@@ -203,4 +203,4 @@ df_wide <- df_algae %>%
   )
 ###
 
-write.csv(df_wide,"results/reef_check_cleaned.csv", row.names = FALSE)
+write.csv(df_wide,"results/reef_check_algae_cleaned.csv", row.names = FALSE)
