@@ -9,8 +9,8 @@ library(dplyr)
 library(tidyr)
 
 ## set working directory to home folder
-setwd("../")
 getwd()
+setwd("../")
 
 ## relative file paths
 data <- "data/Reef_Check"
@@ -19,25 +19,25 @@ figs <- "figs"
 results <- "results"
 
 ## invoke relative file path 
-df_algae <- read.csv(file.path(data, "Algae_Washington_raw.csv"))
+df_invert <- read.csv(file.path(data, "Invert_Washington_raw.csv"))
 
 ## function to place the last column [, ncol] in the first column position i.e. [, 1]
 ## this function is invoked to place the "key" column created above in the first column position 
-front.ofthe.line <- function(df_algae){
-  num.col <- ncol(df_algae)
-  df_algae <- df_algae[c(num.col, 1:(num.col - 1))]
-  return(df_algae)
+front.ofthe.line <- function(df_invert){
+  num.col <- ncol(df_invert)
+  df_invert <- df_invert[c(num.col, 1:(num.col - 1))]
+  return(df_invert)
 }
 
 ## set column headers to lowercase
-names(df_algae) <- base::tolower(names(df_algae))
+names(df_invert) <- base::tolower(names(df_invert))
 
 ## drop Canadian sites
-df_algae <- subset(df_algae, !(site %in% c("7751 Reef", "Ogden Point", 
-                                        "Spring Bay", "Cates Park", 
-                                        "Lions Gate", "Ferguson Point",
-                                        "South Bowyer Island","Christie Islet",
-                                        "Whytecliff Park")))
+df_invert <- subset(df_invert, !(site %in% c("7751 Reef", "Ogden Point", 
+                                           "Spring Bay", "Cates Park", 
+                                           "Lions Gate", "Ferguson Point",
+                                           "South Bowyer Island","Christie Islet",
+                                           "Whytecliff Park")))
 
 ###
 ## legend for basin-site
@@ -122,25 +122,25 @@ basin_lookup <- tribble(
   "North Puget Sound", 10, "Point Whitehorn", 58
 )
 
-df_algae <- df_algae %>%
+df_invert <- df_invert %>%
   left_join(basin_lookup, by = "site")
 
 ## create a unique basin-site-transect key (for data with multiple transects)
-create.key <- function(df_algae){
-  df_algae$key <- paste(
-    df_algae$basin_id,
-    df_algae$site_id,
-    df_algae$transect,
-    substr(as.character(df_algae$year), 3, 4),
+create.key <- function(df_invert){
+  df_invert$key <- paste(
+    df_invert$basin_id,
+    df_invert$site_id,
+    df_invert$transect,
+    substr(as.character(df_invert$year), 3, 4),
     sep = "_")
-  df_algae <- front.ofthe.line(df_algae)
-  return(df_algae)
+  df_invert <- front.ofthe.line(df_invert)
+  return(df_invert)
 }
 
-df_algae <- create.key(df_algae)
+df_invert <- create.key(df_invert)
 
 ## add depth_zone column
-df_algae <- df_algae %>%
+df_invert <- df_invert %>%
   mutate(
     depth_zone = case_when(
       transect %in% 1:3 ~ "offshore",
@@ -150,7 +150,7 @@ df_algae <- df_algae %>%
   )
 
 # reorder columns
-df_algae <- df_algae %>%
+df_invert <- df_invert %>%
   select(
     key,
     basin,
@@ -166,12 +166,11 @@ df_algae <- df_algae %>%
     depth_ft,
     classcode,
     amount,
-    distance,
-    stipes
+    distance
   )
 
 ## extrapolates data to distance of 30.0 m
-df_algae <- df_algae %>%
+df_invert <- df_invert %>%
   mutate(
     adjust = distance < 30,
     amount = as.integer(if_else(adjust, amount / distance * 30, amount)),
@@ -179,60 +178,48 @@ df_algae <- df_algae %>%
   ) %>%
   select(-adjust)
 
-## create summary classcodes for Giant Kelp and Feather Boa Kelp
-df_summary <- df_algae %>%
-  group_by(
-    key, basin, basin_id, site, site_id,
-    transect, depth_zone, latitude, longitude,
-    year, date, depth_ft
-  ) %>%
-  summarise(
-    giant_kelp_n = sum(amount[classcode == "Giant Kelp"], na.rm = TRUE),
-    giant_kelp_stipe = sum(stipes[classcode == "Giant Kelp"], na.rm = TRUE),
-    feather_boa_n = sum(amount[classcode == "Feather Boa Kelp"], na.rm = TRUE),
-    feather_boa_stipe = sum(stipes[classcode == "Feather Boa Kelp"], na.rm = TRUE),
-    .groups = "drop"
-  ) %>%
-  pivot_longer(
-    cols = c(
-      giant_kelp_n,
-      giant_kelp_stipe,
-      feather_boa_n,
-      feather_boa_stipe
-    ),
-    names_to = "classcode",
-    values_to = "amount"
-  )
-
-## append new records to original data
-df_algae <- bind_rows(
-  df_algae %>%
-    select(-stipes) %>%
-    filter(!(classcode %in% c("Giant Kelp", "Feather Boa Kelp"))),
-  df_summary
-)
-
-## remove stipes column entirely
-df_algae <- df_algae %>%
-  select(-any_of("stipes"))
-
-df_algae <- df_algae %>%
+df_invert <- df_invert %>%
   mutate(across(where(is.character), ~ gsub(" ", "_", .x)))
 
-names(df_algae) <- gsub(" ", "_", names(df_algae))
+names(df_invert) <- gsub(" ", "_", names(df_invert))
 
-df_algae$classcode <- tolower(df_algae$classcode)
+df_invert$classcode <- tolower(df_invert$classcode)
+
+df_invert <- df_invert %>%
+  mutate(classcode = recode(classcode,
+                            "dawson's_sun_star" = "dawsons_sun_star",
+                            "green/pallid_urchin" = "green_pallid_urchin",
+                            "kelp_crab_(juvenile)" = "kelp_crab_juv"))
+
+## sum individual counts
+df_invert <- df_invert %>%
+  group_by(
+    key, basin, basin_id, site, site_id,
+    transect, depth_zone,
+    latitude, longitude,
+    year, date, depth_ft,
+    classcode
+  ) %>%
+  summarise(
+    amount = sum(amount),
+    .groups = "drop"
+  )
+
+## corrects cell ordering
+df_invert <- df_invert %>%
+  arrange(site_id, desc(year), transect)
 
 ## pivots table to wide form
-df_wide <- df_algae %>%
+df_wide <- df_invert %>%
   select(key:depth_ft, classcode, amount) %>%
   pivot_wider(
     names_from = classcode,
-    values_from = amount
+    values_from = amount,
+    values_fill = 0
   )
 ###
 
 df_wide <- df_wide |> group_by(site_id)
 df_wide <- arrange(df_wide, .by_group = TRUE)
 
-write.csv(df_wide,"results/reef_check_algae_cleaned.csv", row.names = FALSE)
+write.csv(df_wide,"results/reef_check_invert_cleaned.csv", row.names = FALSE)
