@@ -3,7 +3,7 @@
 ## Overview
 
 This repository contains code, data-processing workflows, analytical outputs, figures, and LaTeX materials associated with the development of an **Understory Kelp Indicator** for Puget Sound, Washington. 
-With funding from Puget Sound Partnerships, [Reef Check](https://www.reefcheck.org/kelp-forest-program/) and the [Seattle Aquarium](https://www.seattleaquarium.org/) are working to co-develop an first instantiation of a Understory Kelp Abundance and Condition Indicator. 
+With funding from Puget Sound Partnerships and SeaDoc Society, [Reef Check](https://www.reefcheck.org/kelp-forest-program/) and the [Seattle Aquarium](https://www.seattleaquarium.org/) are working to co-develop an first instantiation of a Understory Kelp Abundance and Condition Indicator. 
 This initial effort focuses on subtidal kelp species and draws primarily from Reef Check scuba diver survey data, with complementary support from Seattle Aquarium ROV surveys and other compatible data sources where available.
 
 This project is part of a broader effort to support Puget Sound Partnership [Vital Signs](https://vitalsigns.pugetsoundinfo.wa.gov/) reporting by developing a repeatable, transparent, and data-driven indicator for subtidal kelp abundance and condition.
