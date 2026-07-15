@@ -1,0 +1,113 @@
+
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage[hidelinks]{hyperref}
+
+\begin{document}
+	
+	\raggedright
+	\setlength{\parindent}{0pt}
+	
+	\section*{Kelp Density Relative to the Preceding Five Years}
+	
+Following the methods of Frieder et al.\ (2025), we express trends in
+understory kelp density relative to the preceding five years as
+follows.\textsuperscript{1}
+
+
+    \vspace{5mm} 
+	For species \(s\), site \(i\), and current year \(t\), the current
+	density is defined as
+	
+	\begin{equation}
+		D_{s,i,t}^{\mathrm{current}}
+		=
+		D_{s,i,t},
+	\end{equation}
+	
+	where \(D_{s,i,t}\) is the observed density of species \(s\) at site
+	\(i\) during the current year \(t\).
+	
+	The mean density during the five preceding years is defined as
+	
+	\begin{equation}
+		D_{s,i,t}^{\mathrm{5yr}}
+		=
+		\frac{1}{5}
+		\sum_{k=1}^{5}
+		D_{s,i,t-k}.
+	\end{equation}
+	
+	We define the current kelp-density metric as the current density
+	divided by the mean density during the five preceding years,
+	multiplied by 100:
+	
+	\begin{equation}
+		K_{s,i,t}
+		=
+		100
+		\left(
+		\frac{D_{s,i,t}}
+		{\displaystyle \frac{1}{5}
+			\sum_{k=1}^{5} D_{s,i,t-k}}
+		\right).
+	\end{equation}
+	
+	Here,
+	
+	\begin{align*}
+		K_{s,i,t}
+		&= \text{current density as a percentage of the preceding}\\
+		&\quad \text{five-year mean},\\
+		D_{s,i,t}
+		&= \text{density of species \(s\) at site \(i\) in year \(t\)},\\
+		D_{s,i,t-k}
+		&= \text{density of species \(s\) at site \(i\), \(k\) years before 
+		\(t\)}.
+	\end{align*}
+	
+	The resulting metric may be interpreted as follows:
+	
+	\begin{itemize}
+		\item \(K_{s,i,t} = 100\): current density equals the preceding
+		five-year mean;
+		\item \(K_{s,i,t} > 100\): current density is greater than the
+		preceding five-year mean;
+		\item \(K_{s,i,t} < 100\): current density is lower than the
+		preceding five-year mean.
+	\end{itemize}
+	
+	For example, \(K_{s,i,t}=75\) indicates that current density is
+	\(75\%\) of the preceding five-year mean, whereas
+	\(K_{s,i,t}=140\) indicates that current density is \(140\%\) of the
+	preceding five-year mean.
+	
+	\vspace{5mm}
+	
+This example expresses the metric at the site scale. 
+Site-level metrics can then be averaged to generate a basin-scale metric, and 
+basin-scale metrics can likewise be averaged to produce an overarching Puget 
+Sound–wide metric.
+	
+	\vspace{1em}
+	
+	\noindent\rule{0.36\textwidth}{0.4pt}
+	
+	\vspace{0.35em}
+	
+	{\footnotesize
+		\textsuperscript{1}Frieder, C.~A., Bell, T.~W., Berry, H., Cavanaugh, 
+		K.,
+		Claar, D.~C., Freiwald, J., Grime, B., Hamilton, S., Houskeeper, H.~F.,
+		Lombardo, N., Marion, S., McHugh, T.~A., McKenna, G., Parnell, P.~E.,
+		Spector, P., and Weisberg, S.~B. (2025). Developing a Status and Trends
+		Assessment for Floating Kelp Canopies across Large Geographic Areas.
+		\textit{Environmental Science \& Technology}.
+		\url{https://doi.org/10.1021/acs.est.5c07501}.
+	}
+	
+\end{document}
+
