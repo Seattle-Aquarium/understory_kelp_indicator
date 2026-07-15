@@ -125,6 +125,10 @@ basin_lookup <- tribble(
 df_fish <- df_fish %>%
   left_join(basin_lookup, by = "site")
 
+## keep only the first six transects
+df_fish <- df_fish %>%
+  filter(transect %in% 1:6)
+
 ## create a unique basin-site-transect key (for data with multiple transects)
 create.key <- function(df_fish){
   df_fish$key <- paste(
@@ -165,18 +169,8 @@ df_fish <- df_fish %>%
     date,
     depth_ft,
     classcode,
-    amount,
-    distance
+    amount
   )
-
-## extrapolates data to distance of 30.0 m
-df_fish <- df_fish %>%
-  mutate(
-    adjust = distance < 30,
-    amount = as.integer(if_else(adjust, amount / distance * 30, amount)),
-    distance = if_else(adjust, 30, distance)
-  ) %>%
-  select(-adjust)
 
 df_fish <- df_fish %>%
   mutate(across(where(is.character), ~ gsub(" ", "_", .x)))
@@ -187,9 +181,9 @@ df_fish$classcode <- tolower(df_fish$classcode)
 
 df_fish <- df_fish %>%
   mutate(classcode = recode(classcode,
-                            "dawson's_sun_star" = "dawsons_sun_star",
-                            "green/pallid_urchin" = "green_pallid_urchin",
-                            "kelp_crab_(juvenile)" = "kelp_crab_juv"))
+                            "black/yellowtail_yoy" = "black_yellowtail_yoy",
+                            "blue/deacon_yoy" = "blue_deacon_yoy",
+                            "brown/copper/quillback_yoy" = "brown_copper_quillback_yoy"))
 
 ## sum individual counts
 df_fish <- df_fish %>%
@@ -210,7 +204,7 @@ df_fish <- df_fish %>%
   arrange(site_id, desc(year), transect)
 
 ## pivots table to wide form
-df_wide <- df_fish %>%
+df_fish_wide <- df_fish %>%
   select(key:depth_ft, classcode, amount) %>%
   pivot_wider(
     names_from = classcode,
@@ -219,7 +213,7 @@ df_wide <- df_fish %>%
   )
 ###
 
-df_wide <- df_wide |> group_by(site_id)
-df_wide <- arrange(df_wide, .by_group = TRUE)
+df_fish_wide <- df_fish_wide |> group_by(site_id)
+df_fish_wide <- arrange(df_fish_wide, .by_group = TRUE)
 
-write.csv(df_wide,"results/reef_check_fish_cleaned.csv", row.names = FALSE)
+write.csv(df_fish_wide,"results/reef_check_fish_cleaned.csv", row.names = FALSE)

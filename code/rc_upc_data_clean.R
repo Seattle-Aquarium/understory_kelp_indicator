@@ -198,7 +198,7 @@ df_upc <- df_upc %>%
                             ">2m" = "rf_over_2m"
   ))
 
-df_wide <- df_upc %>%
+df_upc_wide <- df_upc %>%
   select(key:depth_ft, classcode, percentage) %>%
   pivot_wider(
     names_from = classcode,
@@ -244,7 +244,7 @@ ordered_class_columns <- c(
   "rf_over_2m"
 )
 
-df_wide <- df_wide %>%
+df_upc_wide <- df_upc_wide %>%
   select(
     key,
     basin,
@@ -261,7 +261,7 @@ df_wide <- df_wide %>%
     all_of(ordered_class_columns)
   )
 
-df_wide <- df_wide |> group_by(site_id)
-df_wide <- arrange(df_wide, .by_group = TRUE)
+df_upc_wide <- df_upc_wide |> group_by(site_id)
+df_upc_wide <- arrange(df_upc_wide, .by_group = TRUE)
 
-write.csv(df_wide, file.path(results, "reef_check_upc_cleaned.csv"), row.names = FALSE)
+write.csv(df_upc_wide, file.path(results, "reef_check_upc_cleaned.csv"), row.names = FALSE)

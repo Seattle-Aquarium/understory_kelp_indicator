@@ -210,7 +210,7 @@ df_invert <- df_invert %>%
   arrange(site_id, desc(year), transect)
 
 ## pivots table to wide form
-df_wide <- df_invert %>%
+df_invert_wide <- df_invert %>%
   select(key:depth_ft, classcode, amount) %>%
   pivot_wider(
     names_from = classcode,
@@ -219,7 +219,7 @@ df_wide <- df_invert %>%
   )
 ###
 
-df_wide <- df_wide |> group_by(site_id)
-df_wide <- arrange(df_wide, .by_group = TRUE)
+df_invert_wide <- df_invert_wide |> group_by(site_id)
+df_invert_wide <- arrange(df_invert_wide, .by_group = TRUE)
 
-write.csv(df_wide,"results/reef_check_invert_cleaned.csv", row.names = FALSE)
+write.csv(df_invert_wide,"results/reef_check_invert_cleaned.csv", row.names = FALSE)

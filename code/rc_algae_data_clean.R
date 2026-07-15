@@ -149,6 +149,7 @@ df_algae <- df_algae %>%
     )
   )
 
+### Functional differences occur after this line
 # reorder columns
 df_algae <- df_algae %>%
   select(
@@ -224,7 +225,7 @@ names(df_algae) <- gsub(" ", "_", names(df_algae))
 df_algae$classcode <- tolower(df_algae$classcode)
 
 ## pivots table to wide form
-df_wide <- df_algae %>%
+df_algae_wide <- df_algae %>%
   select(key:depth_ft, classcode, amount) %>%
   pivot_wider(
     names_from = classcode,
@@ -232,7 +233,7 @@ df_wide <- df_algae %>%
   )
 ###
 
-df_wide <- df_wide |> group_by(site_id)
-df_wide <- arrange(df_wide, .by_group = TRUE)
+df_algae_wide <- df_algae_wide |> group_by(site_id)
+df_algae_wide <- arrange(df_algae_wide, .by_group = TRUE)
 
-write.csv(df_wide,"results/reef_check_algae_cleaned.csv", row.names = FALSE)
+write.csv(df_algae_wide,"results/reef_check_algae_cleaned.csv", row.names = FALSE)
