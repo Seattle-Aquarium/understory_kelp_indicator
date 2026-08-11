@@ -19,25 +19,20 @@ density_cols <- setdiff(names(df_rc), meta_cols)
 density_cols <- density_cols[!density_cols %in% c("ak_giant_kelp_stipe", "ak_feather_boa_stipe")]
 
 ## ============================================================
-## Transect scale: n = 1 row per transect (raw, as collected)
+## Site scale: n = 1 row per site per year (mean of that site's
+## transects within the year; n_transects records how many fed in)
 ## ============================================================
 
-df_transect <- df_rc %>%
-  select(all_of(meta_cols), all_of(density_cols))
-
-write.csv(df_transect, file.path(results, "densities_transect_scale.csv"), row.names = FALSE)
-
-## ============================================================
-## Site scale: n = 1 row per site (mean of that site's transects,
-## all years pooled)
-## ============================================================
-
-site_meta <- df_transect %>%
+site_meta <- df_rc %>%
   distinct(basin, basin_id, site, site_id, latitude, longitude)
 
-site_means <- df_transect %>%
-  group_by(site) %>%
-  summarise(across(all_of(density_cols), ~mean(.x, na.rm = TRUE)), .groups = "drop")
+site_means <- df_rc %>%
+  group_by(site, year) %>%
+  summarise(
+    n_transects = n(),
+    across(all_of(density_cols), ~mean(.x, na.rm = TRUE)),
+    .groups = "drop"
+  )
 
 df_site <- site_meta %>%
   left_join(site_means, by = "site")
@@ -45,17 +40,21 @@ df_site <- site_meta %>%
 write.csv(df_site, file.path(results, "densities_site_scale.csv"), row.names = FALSE)
 
 ## ============================================================
-## Basin scale: n = 1 row per basin (mean of that basin's site
-## means, i.e. every site weighted equally regardless of transect
-## count)
+## Basin scale: n = 1 row per basin per year (mean of that basin's
+## site means within the year, i.e. every site weighted equally
+## regardless of transect count; n_sites records how many fed in)
 ## ============================================================
 
 basin_meta <- df_site %>%
   distinct(basin, basin_id)
 
 basin_means <- df_site %>%
-  group_by(basin) %>%
-  summarise(across(all_of(density_cols), ~mean(.x, na.rm = TRUE)), .groups = "drop")
+  group_by(basin, year) %>%
+  summarise(
+    n_sites = n(),
+    across(all_of(density_cols), ~mean(.x, na.rm = TRUE)),
+    .groups = "drop"
+  )
 
 df_basin <- basin_meta %>%
   left_join(basin_means, by = "basin")
@@ -63,12 +62,18 @@ df_basin <- basin_meta %>%
 write.csv(df_basin, file.path(results, "densities_basin_scale.csv"), row.names = FALSE)
 
 ## ============================================================
-## Puget Sound-wide scale: n = 1 row (mean of the basin means,
-## i.e. every basin weighted equally regardless of site count)
+## Puget Sound-wide scale: n = 1 row per year (mean of the basin
+## means within the year, i.e. every basin weighted equally
+## regardless of site count; n_basins records how many fed in)
 ## ============================================================
 
 df_puget_sound <- df_basin %>%
-  summarise(across(all_of(density_cols), ~mean(.x, na.rm = TRUE))) %>%
+  group_by(year) %>%
+  summarise(
+    n_basins = n(),
+    across(all_of(density_cols), ~mean(.x, na.rm = TRUE)),
+    .groups = "drop"
+  ) %>%
   mutate(region = "Puget_Sound_wide", .before = 1)
 
 write.csv(df_puget_sound, file.path(results, "densities_puget_sound_scale.csv"), row.names = FALSE)
