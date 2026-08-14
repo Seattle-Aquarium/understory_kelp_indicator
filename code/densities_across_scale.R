@@ -7,6 +7,8 @@ code <- "code"
 results <- "results"
 figs <- "figs"
 
+setwd("../")
+
 df_rc <- read.csv(file.path(results, "reef_check_cleaned.csv"), check.names = FALSE)
 
 ## survey metadata carried through from rc_full_data_clean.R; everything
