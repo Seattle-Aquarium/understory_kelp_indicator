@@ -5,6 +5,9 @@
 rm(list=ls())
 library(tidyverse)
 
+## set working directory to home folder
+setwd("../")
+
 data <- "data/Reef_Check"
 results <- "results"
 
@@ -221,6 +224,35 @@ df_algae <- use_correct_coords(df_algae)
 df_upc <- use_correct_coords(df_upc)
 df_invert <- use_correct_coords(df_invert)
 df_fish <- use_correct_coords(df_fish)
+
+## ============================================================
+## Correct fish depth_ft to match the other three datasets
+## ============================================================
+## Fish depth_ft readings can differ slightly from Algae/UPC/Invert for the
+## same real-world survey (same basin_id/site_id/transect/year/date), even
+## though all four datasets originate from the same dive. Left uncorrected,
+## this makes the fish row of a survey look like a distinct survey when
+## building the canonical key below (make_unique_keys groups on depth_ft),
+## causing fish data to end up under its own suffixed key instead of
+## joining onto the shared one. Algae/UPC/Invert agree exactly on depth_ft
+## for a given survey, so fish is normalized to their value; fish's own
+## depth_ft is kept as a fallback for surveys with no match in the other
+## three datasets.
+
+fish_survey_id_columns <- c("basin_id","site_id","transect","year","date")
+
+correct_depth <- bind_rows(
+  df_algae %>% select(all_of(fish_survey_id_columns),depth_ft),
+  df_upc %>% select(all_of(fish_survey_id_columns),depth_ft),
+  df_invert %>% select(all_of(fish_survey_id_columns),depth_ft)
+) %>%
+  distinct()
+
+df_fish <- df_fish %>%
+  rename(depth_ft_orig=depth_ft) %>%
+  left_join(correct_depth,by=fish_survey_id_columns) %>%
+  mutate(depth_ft=coalesce(depth_ft,depth_ft_orig)) %>%
+  select(-depth_ft_orig)
 
 ## ============================================================
 ## ALGAE
