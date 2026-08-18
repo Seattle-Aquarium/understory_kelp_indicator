@@ -1,0 +1,138 @@
+\documentclass[11pt]{article}
+
+\usepackage[margin=1in]{geometry}
+\usepackage{amsmath}
+\usepackage{amssymb}
+
+\begin{document}
+	
+	\raggedright
+	\setlength{\parindent}{0pt}
+	
+	\section*{Within-Site Variation in Understory Kelp Density}
+	
+	Understory kelp abundance is measured along six \(30 \times 2\ \mathrm{m}\)
+	transects at each site. Each transect therefore surveys an area of
+	\(60\ \mathrm{m}^{2}\). For species \(s\), site \(i\), year \(t\), and
+	transect \(j\), transect-level density is defined as
+	
+	\begin{equation}
+		d_{s,i,t,j}
+		=
+		\frac{N_{s,i,t,j}}{60},
+	\end{equation}
+	
+	where \(N_{s,i,t,j}\) is the number of individuals observed along
+	transect \(j\). The mean density across the six transects is
+	
+	\begin{equation}
+		D_{s,i,t}
+		=
+		\frac{1}{6}
+		\sum_{j=1}^{6}
+		d_{s,i,t,j}.
+	\end{equation}
+	
+	We use the following metrics to characterize variation in understory
+	kelp abundance among transects within a site.
+	
+	\subsection*{Standard deviation}
+	
+	The sample standard deviation in transect-level density is
+	
+	\begin{equation}
+		SD_{s,i,t}
+		=
+		\sqrt{
+			\frac{1}{5}
+			\sum_{j=1}^{6}
+			\left(d_{s,i,t,j}-D_{s,i,t}\right)^2
+		}.
+	\end{equation}
+	
+	Standard deviation has the same units as density and describes the
+	typical amount by which individual transect densities differ from the
+	site-level mean. Larger values indicate greater spatial heterogeneity
+	in kelp density within the site.
+	
+	\subsection*{Variance}
+	
+	The sample variance in transect-level density is
+	
+	\begin{equation}
+		V_{s,i,t}
+		=
+		\frac{1}{5}
+		\sum_{j=1}^{6}
+		\left(d_{s,i,t,j}-D_{s,i,t}\right)^2.
+	\end{equation}
+	
+	Variance is the squared standard deviation and provides a formal
+	measure of dispersion among transects. Although its squared units make
+	it less intuitive than standard deviation, it is useful in statistical
+	analyses and for comparing changes in within-site variability through
+	time.
+	
+	\subsection*{Transect occupancy}
+	
+	Transect occupancy is defined as the proportion of transects on which
+	the species is present:
+	
+	\begin{equation}
+		O_{s,i,t}
+		=
+		\frac{1}{6}
+		\sum_{j=1}^{6}
+		I\left(N_{s,i,t,j}>0\right),
+	\end{equation}
+	
+	where \(I(\cdot)\) equals 1 when the condition is true and 0 otherwise.
+	Occupancy ranges from 0 to 1 and may be multiplied by 100 to express
+	the percentage of occupied transects. This metric indicates how
+	broadly a species is distributed across the site, independently of its
+	mean density.
+	
+	\subsection*{Variance-to-mean ratio}
+	
+	Because all transects survey the same area, the variance-to-mean ratio
+	can be calculated from the raw transect counts:
+	
+	\begin{equation}
+		VMR_{s,i,t}
+		=
+		\frac{
+			\displaystyle
+			\frac{1}{5}
+			\sum_{j=1}^{6}
+			\left(N_{s,i,t,j}-\overline{N}_{s,i,t}\right)^2
+		}{
+			\overline{N}_{s,i,t}
+		},
+	\end{equation}
+	
+	where
+	
+	\begin{equation*}
+		\overline{N}_{s,i,t}
+		=
+		\frac{1}{6}
+		\sum_{j=1}^{6}
+		N_{s,i,t,j}.
+	\end{equation*}
+	
+	The variance-to-mean ratio, also called an index of dispersion,
+	characterizes the spatial distribution of counts among transects.
+	Values greater than 1 indicate that counts are more aggregated or
+	patchy than expected under a Poisson distribution, whereas values near
+	1 are consistent with Poisson-like dispersion. The metric is undefined
+	when the mean count is zero and should be interpreted cautiously when
+	mean abundance is very low.
+	
+	Together, these metrics distinguish changes in average kelp density
+	from changes in its spatial distribution. Standard deviation and
+	variance quantify the magnitude of variation among transects,
+	occupancy measures the spatial extent of occurrence within the site,
+	and the variance-to-mean ratio describes the relative aggregation of
+	individuals among transects.
+	
+\end{document}

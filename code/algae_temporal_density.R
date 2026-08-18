@@ -7,8 +7,8 @@ code <- "code"
 results <- "results"
 figs <- "figs"
 
-setwd("../")
-getwd()
+#setwd("../")
+#getwd()
 
 df_rc <- read.csv(file.path(results, "reef_check_cleaned.csv"), check.names = FALSE)
 
@@ -47,7 +47,6 @@ df_out <- site_meta %>%
   left_join(rel_density, by = "site")
 
 write.csv(df_out, file.path(results, "algae_temporal_density.csv"), row.names = FALSE)
-
 
 ## average pct_of_prior_avg per kelp category, across sites within each basin
 ## NA (0/0, no kelp in either period) and Inf (kelp newly appeared from a
