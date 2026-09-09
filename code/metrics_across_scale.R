@@ -73,7 +73,7 @@ site_stats <- df_rc %>%
 df_site <- site_meta %>%
   left_join(site_stats, by = "site")
 
-write.csv(df_site, file.path(results, "densities_site_scale.csv"), row.names = FALSE)
+write.csv(df_site, file.path(results, "metrics_site_scale.csv"), row.names = FALSE)
 
 ## ============================================================
 ## Basin scale: n = 1 row per basin per year (mean/sd/var of that
@@ -92,7 +92,7 @@ basin_stats <- df_site %>%
 df_basin <- basin_meta %>%
   left_join(basin_stats, by = "basin")
 
-write.csv(df_basin, file.path(results, "densities_basin_scale.csv"), row.names = FALSE)
+write.csv(df_basin, file.path(results, "metrics_basin_scale.csv"), row.names = FALSE)
 
 ## ============================================================
 ## Puget Sound-wide scale: n = 1 row per year (mean/sd/var of the
@@ -105,4 +105,4 @@ df_puget_sound <- df_basin %>%
   summarise_density_cols(avg_cols, n_basins = n()) %>%
   mutate(region = "Puget_Sound_wide", .before = 1)
 
-write.csv(df_puget_sound, file.path(results, "densities_puget_sound_scale.csv"), row.names = FALSE)
+write.csv(df_puget_sound, file.path(results, "metrics_puget_sound_scale.csv"), row.names = FALSE)
