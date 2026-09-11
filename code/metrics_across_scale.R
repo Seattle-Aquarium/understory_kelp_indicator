@@ -11,27 +11,52 @@ setwd("../")
 
 df_rc <- read.csv(file.path(results, "reef_check_cleaned.csv"), check.names = FALSE)
 
-## survey metadata carried through from rc_full_data_clean.R; everything
-## else is a raw count/percentage that needs to be scaled to a density
+## survey metadata carried through from rc_full_data_clean.R
 metadata_columns <- c(
   "key","basin","basin_id","site","site_id",
   "transect","depth_zone","latitude","longitude",
   "year","date","depth_ft"
 )
 
-## convert every non-metadata column to a density by dividing by 60.0, so
-## all downstream calculations in this script operate on densities
-df_rc <- df_rc %>%
-  mutate(across(-all_of(metadata_columns), ~.x / 60.0))
+## matches every column carrying any of `prefixes`. NOTE: startsWith() recycles
+## its prefix argument element-wise instead of testing each column against every
+## prefix, so startsWith(nm, c("ak_","cv_")) silently keeps only the columns
+## whose prefix happens to line up with their position -- hence the regex
+## alternation here. "_" carries no regex meaning, so the prefixes paste in as-is
+cols_with_prefix <- function(nm, prefixes) {
+  grep(paste0("^(", paste(prefixes, collapse = "|"), ")"), nm, value = TRUE)
+}
 
-## algae ("ak_") density columns only, excluding stipe counts (a raw
-## stipe tally, not a density, so it doesn't belong in an averaged scale)
-density_cols <- names(df_rc)[startsWith(names(df_rc), "ak_")]
-density_cols <- density_cols[!density_cols %in% c("ak_giant_kelp_stipe", "ak_feather_boa_stipe")]
+## UPC columns ("cv_" cover, "rf_" relief, "sb_" substrate, "sp_" species) are
+## already proportions of the points sampled along a transect -- each prefix
+## group sums to 1 within a row -- so they are carried through unscaled. Dividing
+## them by the transect area would push their ceiling to 1/60 and make them
+## incomparable with everything else.
+prop_prefixes <- c("cv_", "rf_", "sb_", "sp_")
+prop_cols <- cols_with_prefix(names(df_rc), prop_prefixes)
+
+## every remaining non-metadata column is a raw tally, which becomes a density
+## when divided by the area of the transect it was counted on
+transect_area_m2 <- 60.0
+
+df_rc <- df_rc %>%
+  mutate(across(-all_of(c(metadata_columns, prop_cols)), ~.x / transect_area_m2))
+
+## algae ("ak_") densities, excluding stipe counts (a raw stipe tally, not a
+## density, so it doesn't belong in an averaged scale)
+count_cols <- cols_with_prefix(names(df_rc), "ak_")
+count_cols <- setdiff(count_cols, c("ak_giant_kelp_stipe", "ak_feather_boa_stipe"))
+
+## the columns carried through all three scales: algae densities followed by the
+## UPC proportions. The counts reported here are worth a glance on each run --
+## a silent drop is what the startsWith() recycling above caused
+metric_cols <- c(count_cols, prop_cols)
+message("carrying ", length(count_cols), " algae density columns and ",
+        length(prop_cols), " UPC proportion columns through the scales")
 
 ## _avg column produced by the previous scale (raw column names at the
 ## site scale, since that's the first level of aggregation)
-avg_cols <- paste0(density_cols, "_avg")
+avg_cols <- paste0(metric_cols, "_avg")
 
 ## mean/sd/var of each density column, rounded to 2 decimals, with
 ## columns ordered density_avg | sd | var per category. na.rm = TRUE
@@ -40,7 +65,7 @@ avg_cols <- paste0(density_cols, "_avg")
 ## (when aggregating a scale that was itself built by this function) --
 ## that suffix is stripped before re-adding it, so output names never
 ## double up as "_avg_avg".
-summarise_density_cols <- function(df, input_cols, ...){
+summarise_metric_cols <- function(df, input_cols, ...){
   df %>%
     summarise(
       ...,
@@ -68,7 +93,7 @@ site_meta <- df_rc %>%
 
 site_stats <- df_rc %>%
   group_by(site, year) %>%
-  summarise_density_cols(density_cols, n_transects = n())
+  summarise_metric_cols(metric_cols, n_transects = n())
 
 df_site <- site_meta %>%
   left_join(site_stats, by = "site")
@@ -87,7 +112,7 @@ basin_meta <- df_site %>%
 
 basin_stats <- df_site %>%
   group_by(basin, year) %>%
-  summarise_density_cols(avg_cols, n_sites = n())
+  summarise_metric_cols(avg_cols, n_sites = n())
 
 df_basin <- basin_meta %>%
   left_join(basin_stats, by = "basin")
@@ -102,7 +127,7 @@ write.csv(df_basin, file.path(results, "metrics_basin_scale.csv"), row.names = F
 
 df_puget_sound <- df_basin %>%
   group_by(year) %>%
-  summarise_density_cols(avg_cols, n_basins = n()) %>%
+  summarise_metric_cols(avg_cols, n_basins = n()) %>%
   mutate(region = "Puget_Sound_wide", .before = 1)
 
 write.csv(df_puget_sound, file.path(results, "metrics_puget_sound_scale.csv"), row.names = FALSE)
