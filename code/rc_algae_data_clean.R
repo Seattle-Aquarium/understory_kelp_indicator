@@ -28,6 +28,11 @@ names(df_algae) <- tolower(names(df_algae))
 ## drop Canadian sites
 df_algae <- subset(df_algae, !(site %in% canadian_sites))
 
+## correct misspelled site names, then drop the duplicate winter 2025 surveys.
+## both must run before the basin_lookup join below, which matches on "site"
+df_algae <- recode.sites(df_algae)
+df_algae <- drop.winter.surveys(df_algae)
+
 df_algae <- df_algae %>%
   left_join(basin_lookup, by = "site")
 

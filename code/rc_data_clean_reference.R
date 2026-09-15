@@ -7,6 +7,40 @@ canadian_sites <- c("7751 Reef", "Ogden Point", "Spring Bay", "Cates Park",
                     "Lions Gate", "Ferguson Point", "South Bowyer Island",
                     "Christie Islet", "Whytecliff Park")
 
+## Site names misspelled in the raw Reef Check exports. basin_lookup below and
+## every downstream output carry the corrected spelling, so recode.sites() has to
+## run BEFORE the left_join(basin_lookup, by = "site") in each cleaning script --
+## correcting the lookup alone would make that join miss, and the site would then
+## drop out of every dataset carrying NA basin_id. Safe to leave in place once
+## the raw data is corrected upstream: recode() passes through any name it
+## doesn't match.
+site_name_corrections <- c("Elliot Bay Marina" = "Elliott Bay Marina")
+
+recode.sites <- function(df){
+  df %>% mutate(site = recode(site, !!!site_name_corrections))
+}
+
+## Elliott Bay Marina and Sirens of Spring were each dived twice in 2025, once in
+## January and again in August. Every scale downstream assumes one survey per
+## site per year -- pooled, these two site-years average a winter and a
+## late-summer dive together on 12 transects instead of 6 -- so the winter dives
+## are dropped here, for every dataset.
+winter_surveys <- tribble(
+  ~site,                ~date,
+  "Elliott Bay Marina", as.Date("2025-01-28"),
+  "Sirens of Spring",   as.Date("2025-01-27")
+)
+
+## the raw files don't agree on a date format (Algae is M/D/YYYY, the rest are
+## YYYY-MM-DD) and these scripts don't parse dates, so the comparison is made on
+## a parsed copy that is dropped again afterwards
+drop.winter.surveys <- function(df){
+  df %>%
+    mutate(.survey_date = as.Date(date, tryFormats = c("%Y-%m-%d", "%m/%d/%Y"))) %>%
+    anti_join(winter_surveys, by = c("site", ".survey_date" = "date")) %>%
+    select(-.survey_date)
+}
+
 ## basin lookup
 basin_lookup <- tribble(
   ~basin, ~basin_id, ~site, ~site_id,
@@ -31,7 +65,7 @@ basin_lookup <- tribble(
   "Central Puget Sound", 2, "Wing Point", 16,
   "Central Puget Sound", 2, "Sirens of Spring", 17,
   "Central Puget Sound", 2, "Grain Terminal", 18,
-  "Central Puget Sound", 2, "Elliot Bay Marina", 19,
+  "Central Puget Sound", 2, "Elliott Bay Marina", 19,
   "Central Puget Sound", 2, "Magnolia", 20,
   "Central Puget Sound", 2, "Jefferson Head", 23,
   "Central Puget Sound", 2, "Edmonds Shell Creek", 24,

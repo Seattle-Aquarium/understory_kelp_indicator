@@ -30,7 +30,7 @@ basin_lookup <- tribble(
   "Central Puget Sound",2,"Wing Point",16,
   "Central Puget Sound",2,"Sirens of Spring",17,
   "Central Puget Sound",2,"Grain Terminal",18,
-  "Central Puget Sound",2,"Elliot Bay Marina",19,
+  "Central Puget Sound",2,"Elliott Bay Marina",19,
   "Central Puget Sound",2,"Magnolia",20,
   "Central Puget Sound",2,"Jefferson Head",23,
   "Central Puget Sound",2,"Edmonds Shell Creek",24,
@@ -130,7 +130,7 @@ pivot_reef_check <- function(df){
 }
 
 ## Assigns a final, unique survey key. Some sites are surveyed more than
-## once in the same year (e.g. Elliot Bay Marina in 2025); those share the
+## once in the same year (e.g. Elliott Bay Marina in 2025); those share the
 ## same base "key" (basin_site_transect_yr) but have distinct dates. This
 ## must run once on the combined set of survey instances across all four
 ## datasets (see all_metadata below) so that every dataset ends up using
@@ -182,11 +182,40 @@ canadian_sites <- c(
   "Whytecliff Park"
 )
 
+## Site names misspelled in the raw Reef Check exports. basin_lookup and every
+## downstream output carry the corrected spelling, so this has to run BEFORE
+## add_metadata() joins on "site" -- correcting the lookup alone would make that
+## join miss and add_metadata()'s filter(!is.na(basin_id)) would then drop the
+## site from all four datasets silently. Safe to leave in place once the raw data
+## is corrected upstream: recode() passes through any name it doesn't match.
+site_name_corrections <- c("Elliot Bay Marina" = "Elliott Bay Marina")
+
+recode_sites <- function(df){
+  df %>% mutate(site = recode(site, !!!site_name_corrections))
+}
+
+## Elliott Bay Marina and Sirens of Spring were each dived twice in 2025, once in
+## January and again in August. Every scale downstream assumes one survey per
+## site per year -- pooled, these two site-years average a winter and a
+## late-summer dive together on 12 transects instead of 6 -- so the winter dives
+## are dropped. Runs after parse_dates() so the match is on real Dates.
+winter_surveys <- tribble(
+  ~site,                ~date,
+  "Elliott Bay Marina", as.Date("2025-01-28"),
+  "Sirens of Spring",   as.Date("2025-01-27")
+)
+
+drop_winter_surveys <- function(df){
+  df %>% anti_join(winter_surveys, by = c("site","date"))
+}
+
 clean_dataset <- function(df){
   df %>%
     clean_columns() %>%
     filter(!site %in% canadian_sites) %>%
+    recode_sites() %>%
     parse_dates() %>%
+    drop_winter_surveys() %>%
     add_metadata() %>%
     clean_values()
 }
@@ -303,7 +332,7 @@ df_upc <- df_upc %>%
       amount
     ),
     total_amount=if_else(adjust,30,total_amount),
-    percentage=round(percentage/100,digits=2)
+    percentage=round(percentage/100,digits=3)
   ) %>%
   select(-adjust) %>%
   mutate(

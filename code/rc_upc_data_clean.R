@@ -28,6 +28,11 @@ names(df_upc) <- tolower(names(df_upc))
 ## drop Canadian sites
 df_upc <- subset(df_upc, !(site %in% canadian_sites))
 
+## correct misspelled site names, then drop the duplicate winter 2025 surveys.
+## both must run before the basin_lookup join below, which matches on "site"
+df_upc <- recode.sites(df_upc)
+df_upc <- drop.winter.surveys(df_upc)
+
 df_upc <- df_upc %>%
   left_join(basin_lookup, by = "site")
 
@@ -50,7 +55,7 @@ df_upc <- df_upc %>%
   mutate(
     amount = if_else(total_amount != 30, as.integer(amount / total_amount * 30), amount),
     total_amount = if_else(total_amount != 30, 30, total_amount),
-    percentage = round(percentage / 100, digits = 2)
+    percentage = round(percentage / 100, digits = 3)
   )
 
 ## clean strings

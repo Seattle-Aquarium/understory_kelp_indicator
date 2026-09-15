@@ -58,8 +58,8 @@ message("carrying ", length(count_cols), " algae density columns and ",
 ## site scale, since that's the first level of aggregation)
 avg_cols <- paste0(metric_cols, "_avg")
 
-## mean/sd/var of each density column, rounded to 2 decimals, with
-## columns ordered density_avg | sd | var per category. na.rm = TRUE
+## mean/sd/var of each metric column, rounded to 3 decimals, with
+## columns ordered metric_avg | sd | var per category. na.rm = TRUE
 ## excludes missing values from both the sum and the denominator, rather
 ## than treating them as 0. input_cols may already carry an "_avg" suffix
 ## (when aggregating a scale that was itself built by this function) --
@@ -72,9 +72,9 @@ summarise_metric_cols <- function(df, input_cols, ...){
       across(
         all_of(input_cols),
         list(
-          avg = ~round(mean(.x, na.rm = TRUE), 2),
-          sd = ~round(sd(.x, na.rm = TRUE), 2),
-          var = ~round(var(.x, na.rm = TRUE), 2)
+          avg = ~round(mean(.x, na.rm = TRUE), 3),
+          sd = ~round(sd(.x, na.rm = TRUE), 3),
+          var = ~round(var(.x, na.rm = TRUE), 3)
         ),
         .names = "{sub('_avg$', '', .col)}_{.fn}"
       ),
