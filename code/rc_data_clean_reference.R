@@ -41,6 +41,27 @@ drop.winter.surveys <- function(df){
     select(-.survey_date)
 }
 
+## ---- EXCLUDED BASINS -------------------------------------------------------
+## Northern Coast, Western Strait of Juan de Fuca and Eastern Strait of Juan de
+## Fuca are held out of every output in this repo. TO BRING THEM BACK: delete
+## this block and the drop.excluded.basins() call in each cleaning script --
+## nothing else depends on the exclusion, and the raw files in data/Reef_Check
+## still contain every basin. Search the repo for "EXCLUDED BASINS" to find all
+## of the places this is applied.
+##
+## Matching normalises underscores to spaces, so the filter works both before
+## and after the gsub(" ", "_") string cleaning each script applies.
+## ----------------------------------------------------------------------------
+excluded_basins <- c(
+  "Northern Coast",
+  "Western Strait of Juan de Fuca",
+  "Eastern Strait of Juan de Fuca"
+)
+
+drop.excluded.basins <- function(df){
+  df %>% filter(!gsub("_", " ", basin) %in% excluded_basins)
+}
+
 ## basin lookup
 basin_lookup <- tribble(
   ~basin, ~basin_id, ~site, ~site_id,

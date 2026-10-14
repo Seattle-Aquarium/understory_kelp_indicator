@@ -36,6 +36,9 @@ df_fish <- drop.winter.surveys(df_fish)
 df_fish <- df_fish %>%
   left_join(basin_lookup, by = "site")
 
+## EXCLUDED BASINS -- held out of every output; see rc_data_clean_reference.R
+df_fish <- drop.excluded.basins(df_fish)
+
 ## keep only the first six transects
 df_fish <- df_fish %>%
   filter(transect %in% 1:6)

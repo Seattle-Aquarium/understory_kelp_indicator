@@ -36,6 +36,9 @@ df_upc <- drop.winter.surveys(df_upc)
 df_upc <- df_upc %>%
   left_join(basin_lookup, by = "site")
 
+## EXCLUDED BASINS -- held out of every output; see rc_data_clean_reference.R
+df_upc <- drop.excluded.basins(df_upc)
+
 ## key
 df_upc <- create.key(df_upc)
 
@@ -166,7 +169,12 @@ df_upc_wide <- df_upc_wide %>%
     year,
     date,
     depth_ft,
-    all_of(ordered_class_columns)
+    ## EXCLUDED BASINS -- any_of() rather than all_of() because a category can
+    ## go missing entirely once a basin is dropped: "Cobble" and "Boulder" are
+    ## recorded only in Northern Coast, so sb_cobble and sb_boulder have no rows
+    ## left to pivot and never become columns. Restoring the excluded basins
+    ## restores both columns; all_of() would be the stricter check to go back to.
+    any_of(ordered_class_columns)
   )
 
 df_upc_wide <- df_upc_wide |> group_by(site_id)

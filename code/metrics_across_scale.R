@@ -9,7 +9,45 @@ figs <- "figs"
 
 setwd("../")
 
-df_rc <- read.csv(file.path(results, "reef_check_cleaned.csv"), check.names = FALSE)
+## ---- FILE LOCATIONS --------------------------------------------------------
+## Run this script on its own and it reads and writes the repository's own
+## folders, exactly as it always has. The Shiny app in gui/ sets the environment
+## variables below first, so a person can point it at files kept somewhere else
+## without editing anything here. See rc_full_data_clean.R for why environment
+## variables rather than options().
+from_env <- function(var, default) {
+  value <- Sys.getenv(var, unset = "")
+  if (nzchar(value)) value else default
+}
+
+cleaned_csv <- from_env("UKELP_CLEANED_CSV", file.path(results, "reef_check_cleaned.csv"))
+site_csv    <- from_env("UKELP_SITE_CSV",    file.path(results, "metrics_site_scale.csv"))
+basin_csv   <- from_env("UKELP_BASIN_CSV",   file.path(results, "metrics_basin_scale.csv"))
+puget_csv   <- from_env("UKELP_PUGET_CSV",   file.path(results, "metrics_puget_sound_scale.csv"))
+
+for (d in unique(dirname(c(site_csv, basin_csv, puget_csv)))) {
+  dir.create(d, recursive = TRUE, showWarnings = FALSE)
+}
+
+df_rc <- read.csv(cleaned_csv, check.names = FALSE)
+
+## ---- EXCLUDED BASINS -------------------------------------------------------
+## Northern Coast, Western Strait of Juan de Fuca and Eastern Strait of Juan de
+## Fuca are held out of every output in this repo. TO BRING THEM BACK: delete
+## this block -- nothing else depends on the exclusion, and the raw files in
+## data/Reef_Check still contain every basin. Search the repo for
+## "EXCLUDED BASINS" to find all of the places this is applied.
+##
+## The cleaning scripts drop these basins too, so this is a second line of
+## defense that also covers re-running against an older cleaned csv.
+## ----------------------------------------------------------------------------
+excluded_basins <- c(
+  "Northern Coast",
+  "Western Strait of Juan de Fuca",
+  "Eastern Strait of Juan de Fuca"
+)
+
+df_rc <- df_rc %>% filter(!gsub("_", " ", basin) %in% excluded_basins)
 
 ## survey metadata carried through from rc_full_data_clean.R
 metadata_columns <- c(
@@ -98,7 +136,9 @@ site_stats <- df_rc %>%
 df_site <- site_meta %>%
   left_join(site_stats, by = "site")
 
-write.csv(df_site, file.path(results, "metrics_site_scale.csv"), row.names = FALSE)
+write.csv(df_site, site_csv, row.names = FALSE)
+cat("Wrote", site_csv, "--", nrow(df_site), "rows,", ncol(df_site), "columns
+")
 
 ## ============================================================
 ## Basin scale: n = 1 row per basin per year (mean/sd/var of that
@@ -117,7 +157,9 @@ basin_stats <- df_site %>%
 df_basin <- basin_meta %>%
   left_join(basin_stats, by = "basin")
 
-write.csv(df_basin, file.path(results, "metrics_basin_scale.csv"), row.names = FALSE)
+write.csv(df_basin, basin_csv, row.names = FALSE)
+cat("Wrote", basin_csv, "--", nrow(df_basin), "rows,", ncol(df_basin), "columns
+")
 
 ## ============================================================
 ## Puget Sound-wide scale: n = 1 row per year (mean/sd/var of the
@@ -130,4 +172,6 @@ df_puget_sound <- df_basin %>%
   summarise_metric_cols(avg_cols, n_basins = n()) %>%
   mutate(region = "Puget_Sound_wide", .before = 1)
 
-write.csv(df_puget_sound, file.path(results, "metrics_puget_sound_scale.csv"), row.names = FALSE)
+write.csv(df_puget_sound, puget_csv, row.names = FALSE)
+cat("Wrote", puget_csv, "--", nrow(df_puget_sound), "rows,", ncol(df_puget_sound), "columns
+")

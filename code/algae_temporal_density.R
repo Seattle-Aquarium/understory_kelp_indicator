@@ -12,6 +12,24 @@ figs <- "figs"
 
 df_rc <- read.csv(file.path(results, "reef_check_cleaned.csv"), check.names = FALSE)
 
+## ---- EXCLUDED BASINS -------------------------------------------------------
+## Northern Coast, Western Strait of Juan de Fuca and Eastern Strait of Juan de
+## Fuca are held out of every output in this repo. TO BRING THEM BACK: delete
+## this block -- nothing else depends on the exclusion, and the raw files in
+## data/Reef_Check still contain every basin. Search the repo for
+## "EXCLUDED BASINS" to find all of the places this is applied.
+##
+## The cleaning scripts drop these basins too, so this is a second line of
+## defense that also covers re-running against an older cleaned csv.
+## ----------------------------------------------------------------------------
+excluded_basins <- c(
+  "Northern Coast",
+  "Western Strait of Juan de Fuca",
+  "Eastern Strait of Juan de Fuca"
+)
+
+df_rc <- df_rc %>% filter(!gsub("_", " ", basin) %in% excluded_basins)
+
 ## algae ("ak_") kelp category columns, excluding stipe counts
 ak_cols <- names(df_rc)[startsWith(names(df_rc), "ak_")]
 ak_cols <- ak_cols[!ak_cols %in% c("ak_giant_kelp_stipe", "ak_feather_boa_stipe")]

@@ -11,6 +11,27 @@ setwd("../")
 data <- "data/Reef_Check"
 results <- "results"
 
+## ---- FILE LOCATIONS --------------------------------------------------------
+## Run this script on its own and it reads and writes the repository's own
+## folders, exactly as it always has. The Shiny app in gui/ sets the environment
+## variables below first, so a person can point it at files kept somewhere else
+## without editing anything here.
+##
+## Environment variables rather than options() because the app starts this
+## script as its own R process -- options do not cross a process boundary, and a
+## separate process is what keeps the line-one rm(list=ls()) and the setwd()
+## above from reaching into the running app.
+from_env <- function(var, default) {
+  value <- Sys.getenv(var, unset = "")
+  if (nzchar(value)) value else default
+}
+
+algae_csv   <- from_env("UKELP_ALGAE_CSV",   file.path(data, "Algae_Washington_raw.csv"))
+upc_csv     <- from_env("UKELP_UPC_CSV",     file.path(data, "UPC_Washington_raw.csv"))
+invert_csv  <- from_env("UKELP_INVERT_CSV",  file.path(data, "Invert_Washington_raw.csv"))
+fish_csv    <- from_env("UKELP_FISH_CSV",    file.path(data, "Fish_Washington_raw.csv"))
+cleaned_csv <- from_env("UKELP_CLEANED_CSV", file.path(results, "reef_check_cleaned.csv"))
+
 basin_lookup <- tribble(
   ~basin, ~basin_id, ~site, ~site_id,
   "South Puget Sound",1,"Devils Head",1,
@@ -166,10 +187,10 @@ make_unique_keys <- function(df){
 ## Read raw datasets
 ## ============================================================
 
-df_algae <- read.csv(file.path(data,"Algae_Washington_raw.csv"))
-df_upc <- read.csv(file.path(data,"UPC_Washington_raw.csv"))
-df_invert <- read.csv(file.path(data,"Invert_Washington_raw.csv"))
-df_fish <- read.csv(file.path(data,"Fish_Washington_raw.csv"))
+df_algae <- read.csv(algae_csv)
+df_upc <- read.csv(upc_csv)
+df_invert <- read.csv(invert_csv)
+df_fish <- read.csv(fish_csv)
 
 ## ============================================================
 ## Shared cleaning
@@ -209,6 +230,27 @@ drop_winter_surveys <- function(df){
   df %>% anti_join(winter_surveys, by = c("site","date"))
 }
 
+## ---- EXCLUDED BASINS -------------------------------------------------------
+## Northern Coast, Western Strait of Juan de Fuca and Eastern Strait of Juan de
+## Fuca are held out of every output in this repo. TO BRING THEM BACK: delete
+## this block and the drop_excluded_basins() call in clean_dataset() below --
+## nothing else depends on the exclusion, and the raw files in data/Reef_Check
+## still contain every basin. Search the repo for "EXCLUDED BASINS" to find all
+## of the places this is applied.
+##
+## Runs after add_metadata(), which is what attaches "basin", and before
+## clean_values(), so the names still carry spaces at this point.
+## ----------------------------------------------------------------------------
+excluded_basins <- c(
+  "Northern Coast",
+  "Western Strait of Juan de Fuca",
+  "Eastern Strait of Juan de Fuca"
+)
+
+drop_excluded_basins <- function(df){
+  df %>% filter(!gsub("_", " ", basin) %in% excluded_basins)
+}
+
 clean_dataset <- function(df){
   df %>%
     clean_columns() %>%
@@ -217,6 +259,7 @@ clean_dataset <- function(df){
     parse_dates() %>%
     drop_winter_surveys() %>%
     add_metadata() %>%
+    drop_excluded_basins() %>%
     clean_values()
 }
 
@@ -479,8 +522,13 @@ reef_check_cleaned <- all_metadata %>%
     transect
   )
 
+dir.create(dirname(cleaned_csv), recursive = TRUE, showWarnings = FALSE)
+
 write.csv(
   reef_check_cleaned,
-  file.path(results,"reef_check_cleaned.csv"),
+  cleaned_csv,
   row.names=FALSE
 )
+
+cat("Wrote", normalizePath(cleaned_csv, winslash = "/", mustWork = FALSE),
+    "--", nrow(reef_check_cleaned), "rows,", ncol(reef_check_cleaned), "columns\n")

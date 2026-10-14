@@ -36,6 +36,9 @@ df_invert <- drop.winter.surveys(df_invert)
 df_invert <- df_invert %>%
   left_join(basin_lookup, by = "site")
 
+## EXCLUDED BASINS -- held out of every output; see rc_data_clean_reference.R
+df_invert <- drop.excluded.basins(df_invert)
+
 ## key
 df_invert <- create.key(df_invert)
 

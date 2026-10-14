@@ -36,6 +36,9 @@ df_algae <- drop.winter.surveys(df_algae)
 df_algae <- df_algae %>%
   left_join(basin_lookup, by = "site")
 
+## EXCLUDED BASINS -- held out of every output; see rc_data_clean_reference.R
+df_algae <- drop.excluded.basins(df_algae)
+
 ## key
 df_algae <- create.key(df_algae)
 
