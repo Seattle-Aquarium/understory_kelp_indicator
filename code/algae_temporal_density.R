@@ -22,11 +22,22 @@ df_rc <- read.csv(file.path(results, "reef_check_cleaned.csv"), check.names = FA
 ## The cleaning scripts drop these basins too, so this is a second line of
 ## defense that also covers re-running against an older cleaned csv.
 ## ----------------------------------------------------------------------------
-excluded_basins <- c(
+## Set UKELP_INCLUDE_EXCLUDED_BASINS to 1/true/yes to keep these three after
+## all -- that is the "include" checkbox in the Shiny app. Unset, which is how
+## this script runs on its own, they stay excluded exactly as before.
+include_excluded_basins <- tolower(Sys.getenv("UKELP_INCLUDE_EXCLUDED_BASINS",
+                                              unset = "")) %in% c("1", "true", "yes")
+
+excluded_basins <- if (include_excluded_basins) character(0) else c(
   "Northern Coast",
   "Western Strait of Juan de Fuca",
   "Eastern Strait of Juan de Fuca"
 )
+
+if (include_excluded_basins) {
+  message("Including Northern Coast, Western Strait of Juan de Fuca and ",
+          "Eastern Strait of Juan de Fuca.")
+}
 
 df_rc <- df_rc %>% filter(!gsub("_", " ", basin) %in% excluded_basins)
 

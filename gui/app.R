@@ -1,4 +1,4 @@
-## Understory Kelp Indicator -- desktop application
+## Understory Kelp Forests Analyzer -- desktop application
 ##
 ## A front end to the repository's R scripts. It does not reimplement any step:
 ## it collects the file locations a step needs, starts that script as its own R
@@ -128,7 +128,8 @@ FIG_GROUPS <- c("Algae"             = "algae",
 
 FIG_SCALES <- c("Site"             = "site",
                 "Basin"            = "basin",
-                "Puget Sound-wide" = "puget")
+                "Puget Sound"      = "puget",
+                "Washington-wide"  = "washington")
 
 FIG_TYPES <- c("Density / proportion"                        = "plain",
                "Density / proportion with standard deviation" = "sd",
@@ -150,10 +151,26 @@ FIG_SETS <- list(
   list(scale = "basin", type = "composite", folder = "basin_species",
        per = "basin",    about = "one file per basin, every category on one axis"),
   list(scale = "puget", type = "plain",     folder = "puget_sound",
-       per = "one",      about = "one sound-wide file, faceted by category"),
+       per = "one",      about = "Puget_Sound, faceted by category"),
   list(scale = "puget", type = "sd",        folder = "puget_sound_sd",
+       per = "one",      about = "the same, with a standard deviation band"),
+  list(scale = "washington", type = "plain", folder = "puget_sound",
+       per = "one",      about = "Washington_wide, faceted by category"),
+  list(scale = "washington", type = "sd",    folder = "puget_sound_sd",
        per = "one",      about = "the same, with a standard deviation band")
 )
+
+#: Which metrics region each region scale needs, so an unavailable one can be
+#: greyed out rather than silently drawing the wrong thing.
+SCALE_REGION <- c(puget = "Puget_Sound", washington = "Washington_wide")
+
+#: The regions a metrics table actually holds.
+regions_present <- function(path) {
+  if (is.null(path) || !nzchar(path) || !file.exists(path)) return(character(0))
+  d <- tryCatch(read.csv(path, check.names = FALSE), error = function(e) NULL)
+  if (is.null(d) || !"region" %in% names(d)) return(character(0))
+  unique(as.character(d$region))
+}
 
 #: Prefixes and the algae exclusions, so the summary can count categories from
 #: the basin-scale table rather than from a number written down here.
@@ -161,6 +178,35 @@ GROUP_PREFIX <- c(algae = "ak_", cover = "cv_", relief = "rf_",
                   substrate = "sb_", superlayer = "sp_")
 EXCLUDED_CATEGORIES <- c("ak_bull_kelp_avg", "ak_feather_boa_n_avg",
                          "ak_giant_kelp_n_avg")
+
+## ---------------------------------------------------------------------------
+## The three held-out basins
+## ---------------------------------------------------------------------------
+##
+## Every script leaves these out by default. Each tab carries a checkbox that
+## sets UKELP_INCLUDE_EXCLUDED_BASINS, which turns the filter off for that run.
+##
+## Steps 2 and 3 can only include what step 1 actually kept: if the cleaned
+## table was written with the box unticked, the rows are simply not there, and
+## ticking the box downstream cannot conjure them back. basins_present() is how
+## the app checks, so it can say so rather than quietly producing the same
+## figures either way.
+EXCLUDED_BASINS <- c("Northern Coast",
+                     "Western Strait of Juan de Fuca",
+                     "Eastern Strait of Juan de Fuca")
+
+INCLUDE_LABEL <- "Include Northern Coast, Western Strait and Eastern Strait"
+
+#: Which of the three appear in a csv's `basin` column. Names are compared with
+#: underscores collapsed to spaces, since the cleaned tables carry the
+#: underscored form.
+basins_present <- function(path) {
+  if (is.null(path) || !nzchar(path) || !file.exists(path)) return(NULL)
+  d <- tryCatch(read.csv(path, check.names = FALSE), error = function(e) NULL)
+  if (is.null(d) || !"basin" %in% names(d)) return(NULL)
+  found <- unique(gsub("_", " ", as.character(d$basin)))
+  intersect(EXCLUDED_BASINS, found)
+}
 
 ## ---------------------------------------------------------------------------
 ## Helpers
@@ -360,6 +406,34 @@ app_css <- sprintf('
   .rc-plan .tot { border-top:1px solid var(--line); font-weight:600; color:var(--navy); }
   .rc-plan .none { color:var(--warn); font-weight:600; }
 
+  /* The held-out basins checkbox, set apart from the rows above it */
+  .rc-include { margin-top:14px; padding-top:12px; border-top:1px solid var(--line); }
+  .rc-include .checkbox { margin:0; }
+  .rc-include .checkbox label { font-size:13px; color:var(--ink); }
+  .rc-include .note { font-size:11.5px; margin-top:4px; margin-left:21px; }
+  .rc-include .note.warn { color:var(--warn); }
+  .rc-include .note.ok { color:var(--teal-ink); }
+  .rc-include .note.muted { color:var(--ink-muted); }
+
+  /* The preview */
+  .rc-preview-controls { display:grid; grid-template-columns:repeat(4,1fr); gap:16px;
+                         margin-bottom:6px; }
+  .rc-preview-controls h3 { font-size:12px; font-weight:700; letter-spacing:.06em;
+                            text-transform:uppercase; color:var(--navy);
+                            margin:0 0 7px 0; padding-bottom:5px;
+                            border-bottom:2px solid var(--teal); }
+  .rc-preview-controls .form-group { margin-bottom:0; }
+  .rc-preview-controls select { font-size:13px; }
+  @media (max-width: 900px) { .rc-preview-controls { grid-template-columns:1fr 1fr; } }
+
+  .rc-preview-stage { background:#fff; border:1px solid var(--line);
+                      border-radius:8px; padding:10px; margin-top:10px; }
+  .rc-pv-msg { font-size:12.5px; margin-top:8px; }
+  .rc-pv-msg.warn { color:var(--warn); font-weight:600; }
+  .rc-pv-msg.muted { color:var(--ink-muted); }
+  .rc-pv-target { font-size:11.5px; color:var(--ink-muted); margin-left:14px;
+                  font-family:Consolas,"Courier New",monospace; }
+
   .rc-chain { font-size:13px; color:var(--ink); line-height:1.9; margin:0 0 6px 0; }
   .rc-chain .n { display:inline-block; min-width:22px; font-weight:700; color:var(--navy); }
   .rc-foot { font-size:11.5px; color:var(--ink-muted); margin-top:8px; }
@@ -421,13 +495,23 @@ step_panel <- function(step) {
                                selected = unname(FIG_TYPES))
           )
         ),
+        div(class = "rc-include",
+            checkboxInput(paste0("include_", step$id), INCLUDE_LABEL, value = FALSE),
+            uiOutput(paste0("include_note_", step$id))),
         div(style = "margin-top:4px;", uiOutput("fig_plan"))
       )
+      ## The preview card follows, built separately so the two controls are
+      ## visibly different things: the checkboxes above decide what Run writes,
+      ## the dropdowns below decide what you are looking at. They are
+      ## deliberately independent of each other.
     } else {
       div(
         class = "rc-card",
         h2("Reads"),
-        lapply(step$ins, file_row)
+        lapply(step$ins, file_row),
+        div(class = "rc-include",
+            checkboxInput(paste0("include_", step$id), INCLUDE_LABEL, value = FALSE),
+            uiOutput(paste0("include_note_", step$id)))
       )
     },
     div(
@@ -441,17 +525,54 @@ step_panel <- function(step) {
           actionButton(paste0("run_", step$id), "Run this step", class = "btn-run"),
           div(style = "width:10px;"),
           actionButton("reset", "Reset all locations", class = "btn-browse"))
-    )
+    ),
+    if (identical(step$id, "figures")) preview_card() else NULL
+  )
+}
+
+## ---------------------------------------------------------------------------
+## The preview
+## ---------------------------------------------------------------------------
+##
+## Build one figure and look at it before anything is written. Four dropdowns,
+## each narrowing the one after it:
+##
+##   scale  ->  which basin, or which region  ->  figure type  ->  data group
+##
+## Site scale is deliberately absent: its figures are one-per-category showing
+## every site, so there is no single site to preview.
+preview_card <- function() {
+  div(
+    class = "rc-card",
+    h2("Preview a figure"),
+    p(class = "blurb",
+      paste("Build one figure and look at it. These dropdowns are independent",
+            "of the checkboxes above -- they decide what you are looking at,",
+            "not what Run writes.")),
+    div(
+      class = "rc-preview-controls",
+      div(tags$h3("Scale"),      uiOutput("pv_scale_ui")),
+      div(tags$h3("Which"),      uiOutput("pv_where_ui")),
+      div(tags$h3("Figure type"), uiOutput("pv_type_ui")),
+      div(tags$h3("Data"),       uiOutput("pv_group_ui"))
+    ),
+    uiOutput("pv_status"),
+    div(class = "rc-preview-stage", plotOutput("pv_plot", height = "620px")),
+    div(style = "display:flex;align-items:center;flex-wrap:wrap;margin-top:12px;",
+        actionButton("pv_save", "Save this figure", class = "btn-run"),
+        div(style = "width:8px;"),
+        actionButton("pv_save_as", "Save as…", class = "btn-browse"),
+        uiOutput("pv_target", inline = TRUE))
   )
 }
 
 ui <- page_fluid(
   theme = rc_theme,
-  tags$head(tags$style(HTML(app_css)), tags$title("Understory Kelp Indicator")),
+  tags$head(tags$style(HTML(app_css)), tags$title("Understory Kelp Forests Analyzer")),
 
   div(class = "rc-banner",
       tags$img(src = "logo.png", alt = "Reef Check Worldwide"),
-      div(h1("Understory Kelp Indicator", class = "rc-title"),
+      div(h1("Understory Kelp Forests Analyzer", class = "rc-title"),
           p("Reef Check Worldwide  ·  Seattle Aquarium", class = "rc-sub"))),
   div(class = "rc-rule"),
 
@@ -475,10 +596,14 @@ ui <- page_fluid(
               lapply(STEPS, function(s)
                 div(span(class = "n", paste0(s$n, ".")), s$title,
                     span(style = "color:#5F6B7A;", paste0("  —  code/", s$script))))),
+          div(class = "rc-include",
+              checkboxInput("include_all", INCLUDE_LABEL, value = FALSE),
+              uiOutput("include_note_all")),
           div(style = "margin-top:14px;",
               actionButton("run_all", "Run all three steps", class = "btn-all")),
           div(class = "rc-foot",
-              paste("File locations come from the three step tabs. The figures",
+              paste("File locations come from the three step tabs, and the",
+                    "figures step draws whatever is ticked there. The figures",
                     "step writes a few hundred files and takes the longest."))
         )
       )
@@ -523,6 +648,7 @@ server <- function(input, output, session) {
     proc = NULL,                 # processx handle for the running step
     current = NULL,              # which step id is running
     queue = character(0),        # step ids still to run, for "Run everything"
+    all_run = FALSE,             # chain started from the "Run everything" tab
     log = character(0),
     state = list(text = "Not run yet", class = "s-idle")
   )
@@ -578,6 +704,86 @@ server <- function(input, output, session) {
     }
     showNotification("File locations reset to this repository.", duration = 4)
   }, ignoreInit = TRUE)
+
+  ## ---- the three held-out basins -----------------------------------------
+
+  ## Which upstream table each step would have to find them in. Step 1 reads the
+  ## raw exports, which always carry every basin, so it has nothing to check.
+  include_source <- list(clean = NULL, metrics = "cleaned", figures = "basin")
+
+  include_wanted <- function(step_id) isTRUE(input[[paste0("include_", step_id)]])
+
+  ## Which checkbox governs the step about to run. A chain started from "Run
+  ## everything" answers to that tab's single box for all three steps -- step 1
+  ## rebuilds the cleaned table within the same chain, so ticking it there is
+  ## always honorable, which is not true of the per-step boxes.
+  include_for <- function(step_id) {
+    if (isTRUE(rv$all_run)) isTRUE(input$include_all) else include_wanted(step_id)
+  }
+
+  ## NULL when there is nothing to check (step 1, or the upstream file is not
+  ## there yet); otherwise the subset of the three that upstream actually holds.
+  include_available <- function(step_id) {
+    key <- include_source[[step_id]]
+    if (is.null(key)) return(NULL)
+    basins_present(current_path(key))
+  }
+
+  ## Shiny suspends an output while its tab is hidden and resumes it when the
+  ## tab is shown, which it works out from element visibility. Inside a navset
+  ## that resume is unreliable, and an output stuck "recalculating" reads as a
+  ## broken panel. These are all cheap -- a checkbox state, or a header read off
+  ## a small csv -- so they are simply never suspended.
+  keep_live <- function(...) {
+    for (nm in c(...)) outputOptions(output, nm, suspendWhenHidden = FALSE)
+  }
+
+  ## The run-everything box needs no availability check: step 1 runs first in
+  ## the same chain, so whatever it is asked for is what the later steps get.
+  output$include_note_all <- renderUI({
+    if (isTRUE(input$include_all))
+      div(class = "note ok",
+          "All three steps will keep them, starting from the cleaned table.")
+    else
+      div(class = "note muted",
+          "All three steps will leave them out unless this is ticked.")
+  })
+
+  lapply(names(STEPS), function(id) {
+    output[[paste0("include_note_", id)]] <- renderUI({
+      if (!include_wanted(id)) {
+        return(div(class = "note muted",
+                   if (is.null(include_source[[id]]))
+                     "Left out of the cleaned table unless this is ticked."
+                   else "Left out unless this is ticked, and unless step 1 kept them."))
+      }
+      key <- include_source[[id]]
+      if (is.null(key)) {
+        return(div(class = "note ok",
+                   "All three will be kept in the cleaned table."))
+      }
+      have <- include_available(id)
+      src <- FILES[[key]]$label
+      if (is.null(have)) {
+        div(class = "note muted",
+            sprintf("Cannot tell yet — %s has not been written.", src))
+      } else if (!length(have)) {
+        div(class = "note warn",
+            sprintf("Not available: %s holds none of the three. Re-run step 1 with this ticked.",
+                    src))
+      } else if (length(have) < length(EXCLUDED_BASINS)) {
+        div(class = "note warn",
+            sprintf("Partly available: %s holds only %s.",
+                    src, paste(have, collapse = ", ")))
+      } else {
+        div(class = "note ok",
+            sprintf("All three are present in %s and will be included.", src))
+      }
+    })
+  })
+
+  keep_live("include_note_all",
+            paste0("include_note_", names(STEPS)))
 
   ## ---- what the figures step will draw -----------------------------------
 
@@ -662,15 +868,234 @@ server <- function(input, output, session) {
     )
   })
 
+  keep_live("fig_plan")
+
+  ## ---- the preview -------------------------------------------------------
+  ##
+  ## Figures are drawn in this process rather than by starting R again: a
+  ## subprocess costs about 1.3 s per preview (R start-up plus tidyverse plus
+  ## reading the tables), which is tiresome across an exploration loop, and the
+  ## tables are already in memory here. The builders come from the same
+  ## figure_functions.R the script uses, so the preview and the saved file are
+  ## the same figure by construction.
+
+  FIG_ENV <- new.env(parent = globalenv())
+  fig_env_ok <- tryCatch({
+    sys.source(file.path(CODE, "figure_functions.R"), envir = FIG_ENV)
+    TRUE
+  }, error = function(e) {
+    warning("Could not load figure_functions.R: ", conditionMessage(e))
+    FALSE
+  })
+
+  ## The three tables, reloaded whenever a path or its timestamp changes, so a
+  ## preview never shows figures built from a table that has since been rewritten.
+  pv_data <- reactive({
+    if (!fig_env_ok) return(NULL)
+    paths <- vapply(c("site", "basin", "puget"), current_path, character(1))
+    if (!all(file.exists(paths))) return(NULL)
+    invisible(vapply(paths, function(p) as.numeric(file.mtime(p)), numeric(1)))
+
+    d <- tryCatch(list(
+      site  = read.csv(paths[["site"]]),
+      basin = read.csv(paths[["basin"]]),
+      puget = read.csv(paths[["puget"]])
+    ), error = function(e) NULL)
+    if (is.null(d)) return(NULL)
+
+    ## the same factor conversions visualizations.R applies before drawing
+    d$site$site   <- as.factor(d$site$site)
+    d$site$year   <- as.factor(d$site$year)
+    d$basin$basin <- as.factor(d$basin$basin)
+    d$basin$year  <- as.factor(d$basin$year)
+    d$puget$region <- as.factor(d$puget$region)
+    d$puget$year   <- as.factor(d$puget$year)
+    d
+  })
+
+  pv_regions <- reactive({
+    d <- pv_data()
+    if (is.null(d)) character(0) else unique(as.character(d$puget$region))
+  })
+
+  pv_basins <- reactive({
+    d <- pv_data()
+    if (is.null(d)) character(0) else sort(unique(as.character(d$basin$basin)))
+  })
+
+  ## ---- the four dropdowns, each narrowing the next ----
+
+  output$pv_scale_ui <- renderUI(
+    selectInput("pv_scale", NULL, width = "100%",
+                choices = c("Basin" = "basin", "Region-wide" = "region"),
+                selected = isolate(input$pv_scale) %||% "basin"))
+
+  output$pv_where_ui <- renderUI({
+    if (identical(input$pv_scale, "region")) {
+      have <- pv_regions()
+      ## Washington-wide is offered only when the metrics table holds it, which
+      ## is what happens when the outer basins were kept upstream.
+      choices <- c("Puget Sound" = "Puget_Sound")
+      if ("Washington_wide" %in% have)
+        choices <- c(choices, "Washington-wide" = "Washington_wide")
+      selectInput("pv_where", NULL, width = "100%", choices = choices)
+    } else {
+      b <- pv_basins()
+      if (!length(b)) return(selectInput("pv_where", NULL, choices = character(0),
+                                         width = "100%"))
+      labels <- gsub("_", " ", b)
+      selectInput("pv_where", NULL, width = "100%",
+                  choices = setNames(b, labels))
+    }
+  })
+
+  output$pv_type_ui <- renderUI({
+    ## the one-axis composite layout exists only at the basin scale
+    choices <- c("Density / proportion" = "plain",
+                 "With standard deviation" = "sd")
+    if (identical(input$pv_scale, "basin"))
+      choices <- c(choices, "Basin and species composite" = "composite")
+    selectInput("pv_type", NULL, width = "100%", choices = choices)
+  })
+
+  output$pv_group_ui <- renderUI(
+    selectInput("pv_group", NULL, width = "100%", choices = FIG_GROUPS,
+                selected = isolate(input$pv_group) %||% "algae"))
+
+  ## ---- building it ----
+
+  pv_group_def <- reactive({
+    g <- input$pv_group
+    if (is.null(g)) return(NULL)
+    hit <- Filter(function(x) identical(x$folder, g), FIG_ENV$metric_groups)
+    if (length(hit)) hit[[1]] else NULL
+  })
+
+  pv_figure <- reactive({
+    d <- pv_data(); grp <- pv_group_def()
+    req_ok <- !is.null(d) && !is.null(grp) && !is.null(input$pv_type) &&
+      !is.null(input$pv_where) && nzchar(input$pv_where)
+    if (!req_ok) return(NULL)
+
+    FIG_ENV$df_site  <- d$site
+    FIG_ENV$df_basin <- d$basin
+    FIG_ENV$df_puget <- d$puget
+
+    tryCatch({
+      if (identical(input$pv_scale, "region")) {
+        FIG_ENV$sound_density_figure(grp, identical(input$pv_type, "sd"),
+                                     input$pv_where)
+      } else if (identical(input$pv_type, "composite")) {
+        FIG_ENV$basin_species_figure(input$pv_where, grp)
+      } else {
+        FIG_ENV$basin_density_figure(input$pv_where, grp,
+                                     identical(input$pv_type, "sd"))
+      }
+    }, error = function(e) structure(conditionMessage(e), class = "pv_error"))
+  })
+
+  output$pv_status <- renderUI({
+    if (!fig_env_ok)
+      return(div(class = "rc-pv-msg warn",
+                 "code/figure_functions.R could not be loaded, so previews are unavailable."))
+    if (is.null(pv_data()))
+      return(div(class = "rc-pv-msg muted",
+                 "Run step 2 first -- the preview reads the site, basin and region tables."))
+    p <- pv_figure()
+    if (inherits(p, "pv_error"))
+      return(div(class = "rc-pv-msg warn", paste("Could not build that figure:", p)))
+    NULL
+  })
+
+  ## Rendered larger than the exported geometry on purpose: the file is 12x6 in
+  ## at 300 dpi, which puts 8pt facet labels on screen at 8pt. A higher res over
+  ## the same box means a smaller canvas in inches, so the same type reads
+  ## bigger. Saving still writes the canonical 12x6.
+  output$pv_plot <- renderPlot({
+    p <- pv_figure()
+    validate(need(!is.null(p) && !inherits(p, "pv_error"), ""))
+    p
+  }, res = 110)
+
+  ## ---- where saving would put it ----
+
+  pv_target <- reactive({
+    grp <- input$pv_group
+    if (is.null(grp) || is.null(input$pv_where) || !nzchar(input$pv_where)) return(NULL)
+    figs_root <- current_path("figs")
+    set_dir <- if (identical(input$pv_scale, "region")) {
+      if (identical(input$pv_type, "sd")) "puget_sound_sd" else "puget_sound"
+    } else if (identical(input$pv_type, "composite")) {
+      "basin_species"
+    } else if (identical(input$pv_type, "sd")) {
+      "basin_composites_sd"
+    } else {
+      "basin_composites"
+    }
+    stem <- FIG_ENV$safe_file_name(input$pv_where)
+    name <- if (identical(set_dir, "basin_species"))
+      paste0(stem, "_species_avg_density.png") else paste0(stem, "_avg_density.png")
+    file.path(figs_root, set_dir, grp, name)
+  })
+
+  output$pv_target <- renderUI({
+    t <- pv_target()
+    if (is.null(t)) return(NULL)
+    span(class = "rc-pv-target",
+         sub(paste0("^", REPO, "/?"), "", t, fixed = FALSE))
+  })
+
+  save_preview <- function(path) {
+    p <- pv_figure()
+    if (is.null(p) || inherits(p, "pv_error")) {
+      showNotification("There is no figure to save yet.", type = "warning")
+      return(invisible(FALSE))
+    }
+    dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
+    ok <- tryCatch({
+      ggplot2::ggsave(path, plot = p, width = FIG_ENV$fig_width,
+                      height = FIG_ENV$fig_height, dpi = FIG_ENV$fig_dpi,
+                      bg = "white")
+      TRUE
+    }, error = function(e) {
+      showNotification(paste("Could not save:", conditionMessage(e)),
+                       type = "error", duration = 10)
+      FALSE
+    })
+    if (ok) showNotification(paste("Saved", basename(path)), duration = 5)
+    invisible(ok)
+  }
+
+  observeEvent(input$pv_save, {
+    t <- pv_target()
+    if (!is.null(t)) save_preview(t)
+  }, ignoreInit = TRUE)
+
+  ## Registered here rather than beside each definition: outputOptions() needs
+  ## the output to exist already, so this has to follow all of them.
+  keep_live("pv_scale_ui", "pv_where_ui", "pv_type_ui", "pv_group_ui",
+            "pv_status", "pv_target")
+
+  observeEvent(input$pv_save_as, {
+    t <- pv_target()
+    chosen <- pick_save("Save this figure as", t %||% file.path(REPO, "figure.png"))
+    if (!is.null(chosen)) save_preview(chosen)
+  }, ignoreInit = TRUE)
+
   ## ---- running -----------------------------------------------------------
 
   say <- function(...) rv$log <- c(rv$log, ...)
 
   ## Every script gets every path. Each reads only the variables it knows about,
   ## so one environment serves all three and nothing has to be kept in step.
-  run_env <- function() {
+  run_env <- function(step_id) {
     vals <- vapply(names(FILES), current_path, character(1))
     names(vals) <- vapply(FILES, function(f) f$env, character(1))
+
+    ## Each step carries its own checkbox, so the variable is set from the one
+    ## belonging to the step about to run.
+    vals <- c(vals,
+              UKELP_INCLUDE_EXCLUDED_BASINS = if (include_for(step_id)) "1" else "0")
 
     ## The figures step also takes what to draw. Empty means "everything", which
     ## is what the script does when the variable is unset -- so a deliberately
@@ -722,17 +1147,43 @@ server <- function(input, output, session) {
         sprintf("Step %d of 3 -- %s", step$n, step$title),
         sprintf("Running code/%s", step$script),
         strrep("-", 72))
+
+    ## The held-out basins, and whether this step can actually honor the box.
+    if (include_for(step_id)) {
+      ## In a "Run everything" chain step 1 rebuilds the cleaned table first, so
+      ## there is nothing upstream to be missing.
+      key <- if (isTRUE(rv$all_run)) NULL else include_source[[step_id]]
+      if (is.null(key)) {
+        say("Including Northern Coast, Western Strait and Eastern Strait.")
+      } else {
+        have <- include_available(step_id)
+        src <- FILES[[key]]$label
+        if (is.null(have)) {
+          say(sprintf("Note: asked to include the three held-out basins, but %s could not be read to check.", src))
+        } else if (!length(have)) {
+          say(sprintf("Note: asked to include Northern Coast, Western Strait and Eastern Strait, but %s holds none of them.", src),
+              "      They were left out when the cleaned table was built, so this run cannot put them back.",
+              "      To include them: tick the box on step 1, re-run it, then re-run this step.")
+        } else if (length(have) < length(EXCLUDED_BASINS)) {
+          say(sprintf("Note: of the three held-out basins, %s holds only %s. The rest cannot be included.",
+                      src, paste(have, collapse = ", ")))
+        } else {
+          say("Including Northern Coast, Western Strait and Eastern Strait.")
+        }
+      }
+    }
     rv$state <- list(text = sprintf("Step %d of 3: %s…", step$n, step$title),
                      class = "s-busy")
     rv$current <- step_id
     rv$proc <- processx::process$new(rscript, step$script, wd = CODE,
-                                     env = run_env(), stdout = "|", stderr = "2>&1")
+                                     env = run_env(step_id), stdout = "|", stderr = "2>&1")
     invisible(TRUE)
   }
 
-  start_chain <- function(ids) {
+  start_chain <- function(ids, all_run = FALSE) {
     if (!is.null(rv$proc)) return()
     rv$log <- character(0)
+    rv$all_run <- all_run
     rv$queue <- ids
     nxt <- rv$queue[1]
     rv$queue <- rv$queue[-1]
@@ -743,7 +1194,8 @@ server <- function(input, output, session) {
     observeEvent(input[[paste0("run_", id)]], start_chain(id), ignoreInit = TRUE)
   })
 
-  observeEvent(input$run_all, start_chain(names(STEPS)), ignoreInit = TRUE)
+  observeEvent(input$run_all, start_chain(names(STEPS), all_run = TRUE),
+               ignoreInit = TRUE)
 
   observeEvent(input$stop, {
     p <- rv$proc

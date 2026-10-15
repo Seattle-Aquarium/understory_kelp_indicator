@@ -1,2 +1,13 @@
 .Rhistory
 .RData
+figs/puget_sound/algae/Puget_Sound_avg_density.png
+figs/puget_sound/cover/Puget_Sound_avg_density.png
+figs/puget_sound/Puget_Sound_wide_avg_density.png
+figs/puget_sound/relief/Puget_Sound_avg_density.png
+figs/puget_sound/substrate/Puget_Sound_avg_density.png
+figs/puget_sound/superlayer/Puget_Sound_avg_density.png
+figs/puget_sound_sd/algae/Puget_Sound_avg_density.png
+figs/puget_sound_sd/cover/Puget_Sound_avg_density.png
+figs/puget_sound_sd/relief/Puget_Sound_avg_density.png
+figs/puget_sound_sd/substrate/Puget_Sound_avg_density.png
+figs/puget_sound_sd/superlayer/Puget_Sound_avg_density.png

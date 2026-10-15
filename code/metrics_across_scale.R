@@ -41,11 +41,22 @@ df_rc <- read.csv(cleaned_csv, check.names = FALSE)
 ## The cleaning scripts drop these basins too, so this is a second line of
 ## defense that also covers re-running against an older cleaned csv.
 ## ----------------------------------------------------------------------------
-excluded_basins <- c(
+## Set UKELP_INCLUDE_EXCLUDED_BASINS to 1/true/yes to keep these three after
+## all -- that is the "include" checkbox in the Shiny app. Unset, which is how
+## this script runs on its own, they stay excluded exactly as before.
+include_excluded_basins <- tolower(Sys.getenv("UKELP_INCLUDE_EXCLUDED_BASINS",
+                                              unset = "")) %in% c("1", "true", "yes")
+
+excluded_basins <- if (include_excluded_basins) character(0) else c(
   "Northern Coast",
   "Western Strait of Juan de Fuca",
   "Eastern Strait of Juan de Fuca"
 )
+
+if (include_excluded_basins) {
+  message("Including Northern Coast, Western Strait of Juan de Fuca and ",
+          "Eastern Strait of Juan de Fuca.")
+}
 
 df_rc <- df_rc %>% filter(!gsub("_", " ", basin) %in% excluded_basins)
 
@@ -162,15 +173,44 @@ cat("Wrote", basin_csv, "--", nrow(df_basin), "rows,", ncol(df_basin), "columns
 ")
 
 ## ============================================================
-## Puget Sound-wide scale: n = 1 row per year (mean/sd/var of the
+## Region scale: n = 1 row per region per year (mean/sd/var of the
 ## basin means within the year, i.e. every basin weighted equally
 ## regardless of site count; n_basins records how many fed in)
+##
+## Two regions, written to the same file and told apart by `region`:
+##
+##   Puget_Sound      the inner basins only -- the outer coast and the two
+##                    Straits carved out, whether or not they are in the data
+##   Washington_wide  every basin present
+##
+## When the outer three are absent the two would be identical, so only
+## Puget_Sound is written. That absence is what the Shiny app reads to grey out
+## its Washington-wide option, so it is load-bearing rather than tidiness.
 ## ============================================================
 
-df_puget_sound <- df_basin %>%
-  group_by(year) %>%
-  summarise_metric_cols(avg_cols, n_basins = n()) %>%
-  mutate(region = "Puget_Sound_wide", .before = 1)
+## Deliberately separate from `excluded_basins` above: that one empties when the
+## include flag is set, and this carve-out has to hold either way.
+non_puget_basins <- c("Northern Coast",
+                      "Western Strait of Juan de Fuca",
+                      "Eastern Strait of Juan de Fuca")
+
+basin_is_outer <- gsub("_", " ", as.character(df_basin$basin)) %in% non_puget_basins
+
+region_rows <- function(df, label) {
+  df %>%
+    group_by(year) %>%
+    summarise_metric_cols(avg_cols, n_basins = n()) %>%
+    mutate(region = label, .before = 1)
+}
+
+df_puget_sound <- region_rows(df_basin[!basin_is_outer, , drop = FALSE], "Puget_Sound")
+
+if (any(basin_is_outer)) {
+  df_puget_sound <- bind_rows(df_puget_sound, region_rows(df_basin, "Washington_wide"))
+  message("Writing both Puget_Sound and Washington_wide regions.")
+} else {
+  message("Outer basins absent -- writing Puget_Sound only.")
+}
 
 write.csv(df_puget_sound, puget_csv, row.names = FALSE)
 cat("Wrote", puget_csv, "--", nrow(df_puget_sound), "rows,", ncol(df_puget_sound), "columns
