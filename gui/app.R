@@ -126,11 +126,14 @@ FIG_GROUPS <- c("Algae"             = "algae",
                 "Substrate (sb_)"   = "substrate",
                 "Superlayer (sp_)"  = "superlayer")
 
-FIG_SCALES <- c("Site"             = "site",
-                "Basin"            = "basin",
-                "Puget Sound"      = "puget",
-                "Washington-wide"  = "washington",
-                "Percentage"       = "percent")
+## The displayed label only. The value stays "site" because it is what the
+## scripts read from UKELP_FIG_SCALES and what FIG_SETS keys on -- renaming the
+## value would ripple into visualizations.R for no gain.
+FIG_SCALES <- c("Invert to Category" = "site",
+                "Basin"              = "basin",
+                "Puget Sound"        = "puget",
+                "Washington-wide"    = "washington",
+                "Percentage"         = "percent")
 
 FIG_TYPES <- c("Density / proportion"                        = "plain",
                "Density / proportion with standard deviation" = "sd",
@@ -507,8 +510,11 @@ step_panel <- function(step) {
           class = "rc-choices",
           div(
             tags$h3("Scale"),
+            ## Washington-wide is left unticked: it needs the held-out basins,
+            ## which are themselves off by default, so ticking it here would
+            ## promise a figure the data cannot produce.
             checkboxGroupInput("fig_scales", label = NULL, choices = FIG_SCALES,
-                               selected = unname(FIG_SCALES))
+                               selected = setdiff(unname(FIG_SCALES), "washington"))
           ),
           div(
             tags$h3("Data type"),
@@ -575,8 +581,9 @@ include_box <- function(scope) {
 ##
 ##   scale  ->  which basin, or which region  ->  figure type  ->  data group
 ##
-## Site scale is deliberately absent: its figures are one-per-category showing
-## every site, so there is no single site to preview.
+## "Invert to Category" turns the basin figures inside out: one file per
+## category, faceted by basin, rather than one file per basin faceted by
+## category. Its value is still "site" internally -- see FIG_SCALES.
 preview_card <- function() {
   div(
     class = "rc-card",
@@ -607,12 +614,12 @@ preview_card <- function() {
 
 ui <- page_fluid(
   theme = rc_theme,
-  tags$head(tags$style(HTML(app_css)), tags$title("Understory Kelp Indicator")),
+  tags$head(tags$style(HTML(app_css)), tags$title("Understory Kelp Indicator: Data Interpreter")),
 
   div(class = "rc-banner",
       tags$img(src = "rc_logo.png", alt = "Reef Check"),
       tags$img(src = "seaq_logo.png", alt = "Seattle Aquarium"),
-      div(h1("Understory Kelp Indicator", class = "rc-title"),
+      div(h1("Understory Kelp Indicator: Data Interpreter", class = "rc-title"),
           p("Reef Check  ·  Seattle Aquarium", class = "rc-sub"))),
   div(class = "rc-rule"),
 
@@ -678,7 +685,40 @@ ui <- page_fluid(
 ## Server
 ## ---------------------------------------------------------------------------
 
+## ---------------------------------------------------------------------------
+## Quitting when the browser closes
+## ---------------------------------------------------------------------------
+##
+## Closing the browser tab should end the program, so the console window the
+## launcher opened goes away with it. Shiny ends a session on any disconnect --
+## including a page refresh or a brief hiccup -- so quitting immediately would
+## kill the app every time someone hit F5. Instead the session count is tracked
+## here, at file scope so it survives between sessions, and the app only stops
+## once nothing has reconnected for a few seconds.
+##
+## Only when run non-interactively. Started from RStudio with runApp(), closing
+## the viewer should leave the app running to be reopened.
+QUIT_GRACE_SECONDS <- 8
+
+session_tally <- local({
+  n <- 0L
+  list(open  = function() n <<- n + 1L,
+       close = function() n <<- n - 1L,
+       count = function() n)
+})
+
 server <- function(input, output, session) {
+
+  if (!interactive()) {
+    session_tally$open()
+    session$onSessionEnded(function() {
+      session_tally$close()
+      later::later(function() {
+        if (session_tally$count() <= 0) shiny::stopApp()
+      }, QUIT_GRACE_SECONDS)
+    })
+  }
+
 
   rscript <- rscript_path()
 
@@ -735,6 +775,33 @@ server <- function(input, output, session) {
       span(class = d$class, d$text)
     })
   })
+
+  ## Washington-wide is the average over every basin, the three held-out ones
+  ## included. Drawing it while they are filtered out of df_basin puts a
+  ## ten-basin average behind seven basin trajectories -- the blue line and the
+  ## gray lines would disagree. So choosing that scale ticks the basins it
+  ## depends on: on the Figures tab, which governs the figures step, and on Run
+  ## everything, which governs the whole chain and would otherwise skip the
+  ## scale outright for want of Washington_wide rows upstream.
+  observeEvent(input$fig_scales, {
+    if (!"washington" %in% (input$fig_scales %||% character(0))) return()
+    flipped <- FALSE
+    for (scope in c("figures", "all")) {
+      for (k in names(INCLUDE_KEYS)) {
+        id <- paste0("include_", scope, "_", k)
+        if (!isTRUE(input[[id]])) {
+          updateCheckboxInput(session, id, value = TRUE)
+          flipped <- TRUE
+        }
+      }
+    }
+    if (flipped) {
+      showNotification(
+        paste("Washington-wide covers every basin, so the three held-out basins",
+              "have been ticked. Untick Washington-wide to leave them out again."),
+        duration = 9)
+    }
+  }, ignoreInit = TRUE)
 
   observeEvent(input$reset, {
     for (key in names(FILES)) {
@@ -989,10 +1056,15 @@ server <- function(input, output, session) {
 
   pv_is_percent <- reactive(identical(input$pv_scale, "percent"))
 
+  ## One file per category, faceted by basin -- the species_composites set. It
+  ## is the one scale whose figure covers a single category rather than a whole
+  ## group, so the group is chosen first and then narrows the category list.
+  pv_is_site <- reactive(identical(input$pv_scale, "site"))
+
   output$pv_scale_ui <- renderUI(
     selectInput("pv_scale", NULL, width = "100%",
-                choices = c("Basin" = "basin", "Region-wide" = "region",
-                            "Percentage" = "percent"),
+                choices = c("Invert to Category" = "site", "Basin" = "basin",
+                            "Region-wide" = "region", "Percentage" = "percent"),
                 selected = isolate(input$pv_scale) %||% "basin"))
 
   ## Every category in the tables, grouped by data type so a 40-entry list stays
@@ -1012,15 +1084,21 @@ server <- function(input, output, session) {
   })
 
   ## headings, so a relabelled slot always announces itself
-  output$pv_h2 <- renderUI(tags$h3(if (pv_is_percent()) "Narrow by" else "Which"))
+  output$pv_h2 <- renderUI(tags$h3(
+    if (pv_is_percent()) "Narrow by" else if (pv_is_site()) "Data" else "Which"))
   output$pv_h3 <- renderUI(tags$h3(
     if (!pv_is_percent()) "Figure type"
     else if (identical(input$pv_narrow, "category")) "Category" else "Basin"))
   output$pv_h4 <- renderUI(tags$h3(
-    if (!pv_is_percent()) "Data"
+    if (pv_is_site()) "Category"
+    else if (!pv_is_percent()) "Data"
     else if (identical(input$pv_narrow, "category")) "Basin" else "Category"))
 
   output$pv_where_ui <- renderUI({
+    if (pv_is_site()) {
+      return(selectInput("pv_group", NULL, width = "100%", choices = FIG_GROUPS,
+                         selected = isolate(input$pv_group) %||% "algae"))
+    }
     if (pv_is_percent()) {
       return(selectInput("pv_narrow", NULL, width = "100%",
                          choices = c("Basin" = "basin", "Category" = "category"),
@@ -1064,6 +1142,15 @@ server <- function(input, output, session) {
   })
 
   output$pv_group_ui <- renderUI({
+    if (pv_is_site()) {
+      grp <- pv_group_def()
+      if (is.null(grp)) return(selectInput("pv_cat", NULL, choices = character(0),
+                                           width = "100%"))
+      cols <- FIG_ENV$group_cols(grp)
+      labels <- vapply(cols, FIG_ENV$species_label, character(1))
+      return(selectInput("pv_cat", NULL, width = "100%",
+                         choices = setNames(cols, labels)))
+    }
     if (pv_is_percent()) {
       ## the complement of slot 3, so the pair is always a complete address
       if (identical(input$pv_narrow, "category")) {
@@ -1116,6 +1203,18 @@ server <- function(input, output, session) {
     }
 
     grp <- pv_group_def()
+
+    if (pv_is_site()) {
+      if (is.null(grp) || is.null(input$pv_cat) || !nzchar(input$pv_cat) ||
+          is.null(input$pv_type)) return(NULL)
+      FIG_ENV$df_site <- d$site; FIG_ENV$df_basin <- d$basin
+      FIG_ENV$df_puget <- d$puget
+      return(tryCatch(
+        FIG_ENV$species_density_figure(input$pv_cat, grp,
+                                       identical(input$pv_type, "sd")),
+        error = function(e) structure(conditionMessage(e), class = "pv_error")))
+    }
+
     req_ok <- !is.null(d) && !is.null(grp) && !is.null(input$pv_type) &&
       !is.null(input$pv_where) && nzchar(input$pv_where)
     if (!req_ok) return(NULL)
@@ -1174,6 +1273,16 @@ server <- function(input, output, session) {
       return(file.path(current_path("figs"),
                        FIG_ENV$percent_change_file(pair$basin, pair$col,
                                                    grp[[1]]$folder)))
+    }
+    if (pv_is_site()) {
+      if (is.null(input$pv_group) || is.null(input$pv_cat) ||
+          !nzchar(input$pv_cat)) return(NULL)
+      set_dir <- if (identical(input$pv_type, "sd")) "species_composites_sd"
+                 else "species_composites"
+      return(file.path(current_path("figs"), set_dir, input$pv_group,
+                       paste0(FIG_ENV$safe_file_name(
+                         FIG_ENV$species_label(input$pv_cat)),
+                         "_avg_density.png")))
     }
     grp <- input$pv_group
     if (is.null(grp) || is.null(input$pv_where) || !nzchar(input$pv_where)) return(NULL)

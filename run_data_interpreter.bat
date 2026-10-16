@@ -48,13 +48,22 @@ if errorlevel 1 (
 )
 
 REM ---- 3. start ----------------------------------------------------------
+REM  The app stops itself a few seconds after the last browser tab closes (see
+REM  the session tally in gui/app.R), so Rscript returns and this window closes
+REM  on its own. No pause here -- a pause would hold the window open waiting for
+REM  a keypress, which is the very thing we are trying to avoid.
 echo.
 echo   Starting. Your browser will open in a moment.
-echo   Leave this window open while you work; close it when you are finished.
+echo   Close the browser tab when you are finished and this window will close
+echo   itself a few seconds later.
 echo.
 "%RS%" -e "shiny::runApp('gui', launch.browser = TRUE)"
 
-echo.
-echo   The application has stopped.
-pause
+REM  Anything other than a clean exit is worth reading, so hold the window open
+REM  only in that case.
+if errorlevel 1 (
+  echo.
+  echo   The application stopped with an error. The message above says why.
+  pause
+)
 exit /b 0
