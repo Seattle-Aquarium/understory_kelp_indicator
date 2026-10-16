@@ -55,21 +55,23 @@ df_puget <- read.csv(puget_csv)
 ## three, so re-running that script is what keeps the blue sound-wide line
 ## consistent with the basins plotted here.
 ## ----------------------------------------------------------------------------
-## Set UKELP_INCLUDE_EXCLUDED_BASINS to 1/true/yes to keep these three after
-## all -- that is the "include" checkbox in the Shiny app. Unset, which is how
-## this script runs on its own, they stay excluded exactly as before.
-include_excluded_basins <- tolower(Sys.getenv("UKELP_INCLUDE_EXCLUDED_BASINS",
-                                              unset = "")) %in% c("1", "true", "yes")
+## These three are held out by default. UKELP_INCLUDE_BASINS names any that
+## should be kept after all, comma separated -- that is the per-basin checkboxes
+## in the Shiny app, which can bring back one, two or all three independently.
+## Unset, which is how this script runs on its own, all three stay excluded
+## exactly as before.
+held_out_basins <- c("Northern Coast",
+                     "Western Strait of Juan de Fuca",
+                     "Eastern Strait of Juan de Fuca")
 
-excluded_basins <- if (include_excluded_basins) character(0) else c(
-  "Northern Coast",
-  "Western Strait of Juan de Fuca",
-  "Eastern Strait of Juan de Fuca"
-)
+include_basins <- trimws(strsplit(Sys.getenv("UKELP_INCLUDE_BASINS", unset = ""),
+                                  ",", fixed = TRUE)[[1]])
+include_basins <- intersect(held_out_basins, include_basins[nzchar(include_basins)])
 
-if (include_excluded_basins) {
-  message("Including Northern Coast, Western Strait of Juan de Fuca and ",
-          "Eastern Strait of Juan de Fuca.")
+excluded_basins <- setdiff(held_out_basins, include_basins)
+
+if (length(include_basins)) {
+  message("Including: ", paste(include_basins, collapse = ", "))
 }
 
 df_site <- df_site %>% filter(!gsub("_", " ", basin) %in% excluded_basins)
@@ -116,6 +118,7 @@ figs_puget         <- file.path(figs, "puget_sound")           # region-wide
 figs_basin_sd      <- file.path(figs, "basin_composites_sd")
 figs_species_sd    <- file.path(figs, "species_composites_sd")
 figs_puget_sd      <- file.path(figs, "puget_sound_sd")
+figs_percent       <- file.path(figs, "percent_change")       # per basin AND category
 
 ## ---- WHAT TO DRAW ----------------------------------------------------------
 ## Run this script on its own and it draws everything, exactly as it always has.
@@ -152,7 +155,7 @@ from_env_set <- function(var, all) {
 want_groups <- from_env_set("UKELP_FIG_GROUPS",
                             vapply(metric_groups, function(g) g$folder, character(1)))
 want_scales <- from_env_set("UKELP_FIG_SCALES",
-                            c("site", "basin", "puget", "washington"))
+                            c("site", "basin", "puget", "washington", "percent"))
 want_types  <- from_env_set("UKELP_FIG_TYPES",  c("plain", "sd", "composite"))
 
 ## A region scale is only drawable if the metrics table holds that region.
@@ -185,7 +188,8 @@ fig_roots <- unique(c(
   if (drawing("site",  "plain"))     figs_species,
   if (drawing("site",  "sd"))        figs_species_sd,
   if (drawing("puget", "plain") || drawing("washington", "plain")) figs_puget,
-  if (drawing("puget", "sd")    || drawing("washington", "sd"))    figs_puget_sd
+  if (drawing("puget", "sd")    || drawing("washington", "sd"))    figs_puget_sd,
+  if ("percent" %in% want_scales) figs_percent
 ))
 group_folders <- vapply(metric_groups, function(grp) grp$folder, character(1))
 
@@ -296,4 +300,44 @@ for (grp in metric_groups) {
            width = fig_width, height = fig_height, dpi = fig_dpi, bg = "white")
     message("wrote ", sound_fig_file)
   }
+}
+
+
+# -----------------------------------
+## percent difference from the average of all other years
+
+## One figure per basin per category -- deliberately isolated, so nothing shares
+## an axis with anything else. Percent change explodes when the baseline is near
+## zero (the data reaches +11,600%), which would flatten every other line on a
+## shared axis.
+##
+## This scale has no plain/sd/composite variants, so it answers to the scale
+## alone rather than to a (scale, type) pair. Figures that cannot be drawn
+## honestly are skipped with the reason reported, rather than being drawn wrong.
+if ("percent" %in% want_scales) {
+  made <- 0L
+  skipped <- character(0)
+
+  for (grp in metric_groups) {
+    for (focal_basin in sort(unique(as.character(df_basin$basin)))) {
+      for (focal_col in group_cols(grp)) {
+        res <- percent_change_figure(focal_basin, focal_col)
+        if (!isTRUE(res$ok)) {
+          skipped <- c(skipped, res$reason)
+          next
+        }
+        f <- file.path(figs, percent_change_file(focal_basin, focal_col, grp$folder))
+        dir.create(dirname(f), recursive = TRUE, showWarnings = FALSE)
+        show(res$plot)
+        ggsave(f, plot = res$plot, width = fig_width, height = fig_height,
+               dpi = fig_dpi, bg = "white")
+        message("wrote ", f)
+        made <- made + 1L
+      }
+    }
+  }
+
+  message(sprintf("percent change: %d figures written, %d skipped", made,
+                  length(skipped)))
+  for (r in skipped) message("  skipped -- ", r)
 }

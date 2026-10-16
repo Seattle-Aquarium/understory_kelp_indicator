@@ -485,3 +485,98 @@ sound_density_figure <- function(grp, show_sd = FALSE,
       plot.title = element_text(hjust = 0.5),
       legend.position = "none")
 }
+
+
+# -----------------------------------
+## percent difference from the average of all other years
+
+## For one basin and one category: how far each year sits from the average of
+## that basin's other years, as a percentage. Positive is above the other-year
+## average, negative below, and -100% means the category was recorded in other
+## years but not this one.
+##
+## Returns a list rather than a plot, because three situations have no honest
+## figure and the caller needs to say which:
+##
+##   one year only   there are no "other years" to compare against
+##   never recorded  every year is zero, so the comparison is 0/0
+##   infinite        the other-year average is zero while this year is not, so
+##                   the ratio is undefined -- "infinitely more than nothing"
+##
+## list(ok = TRUE, plot = <ggplot>, data = <tibble>) or
+## list(ok = FALSE, reason = "<why>")
+percent_change_data <- function(focal_basin, focal_col) {
+  where <- gsub("_", " ", focal_basin)
+  what <- species_label(focal_col)
+
+  d <- df_basin %>%
+    filter(as.character(basin) == focal_basin) %>%
+    select(year, value = all_of(focal_col)) %>%
+    mutate(year = as.character(year)) %>%
+    arrange(year)
+
+  if (nrow(d) < 2) {
+    return(list(ok = FALSE, reason = sprintf(
+      "only one year of data for %s in %s, so there are no other years to compare against",
+      what, where)))
+  }
+
+  n_known <- sum(!is.na(d$value))
+  if (n_known < 2) {
+    return(list(ok = FALSE, reason = sprintf(
+      "only one year with a recorded value for %s in %s", what, where)))
+  }
+
+  d <- d %>%
+    mutate(others = (sum(value, na.rm = TRUE) - value) / (n_known - 1),
+           pct = (value - others) / others * 100)
+
+  if (all(d$value == 0 | is.na(d$value))) {
+    return(list(ok = FALSE, reason = sprintf(
+      "%s was not recorded in %s in any year, so there is nothing to plot",
+      what, where)))
+  }
+
+  bad <- d$year[is.infinite(d$pct) | is.nan(d$pct)]
+  if (length(bad)) {
+    return(list(ok = FALSE, reason = sprintf(
+      "the other-year average is zero for %s in %s (%s), so the percent difference is infinite",
+      what, where, paste(bad, collapse = ", "))))
+  }
+
+  list(ok = TRUE, data = d)
+}
+
+percent_change_figure <- function(focal_basin, focal_col) {
+  res <- percent_change_data(focal_basin, focal_col)
+  if (!isTRUE(res$ok)) return(res)
+
+  d <- res$data
+  where <- gsub("_", " ", focal_basin)
+
+  res$plot <- ggplot(d, aes(x = year, y = pct, group = 1)) +
+    ## the baseline the whole figure is measured against
+    geom_hline(yintercept = 0, linetype = "dashed", linewidth = 0.6,
+               color = "gray55") +
+    geom_path(color = composite_color, linewidth = 1.2) +
+    geom_point(color = composite_color, size = 2.8) +
+    scale_y_continuous(labels = function(x) paste0(x, "%")) +
+    my.theme +
+    labs(y = "Difference from the average of other years",
+         title = parse(text = facet_labels_for(focal_col)),
+         subtitle = where) +
+    theme(
+      axis.title.x = element_blank(),
+      plot.title = element_text(hjust = 0.5),
+      plot.subtitle = element_text(hjust = 0.5, size = 12, colour = "gray35"),
+      legend.position = "none")
+  res
+}
+
+## Where one of these figures belongs, relative to the figures root.
+percent_change_file <- function(focal_basin, focal_col, group_folder) {
+  file.path("percent_change", group_folder,
+            paste0(safe_file_name(focal_basin), "_",
+                   safe_file_name(species_label(focal_col)),
+                   "_percent_change.png"))
+}

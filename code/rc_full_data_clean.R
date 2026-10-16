@@ -241,21 +241,23 @@ drop_winter_surveys <- function(df){
 ## Runs after add_metadata(), which is what attaches "basin", and before
 ## clean_values(), so the names still carry spaces at this point.
 ## ----------------------------------------------------------------------------
-## Set UKELP_INCLUDE_EXCLUDED_BASINS to 1/true/yes to keep these three after
-## all -- that is the "include" checkbox in the Shiny app. Unset, which is how
-## this script runs on its own, they stay excluded exactly as before.
-include_excluded_basins <- tolower(Sys.getenv("UKELP_INCLUDE_EXCLUDED_BASINS",
-                                              unset = "")) %in% c("1", "true", "yes")
+## These three are held out by default. UKELP_INCLUDE_BASINS names any that
+## should be kept after all, comma separated -- that is the per-basin checkboxes
+## in the Shiny app, which can bring back one, two or all three independently.
+## Unset, which is how this script runs on its own, all three stay excluded
+## exactly as before.
+held_out_basins <- c("Northern Coast",
+                     "Western Strait of Juan de Fuca",
+                     "Eastern Strait of Juan de Fuca")
 
-excluded_basins <- if (include_excluded_basins) character(0) else c(
-  "Northern Coast",
-  "Western Strait of Juan de Fuca",
-  "Eastern Strait of Juan de Fuca"
-)
+include_basins <- trimws(strsplit(Sys.getenv("UKELP_INCLUDE_BASINS", unset = ""),
+                                  ",", fixed = TRUE)[[1]])
+include_basins <- intersect(held_out_basins, include_basins[nzchar(include_basins)])
 
-if (include_excluded_basins) {
-  message("Including Northern Coast, Western Strait of Juan de Fuca and ",
-          "Eastern Strait of Juan de Fuca.")
+excluded_basins <- setdiff(held_out_basins, include_basins)
+
+if (length(include_basins)) {
+  message("Including: ", paste(include_basins, collapse = ", "))
 }
 
 drop_excluded_basins <- function(df){

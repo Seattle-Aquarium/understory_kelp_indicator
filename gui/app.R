@@ -129,7 +129,8 @@ FIG_GROUPS <- c("Algae"             = "algae",
 FIG_SCALES <- c("Site"             = "site",
                 "Basin"            = "basin",
                 "Puget Sound"      = "puget",
-                "Washington-wide"  = "washington")
+                "Washington-wide"  = "washington",
+                "Percentage"       = "percent")
 
 FIG_TYPES <- c("Density / proportion"                        = "plain",
                "Density / proportion with standard deviation" = "sd",
@@ -157,7 +158,14 @@ FIG_SETS <- list(
   list(scale = "washington", type = "plain", folder = "puget_sound",
        per = "one",      about = "Washington_wide, faceted by category"),
   list(scale = "washington", type = "sd",    folder = "puget_sound_sd",
-       per = "one",      about = "the same, with a standard deviation band")
+       per = "one",      about = "the same, with a standard deviation band"),
+  ## No plain/sd/composite variants -- this scale answers to itself alone, so it
+  ## is listed against every type and de-duplicated when the plan is built.
+  list(scale = "percent", type = NA, folder = "percent_change",
+       per = "basin_category",
+       about = paste("one file per basin and category, percent difference from",
+                     "other years (fewer -- combinations with no honest answer",
+                     "are skipped)"))
 )
 
 #: Which metrics region each region scale needs, so an unavailable one can be
@@ -180,11 +188,11 @@ EXCLUDED_CATEGORIES <- c("ak_bull_kelp_avg", "ak_feather_boa_n_avg",
                          "ak_giant_kelp_n_avg")
 
 ## ---------------------------------------------------------------------------
-## The three held-out basins
+## The three withheld basins
 ## ---------------------------------------------------------------------------
 ##
-## Every script leaves these out by default. Each tab carries a checkbox that
-## sets UKELP_INCLUDE_EXCLUDED_BASINS, which turns the filter off for that run.
+## Every script leaves these out by default. Each tab carries one checkbox per
+## basin, and the ticked names go to the scripts as UKELP_INCLUDE_BASINS.
 ##
 ## Steps 2 and 3 can only include what step 1 actually kept: if the cleaned
 ## table was written with the box unticked, the rows are simply not there, and
@@ -195,7 +203,16 @@ EXCLUDED_BASINS <- c("Northern Coast",
                      "Western Strait of Juan de Fuca",
                      "Eastern Strait of Juan de Fuca")
 
-INCLUDE_LABEL <- "Include Northern Coast, Western Strait and Eastern Strait"
+#: Each withheld basin gets its own checkbox, so one can be brought back without
+#: the other two. The key is what the checkbox input is named; the value is the
+#: basin name as the scripts and the cleaned tables spell it.
+INCLUDE_KEYS <- c(north = "Northern Coast",
+                  west  = "Western Strait of Juan de Fuca",
+                  east  = "Eastern Strait of Juan de Fuca")
+
+INCLUDE_HEADING <- "Withheld basins"
+INCLUDE_BLURB <- paste("Left out of every output unless ticked. Tick them",
+                       "independently -- one, two or all three.")
 
 #: Which of the three appear in a csv's `basin` column. Names are compared with
 #: underscores collapsed to spaces, since the cleaned tables carry the
@@ -406,8 +423,13 @@ app_css <- sprintf('
   .rc-plan .tot { border-top:1px solid var(--line); font-weight:600; color:var(--navy); }
   .rc-plan .none { color:var(--warn); font-weight:600; }
 
-  /* The held-out basins checkbox, set apart from the rows above it */
+  /* The withheld basins, one checkbox each, set apart from the rows above */
   .rc-include { margin-top:14px; padding-top:12px; border-top:1px solid var(--line); }
+  .rc-include .hd { font-size:12px; font-weight:700; letter-spacing:.06em;
+                    text-transform:uppercase; color:var(--navy); margin-bottom:2px; }
+  .rc-include .sub { font-size:11.5px; color:var(--ink-muted); margin-bottom:7px; }
+  .rc-include-row { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+  @media (max-width: 760px) { .rc-include-row { grid-template-columns:1fr; } }
   .rc-include .checkbox { margin:0; }
   .rc-include .checkbox label { font-size:13px; color:var(--ink); }
   .rc-include .note { font-size:11.5px; margin-top:4px; margin-left:21px; }
@@ -467,6 +489,10 @@ step_panel <- function(step) {
       tags$div(style = "font-size:12px;color:#5F6B7A;margin:0 0 6px 0;",
                sprintf("Runs code/%s", step$script))
     ),
+    ## The preview comes first on the Figures tab: looking at one figure is how
+    ## a person works out which sets are worth generating, so it belongs above
+    ## the checkboxes that decide what Run writes rather than below them.
+    if (identical(step$id, "figures")) preview_card() else NULL,
     if (identical(step$id, "figures")) {
       ## The three tables this step reads are step 2's outputs and are set on
       ## that tab, so repeating the pickers here would be two places to change
@@ -495,9 +521,7 @@ step_panel <- function(step) {
                                selected = unname(FIG_TYPES))
           )
         ),
-        div(class = "rc-include",
-            checkboxInput(paste0("include_", step$id), INCLUDE_LABEL, value = FALSE),
-            uiOutput(paste0("include_note_", step$id))),
+        include_box(step$id),
         div(style = "margin-top:4px;", uiOutput("fig_plan"))
       )
       ## The preview card follows, built separately so the two controls are
@@ -509,9 +533,7 @@ step_panel <- function(step) {
         class = "rc-card",
         h2("Reads"),
         lapply(step$ins, file_row),
-        div(class = "rc-include",
-            checkboxInput(paste0("include_", step$id), INCLUDE_LABEL, value = FALSE),
-            uiOutput(paste0("include_note_", step$id)))
+        include_box(step$id)
       )
     },
     div(
@@ -525,8 +547,22 @@ step_panel <- function(step) {
           actionButton(paste0("run_", step$id), "Run this step", class = "btn-run"),
           div(style = "width:10px;"),
           actionButton("reset", "Reset all locations", class = "btn-browse"))
-    ),
-    if (identical(step$id, "figures")) preview_card() else NULL
+    )
+  )
+}
+
+## The withheld basins, one checkbox each. `scope` is the step id, or "all" for
+## the Run-everything tab, and becomes the input name prefix.
+include_box <- function(scope) {
+  div(
+    class = "rc-include",
+    tags$div(class = "hd", INCLUDE_HEADING),
+    tags$div(class = "sub", INCLUDE_BLURB),
+    div(class = "rc-include-row",
+        lapply(names(INCLUDE_KEYS), function(k)
+          checkboxInput(paste0("include_", scope, "_", k),
+                        INCLUDE_KEYS[[k]], value = FALSE))),
+    uiOutput(paste0("include_note_", scope))
   )
 }
 
@@ -551,10 +587,13 @@ preview_card <- function() {
             "not what Run writes.")),
     div(
       class = "rc-preview-controls",
-      div(tags$h3("Scale"),      uiOutput("pv_scale_ui")),
-      div(tags$h3("Which"),      uiOutput("pv_where_ui")),
-      div(tags$h3("Figure type"), uiOutput("pv_type_ui")),
-      div(tags$h3("Data"),       uiOutput("pv_group_ui"))
+      ## Slots 2-4 are relabelled by the scale: under Percentage they become
+      ## "Narrow by" and then the two halves of a basin x category address, so
+      ## no control ever changes meaning without saying so.
+      div(tags$h3("Scale"), uiOutput("pv_scale_ui")),
+      div(uiOutput("pv_h2"), uiOutput("pv_where_ui")),
+      div(uiOutput("pv_h3"), uiOutput("pv_type_ui")),
+      div(uiOutput("pv_h4"), uiOutput("pv_group_ui"))
     ),
     uiOutput("pv_status"),
     div(class = "rc-preview-stage", plotOutput("pv_plot", height = "620px")),
@@ -568,12 +607,13 @@ preview_card <- function() {
 
 ui <- page_fluid(
   theme = rc_theme,
-  tags$head(tags$style(HTML(app_css)), tags$title("Understory Kelp Forests Analyzer")),
+  tags$head(tags$style(HTML(app_css)), tags$title("Understory Kelp Indicator")),
 
   div(class = "rc-banner",
-      tags$img(src = "logo.png", alt = "Reef Check Worldwide"),
-      div(h1("Understory Kelp Forests Analyzer", class = "rc-title"),
-          p("Reef Check Worldwide  ·  Seattle Aquarium", class = "rc-sub"))),
+      tags$img(src = "rc_logo.png", alt = "Reef Check"),
+      tags$img(src = "seaq_logo.png", alt = "Seattle Aquarium"),
+      div(h1("Understory Kelp Indicator", class = "rc-title"),
+          p("Reef Check  ·  Seattle Aquarium", class = "rc-sub"))),
   div(class = "rc-rule"),
 
   div(
@@ -596,9 +636,7 @@ ui <- page_fluid(
               lapply(STEPS, function(s)
                 div(span(class = "n", paste0(s$n, ".")), s$title,
                     span(style = "color:#5F6B7A;", paste0("  —  code/", s$script))))),
-          div(class = "rc-include",
-              checkboxInput("include_all", INCLUDE_LABEL, value = FALSE),
-              uiOutput("include_note_all")),
+          include_box("all"),
           div(style = "margin-top:14px;",
               actionButton("run_all", "Run all three steps", class = "btn-all")),
           div(class = "rc-foot",
@@ -705,24 +743,31 @@ server <- function(input, output, session) {
     showNotification("File locations reset to this repository.", duration = 4)
   }, ignoreInit = TRUE)
 
-  ## ---- the three held-out basins -----------------------------------------
+  ## ---- the withheld basins -----------------------------------------------
 
   ## Which upstream table each step would have to find them in. Step 1 reads the
   ## raw exports, which always carry every basin, so it has nothing to check.
   include_source <- list(clean = NULL, metrics = "cleaned", figures = "basin")
 
-  include_wanted <- function(step_id) isTRUE(input[[paste0("include_", step_id)]])
+  ## The basins ticked on one tab. Each has its own checkbox, so this is a set
+  ## rather than a flag -- a person can bring back the Eastern Strait alone.
+  include_picked <- function(scope) {
+    keys <- names(INCLUDE_KEYS)
+    ticked <- keys[vapply(keys, function(k)
+      isTRUE(input[[paste0("include_", scope, "_", k)]]), logical(1))]
+    unname(INCLUDE_KEYS[ticked])
+  }
 
-  ## Which checkbox governs the step about to run. A chain started from "Run
-  ## everything" answers to that tab's single box for all three steps -- step 1
-  ## rebuilds the cleaned table within the same chain, so ticking it there is
-  ## always honorable, which is not true of the per-step boxes.
+  ## Which tab's ticks govern the step about to run. A chain started from "Run
+  ## everything" answers to that tab for all three steps -- step 1 rebuilds the
+  ## cleaned table within the same chain, so whatever is ticked there is always
+  ## honorable, which is not true of the per-step boxes.
   include_for <- function(step_id) {
-    if (isTRUE(rv$all_run)) isTRUE(input$include_all) else include_wanted(step_id)
+    if (isTRUE(rv$all_run)) include_picked("all") else include_picked(step_id)
   }
 
   ## NULL when there is nothing to check (step 1, or the upstream file is not
-  ## there yet); otherwise the subset of the three that upstream actually holds.
+  ## there yet); otherwise which of the withheld basins upstream actually holds.
   include_available <- function(step_id) {
     key <- include_source[[step_id]]
     if (is.null(key)) return(NULL)
@@ -738,46 +783,58 @@ server <- function(input, output, session) {
     for (nm in c(...)) outputOptions(output, nm, suspendWhenHidden = FALSE)
   }
 
+  one_or_more <- function(x) if (length(x) == 1) x else
+    paste(paste(head(x, -1), collapse = ", "), "and", tail(x, 1))
+
   ## The run-everything box needs no availability check: step 1 runs first in
-  ## the same chain, so whatever it is asked for is what the later steps get.
+  ## the same chain, so whatever is ticked there is what the later steps get.
   output$include_note_all <- renderUI({
-    if (isTRUE(input$include_all))
-      div(class = "note ok",
-          "All three steps will keep them, starting from the cleaned table.")
-    else
+    picked <- include_picked("all")
+    if (!length(picked))
       div(class = "note muted",
-          "All three steps will leave them out unless this is ticked.")
+          "All three steps will leave every withheld basin out.")
+    else
+      div(class = "note ok",
+          sprintf("All three steps will keep %s, starting from the cleaned table.",
+                  one_or_more(picked)))
   })
 
   lapply(names(STEPS), function(id) {
     output[[paste0("include_note_", id)]] <- renderUI({
-      if (!include_wanted(id)) {
+      picked <- include_picked(id)
+      if (!length(picked)) {
         return(div(class = "note muted",
                    if (is.null(include_source[[id]]))
-                     "Left out of the cleaned table unless this is ticked."
-                   else "Left out unless this is ticked, and unless step 1 kept them."))
+                     "None will be kept in the cleaned table."
+                   else "None will be included."))
       }
       key <- include_source[[id]]
       if (is.null(key)) {
         return(div(class = "note ok",
-                   "All three will be kept in the cleaned table."))
+                   sprintf("%s will be kept in the cleaned table.",
+                           one_or_more(picked))))
       }
+
       have <- include_available(id)
       src <- FILES[[key]]$label
       if (is.null(have)) {
-        div(class = "note muted",
-            sprintf("Cannot tell yet — %s has not been written.", src))
-      } else if (!length(have)) {
+        return(div(class = "note muted",
+                   sprintf("Cannot tell yet — %s has not been written.", src)))
+      }
+      missing <- setdiff(picked, have)
+      usable <- intersect(picked, have)
+      if (!length(usable)) {
         div(class = "note warn",
-            sprintf("Not available: %s holds none of the three. Re-run step 1 with this ticked.",
-                    src))
-      } else if (length(have) < length(EXCLUDED_BASINS)) {
+            sprintf("Not available: %s does not hold %s. Re-run step 1 with %s ticked.",
+                    src, one_or_more(picked),
+                    if (length(picked) == 1) "it" else "them"))
+      } else if (length(missing)) {
         div(class = "note warn",
-            sprintf("Partly available: %s holds only %s.",
-                    src, paste(have, collapse = ", ")))
+            sprintf("%s will be included; %s is not in %s.",
+                    one_or_more(usable), one_or_more(missing), src))
       } else {
         div(class = "note ok",
-            sprintf("All three are present in %s and will be included.", src))
+            sprintf("%s will be included.", one_or_more(usable)))
       }
     })
   })
@@ -812,8 +869,10 @@ server <- function(input, output, session) {
 
   output$fig_plan <- renderUI({
     sel <- fig_selection()
-    sets <- Filter(function(s) s$scale %in% sel$scales && s$type %in% sel$types,
-                   FIG_SETS)
+    sets <- Filter(function(s) {
+      if (identical(s$scale, "percent")) "percent" %in% sel$scales
+      else s$scale %in% sel$scales && s$type %in% sel$types
+    }, FIG_SETS)
 
     if (!length(sets) || !length(sel$groups)) {
       return(div(class = "rc-plan",
@@ -828,6 +887,9 @@ server <- function(input, output, session) {
       switch(s$per,
              basin = sc$basins,
              category = unname(sc$categories[[grp]]),
+             ## one file per basin AND category -- the only set whose count is a
+             ## product rather than a lookup
+             basin_category = sc$basins * unname(sc$categories[[grp]]),
              one = 1L)
     }
 
@@ -925,12 +987,45 @@ server <- function(input, output, session) {
 
   ## ---- the four dropdowns, each narrowing the next ----
 
+  pv_is_percent <- reactive(identical(input$pv_scale, "percent"))
+
   output$pv_scale_ui <- renderUI(
     selectInput("pv_scale", NULL, width = "100%",
-                choices = c("Basin" = "basin", "Region-wide" = "region"),
+                choices = c("Basin" = "basin", "Region-wide" = "region",
+                            "Percentage" = "percent"),
                 selected = isolate(input$pv_scale) %||% "basin"))
 
+  ## Every category in the tables, grouped by data type so a 40-entry list stays
+  ## navigable. Values are raw column names; labels are the readable form.
+  pv_all_categories <- reactive({
+    d <- pv_data()
+    if (is.null(d)) return(list())
+    out <- list()
+    for (grp in FIG_ENV$metric_groups) {
+      cols <- FIG_ENV$group_cols(grp)
+      if (!length(cols)) next
+      labels <- vapply(cols, FIG_ENV$species_label, character(1))
+      out[[names(FIG_GROUPS)[match(grp$folder, FIG_GROUPS)]]] <-
+        setNames(as.list(cols), labels)
+    }
+    out
+  })
+
+  ## headings, so a relabelled slot always announces itself
+  output$pv_h2 <- renderUI(tags$h3(if (pv_is_percent()) "Narrow by" else "Which"))
+  output$pv_h3 <- renderUI(tags$h3(
+    if (!pv_is_percent()) "Figure type"
+    else if (identical(input$pv_narrow, "category")) "Category" else "Basin"))
+  output$pv_h4 <- renderUI(tags$h3(
+    if (!pv_is_percent()) "Data"
+    else if (identical(input$pv_narrow, "category")) "Basin" else "Category"))
+
   output$pv_where_ui <- renderUI({
+    if (pv_is_percent()) {
+      return(selectInput("pv_narrow", NULL, width = "100%",
+                         choices = c("Basin" = "basin", "Category" = "category"),
+                         selected = isolate(input$pv_narrow) %||% "basin"))
+    }
     if (identical(input$pv_scale, "region")) {
       have <- pv_regions()
       ## Washington-wide is offered only when the metrics table holds it, which
@@ -950,6 +1045,16 @@ server <- function(input, output, session) {
   })
 
   output$pv_type_ui <- renderUI({
+    if (pv_is_percent()) {
+      ## whichever half the person chose to lead with
+      if (identical(input$pv_narrow, "category")) {
+        return(selectInput("pv_a", NULL, width = "100%",
+                           choices = pv_all_categories()))
+      }
+      b <- pv_basins()
+      return(selectInput("pv_a", NULL, width = "100%",
+                         choices = setNames(b, gsub("_", " ", b))))
+    }
     ## the one-axis composite layout exists only at the basin scale
     choices <- c("Density / proportion" = "plain",
                  "With standard deviation" = "sd")
@@ -958,9 +1063,29 @@ server <- function(input, output, session) {
     selectInput("pv_type", NULL, width = "100%", choices = choices)
   })
 
-  output$pv_group_ui <- renderUI(
+  output$pv_group_ui <- renderUI({
+    if (pv_is_percent()) {
+      ## the complement of slot 3, so the pair is always a complete address
+      if (identical(input$pv_narrow, "category")) {
+        b <- pv_basins()
+        return(selectInput("pv_b", NULL, width = "100%",
+                           choices = setNames(b, gsub("_", " ", b))))
+      }
+      return(selectInput("pv_b", NULL, width = "100%",
+                         choices = pv_all_categories()))
+    }
     selectInput("pv_group", NULL, width = "100%", choices = FIG_GROUPS,
-                selected = isolate(input$pv_group) %||% "algae"))
+                selected = isolate(input$pv_group) %||% "algae")
+  })
+
+  ## The basin and the category, whichever order they were chosen in.
+  pv_pair <- reactive({
+    if (!pv_is_percent()) return(NULL)
+    if (identical(input$pv_narrow, "category"))
+      list(basin = input$pv_b, col = input$pv_a)
+    else
+      list(basin = input$pv_a, col = input$pv_b)
+  })
 
   ## ---- building it ----
 
@@ -972,7 +1097,25 @@ server <- function(input, output, session) {
   })
 
   pv_figure <- reactive({
-    d <- pv_data(); grp <- pv_group_def()
+    d <- pv_data()
+    if (is.null(d)) return(NULL)
+
+    ## Percentage answers to a basin and a category, and refuses to draw where
+    ## the comparison has no honest answer -- the builder returns the reason.
+    if (pv_is_percent()) {
+      pair <- pv_pair()
+      if (is.null(pair) || is.null(pair$basin) || is.null(pair$col) ||
+          !nzchar(pair$basin) || !nzchar(pair$col)) return(NULL)
+      FIG_ENV$df_site <- d$site; FIG_ENV$df_basin <- d$basin
+      FIG_ENV$df_puget <- d$puget
+      res <- tryCatch(FIG_ENV$percent_change_figure(pair$basin, pair$col),
+                      error = function(e)
+                        list(ok = FALSE, reason = conditionMessage(e)))
+      if (!isTRUE(res$ok)) return(structure(res$reason, class = "pv_error"))
+      return(res$plot)
+    }
+
+    grp <- pv_group_def()
     req_ok <- !is.null(d) && !is.null(grp) && !is.null(input$pv_type) &&
       !is.null(input$pv_where) && nzchar(input$pv_where)
     if (!req_ok) return(NULL)
@@ -1003,7 +1146,8 @@ server <- function(input, output, session) {
                  "Run step 2 first -- the preview reads the site, basin and region tables."))
     p <- pv_figure()
     if (inherits(p, "pv_error"))
-      return(div(class = "rc-pv-msg warn", paste("Could not build that figure:", p)))
+      return(div(class = "rc-pv-msg warn",
+                 paste0("No figure for this combination — ", as.character(p), ".")))
     NULL
   })
 
@@ -1020,6 +1164,17 @@ server <- function(input, output, session) {
   ## ---- where saving would put it ----
 
   pv_target <- reactive({
+    if (pv_is_percent()) {
+      pair <- pv_pair()
+      if (is.null(pair) || is.null(pair$basin) || is.null(pair$col) ||
+          !nzchar(pair$basin) || !nzchar(pair$col)) return(NULL)
+      grp <- Filter(function(g) pair$col %in% FIG_ENV$group_cols(g),
+                    FIG_ENV$metric_groups)
+      if (!length(grp)) return(NULL)
+      return(file.path(current_path("figs"),
+                       FIG_ENV$percent_change_file(pair$basin, pair$col,
+                                                   grp[[1]]$folder)))
+    }
     grp <- input$pv_group
     if (is.null(grp) || is.null(input$pv_where) || !nzchar(input$pv_where)) return(NULL)
     figs_root <- current_path("figs")
@@ -1074,7 +1229,7 @@ server <- function(input, output, session) {
   ## Registered here rather than beside each definition: outputOptions() needs
   ## the output to exist already, so this has to follow all of them.
   keep_live("pv_scale_ui", "pv_where_ui", "pv_type_ui", "pv_group_ui",
-            "pv_status", "pv_target")
+            "pv_h2", "pv_h3", "pv_h4", "pv_status", "pv_target")
 
   observeEvent(input$pv_save_as, {
     t <- pv_target()
@@ -1095,7 +1250,7 @@ server <- function(input, output, session) {
     ## Each step carries its own checkbox, so the variable is set from the one
     ## belonging to the step about to run.
     vals <- c(vals,
-              UKELP_INCLUDE_EXCLUDED_BASINS = if (include_for(step_id)) "1" else "0")
+              UKELP_INCLUDE_BASINS = paste(include_for(step_id), collapse = ","))
 
     ## The figures step also takes what to draw. Empty means "everything", which
     ## is what the script does when the variable is unset -- so a deliberately
@@ -1148,30 +1303,35 @@ server <- function(input, output, session) {
         sprintf("Running code/%s", step$script),
         strrep("-", 72))
 
-    ## The held-out basins, and whether this step can actually honor the box.
-    if (include_for(step_id)) {
+    ## What was ticked, and whether this step can actually honor it.
+    picked <- include_for(step_id)
+    if (length(picked)) {
       ## In a "Run everything" chain step 1 rebuilds the cleaned table first, so
       ## there is nothing upstream to be missing.
       key <- if (isTRUE(rv$all_run)) NULL else include_source[[step_id]]
       if (is.null(key)) {
-        say("Including Northern Coast, Western Strait and Eastern Strait.")
+        say(paste0("Including: ", paste(picked, collapse = ", ")))
       } else {
         have <- include_available(step_id)
         src <- FILES[[key]]$label
         if (is.null(have)) {
-          say(sprintf("Note: asked to include the three held-out basins, but %s could not be read to check.", src))
-        } else if (!length(have)) {
-          say(sprintf("Note: asked to include Northern Coast, Western Strait and Eastern Strait, but %s holds none of them.", src),
-              "      They were left out when the cleaned table was built, so this run cannot put them back.",
-              "      To include them: tick the box on step 1, re-run it, then re-run this step.")
-        } else if (length(have) < length(EXCLUDED_BASINS)) {
-          say(sprintf("Note: of the three held-out basins, %s holds only %s. The rest cannot be included.",
-                      src, paste(have, collapse = ", ")))
+          say(sprintf("Note: asked to include %s, but %s could not be read to check.",
+                      paste(picked, collapse = ", "), src))
         } else {
-          say("Including Northern Coast, Western Strait and Eastern Strait.")
+          usable <- intersect(picked, have)
+          missing <- setdiff(picked, have)
+          if (length(usable)) say(paste0("Including: ", paste(usable, collapse = ", ")))
+          if (length(missing)) {
+            say(sprintf("Note: %s not available -- %s does not hold %s.",
+                        paste(missing, collapse = ", "), src,
+                        if (length(missing) == 1) "it" else "them"),
+                "      They were left out when the cleaned table was built, so this run cannot put them back.",
+                "      To include them: tick them on step 1, re-run it, then re-run this step.")
+          }
         }
       }
     }
+
     rv$state <- list(text = sprintf("Step %d of 3: %s…", step$n, step$title),
                      class = "s-busy")
     rv$current <- step_id
