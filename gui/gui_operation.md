@@ -5,7 +5,7 @@
 Data Interpreter is a one stop shop for manipulating and visualizing Reef Check's Washington State dataset. The R Shiny app combines the capabilities of R scripts located in this repo's `code` directory, and cleanly guides users through each step in a user interface. With surveys conducted annually for more than 50 sites in Washington waters alone, Data Interpreter will rapidly deliver the latest updates and trends on the health of our understory kelp forests.
 
 <p align="center">
-  <img width="66%" alt="Understory Kelp Indicator: Data Interpreter GUI Figures tab" src="understory_kelp_indicator/gui/uki_datainterp.png"/>
+  <img width="66%" alt="Understory Kelp Indicator: Data Interpreter GUI Figures tab" src="gui/uki_datainterp.png"/>
 </p>
 
 ## Operation
