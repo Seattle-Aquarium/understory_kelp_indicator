@@ -28,8 +28,16 @@ names(df_upc) <- tolower(names(df_upc))
 ## drop Canadian sites
 df_upc <- subset(df_upc, !(site %in% canadian_sites))
 
+## correct misspelled site names, then drop the duplicate winter 2025 surveys.
+## both must run before the basin_lookup join below, which matches on "site"
+df_upc <- recode.sites(df_upc)
+df_upc <- drop.winter.surveys(df_upc)
+
 df_upc <- df_upc %>%
   left_join(basin_lookup, by = "site")
+
+## EXCLUDED BASINS -- held out of every output; see rc_data_clean_reference.R
+df_upc <- drop.excluded.basins(df_upc)
 
 ## key
 df_upc <- create.key(df_upc)
@@ -50,7 +58,7 @@ df_upc <- df_upc %>%
   mutate(
     amount = if_else(total_amount != 30, as.integer(amount / total_amount * 30), amount),
     total_amount = if_else(total_amount != 30, 30, total_amount),
-    percentage = round(percentage / 100, digits = 2)
+    percentage = round(percentage / 100, digits = 3)
   )
 
 ## clean strings
@@ -161,7 +169,12 @@ df_upc_wide <- df_upc_wide %>%
     year,
     date,
     depth_ft,
-    all_of(ordered_class_columns)
+    ## EXCLUDED BASINS -- any_of() rather than all_of() because a category can
+    ## go missing entirely once a basin is dropped: "Cobble" and "Boulder" are
+    ## recorded only in Northern Coast, so sb_cobble and sb_boulder have no rows
+    ## left to pivot and never become columns. Restoring the excluded basins
+    ## restores both columns; all_of() would be the stricter check to go back to.
+    any_of(ordered_class_columns)
   )
 
 df_upc_wide <- df_upc_wide |> group_by(site_id)

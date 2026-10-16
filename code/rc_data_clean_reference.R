@@ -7,6 +7,74 @@ canadian_sites <- c("7751 Reef", "Ogden Point", "Spring Bay", "Cates Park",
                     "Lions Gate", "Ferguson Point", "South Bowyer Island",
                     "Christie Islet", "Whytecliff Park")
 
+## Site names misspelled in the raw Reef Check exports. basin_lookup below and
+## every downstream output carry the corrected spelling, so recode.sites() has to
+## run BEFORE the left_join(basin_lookup, by = "site") in each cleaning script --
+## correcting the lookup alone would make that join miss, and the site would then
+## drop out of every dataset carrying NA basin_id. Safe to leave in place once
+## the raw data is corrected upstream: recode() passes through any name it
+## doesn't match.
+site_name_corrections <- c("Elliot Bay Marina" = "Elliott Bay Marina")
+
+recode.sites <- function(df){
+  df %>% mutate(site = recode(site, !!!site_name_corrections))
+}
+
+## Elliott Bay Marina and Sirens of Spring were each dived twice in 2025, once in
+## January and again in August. Every scale downstream assumes one survey per
+## site per year -- pooled, these two site-years average a winter and a
+## late-summer dive together on 12 transects instead of 6 -- so the winter dives
+## are dropped here, for every dataset.
+winter_surveys <- tribble(
+  ~site,                ~date,
+  "Elliott Bay Marina", as.Date("2025-01-28"),
+  "Sirens of Spring",   as.Date("2025-01-27")
+)
+
+## the raw files don't agree on a date format (Algae is M/D/YYYY, the rest are
+## YYYY-MM-DD) and these scripts don't parse dates, so the comparison is made on
+## a parsed copy that is dropped again afterwards
+drop.winter.surveys <- function(df){
+  df %>%
+    mutate(.survey_date = as.Date(date, tryFormats = c("%Y-%m-%d", "%m/%d/%Y"))) %>%
+    anti_join(winter_surveys, by = c("site", ".survey_date" = "date")) %>%
+    select(-.survey_date)
+}
+
+## ---- EXCLUDED BASINS -------------------------------------------------------
+## Northern Coast, Western Strait of Juan de Fuca and Eastern Strait of Juan de
+## Fuca are held out of every output in this repo. TO BRING THEM BACK: delete
+## this block and the drop.excluded.basins() call in each cleaning script --
+## nothing else depends on the exclusion, and the raw files in data/Reef_Check
+## still contain every basin. Search the repo for "EXCLUDED BASINS" to find all
+## of the places this is applied.
+##
+## Matching normalises underscores to spaces, so the filter works both before
+## and after the gsub(" ", "_") string cleaning each script applies.
+## ----------------------------------------------------------------------------
+## These three are held out by default. UKELP_INCLUDE_BASINS names any that
+## should be kept after all, comma separated -- that is the per-basin checkboxes
+## in the Shiny app, which can bring back one, two or all three independently.
+## Unset, which is how this script runs on its own, all three stay excluded
+## exactly as before.
+held_out_basins <- c("Northern Coast",
+                     "Western Strait of Juan de Fuca",
+                     "Eastern Strait of Juan de Fuca")
+
+include_basins <- trimws(strsplit(Sys.getenv("UKELP_INCLUDE_BASINS", unset = ""),
+                                  ",", fixed = TRUE)[[1]])
+include_basins <- intersect(held_out_basins, include_basins[nzchar(include_basins)])
+
+excluded_basins <- setdiff(held_out_basins, include_basins)
+
+if (length(include_basins)) {
+  message("Including: ", paste(include_basins, collapse = ", "))
+}
+
+drop.excluded.basins <- function(df){
+  df %>% filter(!gsub("_", " ", basin) %in% excluded_basins)
+}
+
 ## basin lookup
 basin_lookup <- tribble(
   ~basin, ~basin_id, ~site, ~site_id,
@@ -31,7 +99,7 @@ basin_lookup <- tribble(
   "Central Puget Sound", 2, "Wing Point", 16,
   "Central Puget Sound", 2, "Sirens of Spring", 17,
   "Central Puget Sound", 2, "Grain Terminal", 18,
-  "Central Puget Sound", 2, "Elliot Bay Marina", 19,
+  "Central Puget Sound", 2, "Elliott Bay Marina", 19,
   "Central Puget Sound", 2, "Magnolia", 20,
   "Central Puget Sound", 2, "Jefferson Head", 23,
   "Central Puget Sound", 2, "Edmonds Shell Creek", 24,

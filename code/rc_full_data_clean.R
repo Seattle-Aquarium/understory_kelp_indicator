@@ -11,6 +11,27 @@ setwd("../")
 data <- "data/Reef_Check"
 results <- "results"
 
+## ---- FILE LOCATIONS --------------------------------------------------------
+## Run this script on its own and it reads and writes the repository's own
+## folders, exactly as it always has. The Shiny app in gui/ sets the environment
+## variables below first, so a person can point it at files kept somewhere else
+## without editing anything here.
+##
+## Environment variables rather than options() because the app starts this
+## script as its own R process -- options do not cross a process boundary, and a
+## separate process is what keeps the line-one rm(list=ls()) and the setwd()
+## above from reaching into the running app.
+from_env <- function(var, default) {
+  value <- Sys.getenv(var, unset = "")
+  if (nzchar(value)) value else default
+}
+
+algae_csv   <- from_env("UKELP_ALGAE_CSV",   file.path(data, "Algae_Washington_raw.csv"))
+upc_csv     <- from_env("UKELP_UPC_CSV",     file.path(data, "UPC_Washington_raw.csv"))
+invert_csv  <- from_env("UKELP_INVERT_CSV",  file.path(data, "Invert_Washington_raw.csv"))
+fish_csv    <- from_env("UKELP_FISH_CSV",    file.path(data, "Fish_Washington_raw.csv"))
+cleaned_csv <- from_env("UKELP_CLEANED_CSV", file.path(results, "reef_check_cleaned.csv"))
+
 basin_lookup <- tribble(
   ~basin, ~basin_id, ~site, ~site_id,
   "South Puget Sound",1,"Devils Head",1,
@@ -30,7 +51,7 @@ basin_lookup <- tribble(
   "Central Puget Sound",2,"Wing Point",16,
   "Central Puget Sound",2,"Sirens of Spring",17,
   "Central Puget Sound",2,"Grain Terminal",18,
-  "Central Puget Sound",2,"Elliot Bay Marina",19,
+  "Central Puget Sound",2,"Elliott Bay Marina",19,
   "Central Puget Sound",2,"Magnolia",20,
   "Central Puget Sound",2,"Jefferson Head",23,
   "Central Puget Sound",2,"Edmonds Shell Creek",24,
@@ -130,7 +151,7 @@ pivot_reef_check <- function(df){
 }
 
 ## Assigns a final, unique survey key. Some sites are surveyed more than
-## once in the same year (e.g. Elliot Bay Marina in 2025); those share the
+## once in the same year (e.g. Elliott Bay Marina in 2025); those share the
 ## same base "key" (basin_site_transect_yr) but have distinct dates. This
 ## must run once on the combined set of survey instances across all four
 ## datasets (see all_metadata below) so that every dataset ends up using
@@ -166,10 +187,10 @@ make_unique_keys <- function(df){
 ## Read raw datasets
 ## ============================================================
 
-df_algae <- read.csv(file.path(data,"Algae_Washington_raw.csv"))
-df_upc <- read.csv(file.path(data,"UPC_Washington_raw.csv"))
-df_invert <- read.csv(file.path(data,"Invert_Washington_raw.csv"))
-df_fish <- read.csv(file.path(data,"Fish_Washington_raw.csv"))
+df_algae <- read.csv(algae_csv)
+df_upc <- read.csv(upc_csv)
+df_invert <- read.csv(invert_csv)
+df_fish <- read.csv(fish_csv)
 
 ## ============================================================
 ## Shared cleaning
@@ -182,12 +203,76 @@ canadian_sites <- c(
   "Whytecliff Park"
 )
 
+## Site names misspelled in the raw Reef Check exports. basin_lookup and every
+## downstream output carry the corrected spelling, so this has to run BEFORE
+## add_metadata() joins on "site" -- correcting the lookup alone would make that
+## join miss and add_metadata()'s filter(!is.na(basin_id)) would then drop the
+## site from all four datasets silently. Safe to leave in place once the raw data
+## is corrected upstream: recode() passes through any name it doesn't match.
+site_name_corrections <- c("Elliot Bay Marina" = "Elliott Bay Marina")
+
+recode_sites <- function(df){
+  df %>% mutate(site = recode(site, !!!site_name_corrections))
+}
+
+## Elliott Bay Marina and Sirens of Spring were each dived twice in 2025, once in
+## January and again in August. Every scale downstream assumes one survey per
+## site per year -- pooled, these two site-years average a winter and a
+## late-summer dive together on 12 transects instead of 6 -- so the winter dives
+## are dropped. Runs after parse_dates() so the match is on real Dates.
+winter_surveys <- tribble(
+  ~site,                ~date,
+  "Elliott Bay Marina", as.Date("2025-01-28"),
+  "Sirens of Spring",   as.Date("2025-01-27")
+)
+
+drop_winter_surveys <- function(df){
+  df %>% anti_join(winter_surveys, by = c("site","date"))
+}
+
+## ---- EXCLUDED BASINS -------------------------------------------------------
+## Northern Coast, Western Strait of Juan de Fuca and Eastern Strait of Juan de
+## Fuca are held out of every output in this repo. TO BRING THEM BACK: delete
+## this block and the drop_excluded_basins() call in clean_dataset() below --
+## nothing else depends on the exclusion, and the raw files in data/Reef_Check
+## still contain every basin. Search the repo for "EXCLUDED BASINS" to find all
+## of the places this is applied.
+##
+## Runs after add_metadata(), which is what attaches "basin", and before
+## clean_values(), so the names still carry spaces at this point.
+## ----------------------------------------------------------------------------
+## These three are held out by default. UKELP_INCLUDE_BASINS names any that
+## should be kept after all, comma separated -- that is the per-basin checkboxes
+## in the Shiny app, which can bring back one, two or all three independently.
+## Unset, which is how this script runs on its own, all three stay excluded
+## exactly as before.
+held_out_basins <- c("Northern Coast",
+                     "Western Strait of Juan de Fuca",
+                     "Eastern Strait of Juan de Fuca")
+
+include_basins <- trimws(strsplit(Sys.getenv("UKELP_INCLUDE_BASINS", unset = ""),
+                                  ",", fixed = TRUE)[[1]])
+include_basins <- intersect(held_out_basins, include_basins[nzchar(include_basins)])
+
+excluded_basins <- setdiff(held_out_basins, include_basins)
+
+if (length(include_basins)) {
+  message("Including: ", paste(include_basins, collapse = ", "))
+}
+
+drop_excluded_basins <- function(df){
+  df %>% filter(!gsub("_", " ", basin) %in% excluded_basins)
+}
+
 clean_dataset <- function(df){
   df %>%
     clean_columns() %>%
     filter(!site %in% canadian_sites) %>%
+    recode_sites() %>%
     parse_dates() %>%
+    drop_winter_surveys() %>%
     add_metadata() %>%
+    drop_excluded_basins() %>%
     clean_values()
 }
 
@@ -303,7 +388,7 @@ df_upc <- df_upc %>%
       amount
     ),
     total_amount=if_else(adjust,30,total_amount),
-    percentage=round(percentage/100,digits=2)
+    percentage=round(percentage/100,digits=3)
   ) %>%
   select(-adjust) %>%
   mutate(
@@ -450,8 +535,13 @@ reef_check_cleaned <- all_metadata %>%
     transect
   )
 
+dir.create(dirname(cleaned_csv), recursive = TRUE, showWarnings = FALSE)
+
 write.csv(
   reef_check_cleaned,
-  file.path(results,"reef_check_cleaned.csv"),
+  cleaned_csv,
   row.names=FALSE
 )
+
+cat("Wrote", normalizePath(cleaned_csv, winslash = "/", mustWork = FALSE),
+    "--", nrow(reef_check_cleaned), "rows,", ncol(reef_check_cleaned), "columns\n")

@@ -12,6 +12,37 @@ figs <- "figs"
 
 df_rc <- read.csv(file.path(results, "reef_check_cleaned.csv"), check.names = FALSE)
 
+## ---- EXCLUDED BASINS -------------------------------------------------------
+## Northern Coast, Western Strait of Juan de Fuca and Eastern Strait of Juan de
+## Fuca are held out of every output in this repo. TO BRING THEM BACK: delete
+## this block -- nothing else depends on the exclusion, and the raw files in
+## data/Reef_Check still contain every basin. Search the repo for
+## "EXCLUDED BASINS" to find all of the places this is applied.
+##
+## The cleaning scripts drop these basins too, so this is a second line of
+## defense that also covers re-running against an older cleaned csv.
+## ----------------------------------------------------------------------------
+## These three are held out by default. UKELP_INCLUDE_BASINS names any that
+## should be kept after all, comma separated -- that is the per-basin checkboxes
+## in the Shiny app, which can bring back one, two or all three independently.
+## Unset, which is how this script runs on its own, all three stay excluded
+## exactly as before.
+held_out_basins <- c("Northern Coast",
+                     "Western Strait of Juan de Fuca",
+                     "Eastern Strait of Juan de Fuca")
+
+include_basins <- trimws(strsplit(Sys.getenv("UKELP_INCLUDE_BASINS", unset = ""),
+                                  ",", fixed = TRUE)[[1]])
+include_basins <- intersect(held_out_basins, include_basins[nzchar(include_basins)])
+
+excluded_basins <- setdiff(held_out_basins, include_basins)
+
+if (length(include_basins)) {
+  message("Including: ", paste(include_basins, collapse = ", "))
+}
+
+df_rc <- df_rc %>% filter(!gsub("_", " ", basin) %in% excluded_basins)
+
 ## algae ("ak_") kelp category columns, excluding stipe counts
 ak_cols <- names(df_rc)[startsWith(names(df_rc), "ak_")]
 ak_cols <- ak_cols[!ak_cols %in% c("ak_giant_kelp_stipe", "ak_feather_boa_stipe")]

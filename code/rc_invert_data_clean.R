@@ -28,8 +28,16 @@ names(df_invert) <- tolower(names(df_invert))
 ## drop Canadian sites
 df_invert <- subset(df_invert, !(site %in% canadian_sites))
 
+## correct misspelled site names, then drop the duplicate winter 2025 surveys.
+## both must run before the basin_lookup join below, which matches on "site"
+df_invert <- recode.sites(df_invert)
+df_invert <- drop.winter.surveys(df_invert)
+
 df_invert <- df_invert %>%
   left_join(basin_lookup, by = "site")
+
+## EXCLUDED BASINS -- held out of every output; see rc_data_clean_reference.R
+df_invert <- drop.excluded.basins(df_invert)
 
 ## key
 df_invert <- create.key(df_invert)
