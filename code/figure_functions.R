@@ -610,12 +610,13 @@ caption_for <- function(analysis, scale, view, squished = FALSE) {
                     "the preceding years' mean. Gray: individual basins."))
   }
   if (identical(analysis, "trend")) {
-    line <- paste(line, "Dashed: 100% (no change).",
-                  "Triangles on the bottom edge: lost (in the baseline, not this year);",
-                  "on the top edge: new (not in the baseline).",
-                  if (!identical(scale, "site"))
-                    sprintf("The number beside a triangle is how many %s it stands for.",
-                            if (identical(scale, "puget")) "basins" else "sites"))
+    line <- paste(c(line, "Dashed: 100% (no change).",
+                    "Triangles on the bottom edge: lost (in the baseline, not this year);",
+                    "on the top edge: new (not in the baseline).",
+                    if (!identical(scale, "site"))
+                      sprintf("The number beside a triangle is how many %s it stands for.",
+                              if (identical(scale, "puget")) "basins" else "sites")),
+                  collapse = " ")
     if (isTRUE(squished)) {
       line <- paste(line, sprintf("Values beyond %s-%s are drawn at those limits%s.",
                                   pct_label(trend_cap[1]), pct_label(trend_cap[2]),
@@ -1060,13 +1061,16 @@ draw_nmds <- function(color_by, basin = NULL, size_by = NULL, arrows = TRUE,
                      format(info$n_transects, big.mark = ","), " transects",
                      if (!all(focus)) paste0(" \u00b7 sites of ", place_label(basin),
                                              " in color, the rest in gray"))
-  caption <- paste(
+  ## c() then collapse, not paste(): paste() turns a skipped (NULL) sentence
+  ## into "" and leaves a double space where it would have been
+  caption <- paste(c(
     sprintf("Each point is one 30 x 2 m transect; %d with no understory algae and %d without an algae survey cannot be placed and are left out.",
             info$n_no_understory_algae, info$n_no_algae_survey),
     if (isTRUE(arrows)) "Arrows point to each species' score: the weighted average of the transects it occurs on.",
     if (isTRUE(ellipses)) "Ellipses: 95% normal-theory ellipses for each group of 5 or more transects.",
     if (!is.null(size_col)) sprintf("Point size: %s density on the transect.", nmds_size_label(size_by)),
-    "Stress under 0.2 gives a usable two-dimensional picture (Clarke 1993); fine detail should not be over-read.")
+    "Stress under 0.2 gives a usable two-dimensional picture (Clarke 1993); fine detail should not be over-read."),
+    collapse = " ")
   caption <- paste(strwrap(caption, width = 175), collapse = "\n")
 
   p <- p +
