@@ -3,7 +3,14 @@
 ## Output: results/reef_check_cleaned.csv
 
 rm(list=ls())
-library(tidyverse)
+## The three packages this script uses, rather than the whole tidyverse: fewer
+## packages for the app's private R environment to install, and no attach
+## messages cluttering the log the app shows.
+suppressPackageStartupMessages({
+  library(dplyr)
+  library(tidyr)
+  library(tibble)
+})
 
 ## set working directory to home folder
 setwd("../")
@@ -138,14 +145,34 @@ add_metadata <- function(df){
     )
 }
 
+## A category a survey's datasheet did not carry was never looked for, which is
+## not the same as looked for and not found. Within each survey (one site on one
+## date) every transect gets an explicit 0 for every category that survey
+## recorded anywhere; a category the survey never recorded is left out here and
+## so comes through the pivot below as NA.
+##
+## The datasheets changed over the years. UPC gained the superlayer in 2022,
+## Clay in 2023, and Acid Weed (as both a cover and a superlayer class) in 2024;
+## the invert and fish sheets gained species in 2022-2023. The algae sheet never
+## changed. Filling those gaps with 0, as this script used to, made datasheet
+## changes look like declines and first appearances.
+complete_on_sheet <- function(df){
+  df %>%
+    select(key,site_id,date,classcode,amount) %>%
+    group_by(site_id,date) %>%
+    complete(key,classcode,fill=list(amount=0)) %>%
+    ungroup()
+}
+
+## No values_fill: complete_on_sheet() has already written every real 0, so a
+## cell still empty after the pivot is a category that was not on the sheet.
 pivot_reef_check <- function(df){
   wide <- df %>%
     select(key,classcode,amount) %>%
     pivot_wider(
       names_from=classcode,
       values_from=amount,
-      values_fn=sum,
-      values_fill=0
+      values_fn=sum
     )
   wide %>% select(key,all_of(sort(setdiff(names(wide),"key"))))
 }
@@ -343,10 +370,15 @@ df_fish <- df_fish %>%
 ## ALGAE
 ## ============================================================
 
+## A dense patch is sometimes counted over only part of the transect; Distance is
+## how far the count ran, and the count is scaled up to the full 30 m. round()
+## rather than as.integer(): as.integer() truncates, which biased every scaled
+## count down, and on floating-point values such as 56/16.8*30 = 99.99999...
+## it dropped a whole individual.
 df_algae <- df_algae %>%
   mutate(
     adjust=distance < 30,
-    amount=as.integer(if_else(adjust,amount/distance*30,amount)),
+    amount=if_else(adjust,round(amount*30/distance),as.numeric(amount)),
     distance=if_else(adjust,30,distance)
   ) %>%
   select(-adjust)
@@ -379,19 +411,13 @@ df_algae <- bind_rows(
 ## UPC
 ## ============================================================
 
+## Each UPC value is the share of the points read along the transect that fell in
+## the category. Total_Amount is not always 30 -- between 24 and 42 points were
+## read on some transects -- so the share is taken over the points actually read.
+## Not rounded: rounding to 3 decimals here put every later scale a little off.
 df_upc <- df_upc %>%
   mutate(
-    adjust=total_amount != 30,
-    amount=if_else(
-      adjust,
-      as.integer(amount/total_amount*30),
-      amount
-    ),
-    total_amount=if_else(adjust,30,total_amount),
-    percentage=round(percentage/100,digits=3)
-  ) %>%
-  select(-adjust) %>%
-  mutate(
+    amount=amount/total_amount,
     classcode=tolower(classcode),
     classcode=recode(
       classcode,
@@ -422,23 +448,39 @@ df_upc <- df_upc %>%
       "articulated_coralline"="cv_articulated",
       "crustose_coralline"="cv_crustose",
       "sessile_invertebrates"="cv_sessile_inverts",
+      "mobile_invertebrates"="cv_mobile_inverts",
       "seagrasses"="cv_seagrass",
       "0-10cm"="rf_0-10cm",
       "10cm-1m"="rf_10cm-1m",
       "1m-2m"="rf_1m-2m",
       ">2m"="rf_over_2m"
-    ),
-    amount=percentage
+    )
   )
+
+## A class the recode above does not know -- a new one on a future datasheet --
+## would otherwise come through with no prefix, and every later script finds its
+## columns by prefix, so it would vanish without a word. It is given its
+## category's prefix instead, and named in the log.
+upc_category_prefix <- c("upc_cover"="cv_","upc_relief"="rf_",
+                         "upc_substrate"="sb_","upc_superlayer"="sp_")
+unprefixed <- !grepl("^(cv|rf|sb|sp)_",df_upc$classcode)
+if (any(unprefixed)) {
+  message("UPC classes not in the recode list, prefixed by their category: ",
+          paste(unique(df_upc$classcode[unprefixed]),collapse=", "))
+  df_upc$classcode[unprefixed] <- paste0(
+    upc_category_prefix[tolower(df_upc$category[unprefixed])],
+    df_upc$classcode[unprefixed])
+}
 
 ## ============================================================
 ## INVERTEBRATES
 ## ============================================================
 
+## scaled to the full 30 m exactly as the algae counts are, round() and all
 df_invert <- df_invert %>%
   mutate(
     adjust=distance < 30,
-    amount=as.integer(if_else(adjust,amount/distance*30,amount))
+    amount=if_else(adjust,round(amount*30/distance),as.numeric(amount))
   ) %>%
   select(-adjust) %>%
   mutate(
@@ -463,6 +505,11 @@ df_invert <- df_invert %>%
 ## FISH
 ## ============================================================
 
+## Fish are counted on up to 25 transects per site, but only transects 1-6 share
+## their numbers -- and so their rows -- with the algae, UPC and invert
+## transects. The rest are dropped here, which is right for a one-row-per-
+## transect table but discards roughly two thirds of the fish counts; a
+## fish-only site average would want all of them.
 df_fish <- df_fish %>%
   filter(transect %in% 1:6) %>%
   mutate(
@@ -510,10 +557,16 @@ df_upc <- apply_final_key(df_upc)
 df_invert <- apply_final_key(df_invert)
 df_fish <- apply_final_key(df_fish)
 
-df_algae_wide <- pivot_reef_check(df_algae)
-df_upc_wide <- pivot_reef_check(df_upc)
-df_invert_wide <- pivot_reef_check(df_invert)
-df_fish_wide <- pivot_reef_check(df_fish)
+## every row has to have found its survey; one that didn't would be dropped by
+## the joins below without a trace
+for (nm in c("df_algae","df_upc","df_invert","df_fish")) {
+  if (anyNA(get(nm)$key)) stop(nm, " has rows that matched no survey key")
+}
+
+df_algae_wide <- pivot_reef_check(complete_on_sheet(df_algae))
+df_upc_wide <- pivot_reef_check(complete_on_sheet(df_upc))
+df_invert_wide <- pivot_reef_check(complete_on_sheet(df_invert))
+df_fish_wide <- pivot_reef_check(complete_on_sheet(df_fish))
 
 ## ============================================================
 ## Combine datasets
@@ -522,7 +575,8 @@ df_fish_wide <- pivot_reef_check(df_fish)
 ## metadata columns, so joining the (metadata-free) wide species tables
 ## onto it by "key" needs no suffixing/restoring of duplicate columns.
 ## Species columns are NA where that dataset wasn't surveyed on a given
-## dive, and 0 where it was surveyed but nothing of that class was found.
+## dive or the class wasn't on that survey's datasheet (complete_on_sheet()),
+## and 0 where it was looked for and nothing of that class was found.
 
 reef_check_cleaned <- all_metadata %>%
   left_join(df_algae_wide,by="key") %>%

@@ -1,5 +1,8 @@
 rm(list=ls())
-library(tidyverse)
+suppressPackageStartupMessages({
+  library(dplyr)
+  library(tidyr)
+})
 
 ## relative file paths
 data <- "data/Reef_Check"
@@ -20,12 +23,13 @@ from_env <- function(var, default) {
   if (nzchar(value)) value else default
 }
 
-cleaned_csv <- from_env("UKELP_CLEANED_CSV", file.path(results, "reef_check_cleaned.csv"))
-site_csv    <- from_env("UKELP_SITE_CSV",    file.path(results, "metrics_site_scale.csv"))
-basin_csv   <- from_env("UKELP_BASIN_CSV",   file.path(results, "metrics_basin_scale.csv"))
-puget_csv   <- from_env("UKELP_PUGET_CSV",   file.path(results, "metrics_puget_sound_scale.csv"))
+cleaned_csv  <- from_env("UKELP_CLEANED_CSV",  file.path(results, "reef_check_cleaned.csv"))
+transect_csv <- from_env("UKELP_TRANSECT_CSV", file.path(results, "metrics_transect_scale.csv"))
+site_csv     <- from_env("UKELP_SITE_CSV",     file.path(results, "metrics_site_scale.csv"))
+basin_csv    <- from_env("UKELP_BASIN_CSV",    file.path(results, "metrics_basin_scale.csv"))
+puget_csv    <- from_env("UKELP_PUGET_CSV",    file.path(results, "metrics_puget_sound_scale.csv"))
 
-for (d in unique(dirname(c(site_csv, basin_csv, puget_csv)))) {
+for (d in unique(dirname(c(transect_csv, site_csv, basin_csv, puget_csv)))) {
   dir.create(d, recursive = TRUE, showWarnings = FALSE)
 }
 
@@ -78,44 +82,68 @@ cols_with_prefix <- function(nm, prefixes) {
   grep(paste0("^(", paste(prefixes, collapse = "|"), ")"), nm, value = TRUE)
 }
 
-## UPC columns ("cv_" cover, "rf_" relief, "sb_" substrate, "sp_" species) are
-## already proportions of the points sampled along a transect -- each prefix
-## group sums to 1 within a row -- so they are carried through unscaled. Dividing
+## UPC columns ("cv_" cover, "rf_" relief, "sb_" substrate, "sp_" superlayer)
+## are already proportions of the points sampled along a transect, so they are
+## carried through unscaled. Cover, relief and substrate each sum to 1 within a
+## row; superlayer does not -- most points have no superlayer at all. Dividing
 ## them by the transect area would push their ceiling to 1/60 and make them
 ## incomparable with everything else.
 prop_prefixes <- c("cv_", "rf_", "sb_", "sp_")
 prop_cols <- cols_with_prefix(names(df_rc), prop_prefixes)
 
-## every remaining non-metadata column is a raw tally, which becomes a density
-## when divided by the area of the transect it was counted on
+## algae ("ak_"), invertebrate ("iv_") and fish ("fs_") columns are raw tallies,
+## which become a density -- individuals per m^2 -- when divided by the area of
+## the transect they were counted on. The two stipe columns are left out: a
+## stipe tally is not a density of anything, so it doesn't belong in an
+## averaged scale (it stays in the cleaned table).
 transect_area_m2 <- 60.0
 
+ak_cols <- setdiff(cols_with_prefix(names(df_rc), "ak_"),
+                   c("ak_giant_kelp_stipe", "ak_feather_boa_stipe"))
+iv_cols <- cols_with_prefix(names(df_rc), "iv_")
+fs_cols <- cols_with_prefix(names(df_rc), "fs_")
+count_cols <- c(ak_cols, iv_cols, fs_cols)
+
 df_rc <- df_rc %>%
-  mutate(across(-all_of(c(metadata_columns, prop_cols)), ~.x / transect_area_m2))
+  mutate(across(all_of(count_cols), ~.x / transect_area_m2))
 
-## algae ("ak_") densities, excluding stipe counts (a raw stipe tally, not a
-## density, so it doesn't belong in an averaged scale)
-count_cols <- cols_with_prefix(names(df_rc), "ak_")
-count_cols <- setdiff(count_cols, c("ak_giant_kelp_stipe", "ak_feather_boa_stipe"))
+## the columns carried through all four scales: algae, invert and fish
+## densities, then the UPC proportions. The counts reported here are worth a
+## glance on each run -- a silent drop is what the startsWith() recycling
+## above caused
+metric_cols <- c(ak_cols, prop_cols, iv_cols, fs_cols)
+message("carrying ", length(ak_cols), " algae, ", length(prop_cols), " UPC, ",
+        length(iv_cols), " invertebrate and ", length(fs_cols),
+        " fish columns through the scales")
 
-## the columns carried through all three scales: algae densities followed by the
-## UPC proportions. The counts reported here are worth a glance on each run --
-## a silent drop is what the startsWith() recycling above caused
-metric_cols <- c(count_cols, prop_cols)
-message("carrying ", length(count_cols), " algae density columns and ",
-        length(prop_cols), " UPC proportion columns through the scales")
+## Which transects each dataset actually covers. A transect row exists if any
+## of the four was surveyed on it, so counting rows overstates a dataset that
+## missed a transect (Cattle Point 2024 has 6 rows but 5 algae transects).
+has_data <- function(df, cols) rowSums(!is.na(df[cols])) > 0
+df_rc <- df_rc %>%
+  mutate(.algae  = has_data(df_rc, ak_cols),
+         .upc    = has_data(df_rc, prop_cols),
+         .invert = has_data(df_rc, iv_cols),
+         .fish   = has_data(df_rc, fs_cols))
 
 ## _avg column produced by the previous scale (raw column names at the
 ## site scale, since that's the first level of aggregation)
 avg_cols <- paste0(metric_cols, "_avg")
 
-## mean/sd/var of each metric column, rounded to 3 decimals, with
-## columns ordered metric_avg | sd | var per category. na.rm = TRUE
-## excludes missing values from both the sum and the denominator, rather
-## than treating them as 0. input_cols may already carry an "_avg" suffix
-## (when aggregating a scale that was itself built by this function) --
-## that suffix is stripped before re-adding it, so output names never
-## double up as "_avg_avg".
+## mean/sd/var of each metric column, with columns ordered metric_avg | sd |
+## var per category. na.rm = TRUE excludes missing values from both the sum and
+## the denominator, rather than treating them as 0; a category with no values
+## at all is NA rather than NaN. input_cols may already carry an "_avg" suffix
+## (when aggregating a scale that was itself built by this function) -- that
+## suffix is stripped before re-adding it, so output names never double up as
+## "_avg_avg".
+##
+## Nothing is rounded here. Each scale used to be rounded to 3 decimals and the
+## next scale built from the rounded values: 145 of 854 non-zero site variances
+## became exactly 0, and small site means were off by up to 8%. write_scale()
+## trims to 6 significant figures on the way out, and only there.
+mean_or_na <- function(x) if (all(is.na(x))) NA_real_ else mean(x, na.rm = TRUE)
+
 summarise_metric_cols <- function(df, input_cols, ...){
   df %>%
     summarise(
@@ -123,9 +151,9 @@ summarise_metric_cols <- function(df, input_cols, ...){
       across(
         all_of(input_cols),
         list(
-          avg = ~round(mean(.x, na.rm = TRUE), 3),
-          sd = ~round(sd(.x, na.rm = TRUE), 3),
-          var = ~round(var(.x, na.rm = TRUE), 3)
+          avg = ~mean_or_na(.x),
+          sd = ~sd(.x, na.rm = TRUE),
+          var = ~var(.x, na.rm = TRUE)
         ),
         .names = "{sub('_avg$', '', .col)}_{.fn}"
       ),
@@ -133,10 +161,34 @@ summarise_metric_cols <- function(df, input_cols, ...){
     )
 }
 
+## 6 significant figures keeps the files readable without the damage rounding
+## to a fixed number of decimals did to small densities. Only the metric columns
+## -- latitude and longitude need every digit they have.
+write_scale <- function(df, path, cols) {
+  df <- df %>% mutate(across(any_of(cols), ~signif(.x, 6)))
+  write.csv(df, path, row.names = FALSE)
+  cat("Wrote", path, "--", nrow(df), "rows,", ncol(df), "columns\n")
+}
+
+stat_cols <- function(df) grep("_(avg|sd|var)$", names(df), value = TRUE)
+
+## ============================================================
+## Transect scale: n = 1 row per transect survey, the cleaned table
+## in density units -- individuals per m^2 for algae, invertebrates
+## and fish, proportion of points for UPC. The starting point for
+## anything run on individual transects (NMDS, GLMMs).
+## ============================================================
+
+df_transect <- df_rc %>%
+  select(all_of(metadata_columns), all_of(metric_cols))
+
+write_scale(df_transect, transect_csv, metric_cols)
+
 ## ============================================================
 ## Site scale: n = 1 row per site per year (mean/sd/var of that
 ## site's transects within the year; n_transects records how many
-## fed in)
+## transect rows fed in, and n_transects_<dataset> how many of them
+## that dataset was actually surveyed on)
 ## ============================================================
 
 site_meta <- df_rc %>%
@@ -144,14 +196,17 @@ site_meta <- df_rc %>%
 
 site_stats <- df_rc %>%
   group_by(site, year) %>%
-  summarise_metric_cols(metric_cols, n_transects = n())
+  summarise_metric_cols(metric_cols,
+                        n_transects = n(),
+                        n_transects_algae = sum(.algae),
+                        n_transects_upc = sum(.upc),
+                        n_transects_invert = sum(.invert),
+                        n_transects_fish = sum(.fish))
 
 df_site <- site_meta %>%
   left_join(site_stats, by = "site")
 
-write.csv(df_site, site_csv, row.names = FALSE)
-cat("Wrote", site_csv, "--", nrow(df_site), "rows,", ncol(df_site), "columns
-")
+write_scale(df_site, site_csv, stat_cols(df_site))
 
 ## ============================================================
 ## Basin scale: n = 1 row per basin per year (mean/sd/var of that
@@ -170,9 +225,7 @@ basin_stats <- df_site %>%
 df_basin <- basin_meta %>%
   left_join(basin_stats, by = "basin")
 
-write.csv(df_basin, basin_csv, row.names = FALSE)
-cat("Wrote", basin_csv, "--", nrow(df_basin), "rows,", ncol(df_basin), "columns
-")
+write_scale(df_basin, basin_csv, stat_cols(df_basin))
 
 ## ============================================================
 ## Region scale: n = 1 row per region per year (mean/sd/var of the
@@ -214,6 +267,4 @@ if (any(basin_is_outer)) {
   message("Outer basins absent -- writing Puget_Sound only.")
 }
 
-write.csv(df_puget_sound, puget_csv, row.names = FALSE)
-cat("Wrote", puget_csv, "--", nrow(df_puget_sound), "rows,", ncol(df_puget_sound), "columns
-")
+write_scale(df_puget_sound, puget_csv, stat_cols(df_puget_sound))
