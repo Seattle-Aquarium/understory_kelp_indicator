@@ -1,0 +1,5 @@
+# Windows batch and PowerShell files keep CRLF line endings: cmd.exe can fail
+# to find goto/call labels in a batch file whose lines end in a bare LF.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
