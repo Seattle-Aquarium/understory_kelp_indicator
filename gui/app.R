@@ -124,6 +124,12 @@ FILES <- list(
                      default = file.path(RESULTS, "trend_basin_scale.csv")),
   trend_puget = list(label = "Trend, Puget Sound", env = "UKELP_TREND_PUGET_CSV", kind = "save",
                      default = file.path(RESULTS, "trend_puget_sound_scale.csv")),
+  nmds_points  = list(label = "NMDS, transects", env = "UKELP_NMDS_POINTS_CSV", kind = "save",
+                      default = file.path(RESULTS, "nmds_algae_points.csv")),
+  nmds_species = list(label = "NMDS, species", env = "UKELP_NMDS_SPECIES_CSV", kind = "save",
+                      default = file.path(RESULTS, "nmds_algae_species.csv")),
+  nmds_stress  = list(label = "NMDS, stress", env = "UKELP_NMDS_STRESS_CSV", kind = "save",
+                      default = file.path(RESULTS, "nmds_algae_stress.csv")),
   figs    = list(label = "Figures folder", env = "UKELP_FIGS_DIR",  kind = "dir",
                  default = FIGS)
 )
@@ -142,15 +148,18 @@ STEPS <- list(
        ins = c("algae", "upc", "invert", "fish"),
        outs = c("cleaned")),
   list(id = "metrics", n = 2, title = "Build metrics",
-       scripts = c("metrics_across_scale.R", "temporal_trend.R"),
+       scripts = c("metrics_across_scale.R", "temporal_trend.R", "nmds_algae.R"),
        blurb = paste("Turns the combined table into transect, site, basin and Puget",
                      "Sound-wide tables -- each average with its standard deviation",
-                     "and variance -- then computes the temporal trend: each year's",
-                     "density as a percentage of the preceding years' mean, at the",
-                     "site, basin and Puget Sound scales."),
+                     "and variance -- then computes the temporal trend (each year's",
+                     "density as a percentage of the preceding years' mean) and an",
+                     "NMDS of the understory algae community, one point per",
+                     "transect. The NMDS takes a few minutes, and is only re-run",
+                     "when the transect table has changed."),
        ins = c("cleaned"),
        outs = c("transect", "site", "basin", "puget",
-                "trend_site", "trend_basin", "trend_puget")),
+                "trend_site", "trend_basin", "trend_puget",
+                "nmds_points", "nmds_species", "nmds_stress")),
   list(id = "figures", n = 3, title = "Figures",
        scripts = "visualizations.R",
        blurb = paste("Draws every figure set ticked below into the figures folder,",
@@ -191,7 +200,8 @@ if (FIG_OK) {
 
 ## the tables the figures read, by FILES key
 FIG_TABLES <- c("transect", "site", "basin", "puget",
-                "trend_site", "trend_basin", "trend_puget")
+                "trend_site", "trend_basin", "trend_puget",
+                "nmds_points", "nmds_species", "nmds_stress")
 
 ## ---------------------------------------------------------------------------
 ## The three withheld basins
@@ -591,25 +601,30 @@ include_box <- function(scope) {
 }
 
 ## ---------------------------------------------------------------------------
-## The preview
+## Explore data
 ## ---------------------------------------------------------------------------
 ##
 ## Build one figure and look at it before anything is written. Four choices
 ## define the figure -- the same four that name the folders Run writes into:
 ##
-##   analysis  temporal trend, average density, or density with its SD band
-##   scale     site, basin or Puget Sound
+##   analysis  temporal trend, average density, density with its SD band, or
+##             the NMDS of the algae community
+##   scale     site, basin or Puget Sound (the NMDS: the transect)
 ##   view      species within one geography (a panel per species), one species
 ##             across geographies (a panel per place), or every species
-##             composited on one set of axes for one geography
-##   data      algae or one of the four UPC groups
+##             composited on one set of axes for one geography -- for the NMDS,
+##             what colours the points: basin, site, year or depth zone
+##   data      algae or one of the four UPC groups (the NMDS: algae)
 ##
 ## and a second row then asks only for what that figure still needs -- which
-## site, basin or region, which species -- plus the y-axis switch.
+## site, basin or region, which species, or for the NMDS which species sizes
+## the points -- plus the y-axis switch (for the NMDS, arrows and ellipses).
+## The slots relabel themselves with the analysis, so no control changes
+## meaning without saying so.
 preview_card <- function() {
   div(
     class = "rc-card",
-    h2("Preview a figure"),
+    h2("Explore data"),
     p(class = "blurb",
       paste("Build one figure and look at it. These choices are independent of",
             "the checkboxes below -- they decide what you are looking at, not",
@@ -619,19 +634,15 @@ preview_card <- function() {
       div(tags$h3("Analysis"),
           selectInput("pv_analysis", NULL, choices = ANALYSES, selected = "density",
                       width = "100%")),
-      div(tags$h3("Scale"),
-          selectInput("pv_scale", NULL, choices = FIG_SCALES, selected = "basin",
-                      width = "100%")),
-      div(tags$h3("View"), uiOutput("pv_view_ui")),
-      div(tags$h3("Data"),
-          selectInput("pv_group", NULL, choices = FIG_GROUPS, selected = "algae",
-                      width = "100%"))
+      div(uiOutput("pv_scale_ui")),
+      div(uiOutput("pv_view_ui")),
+      div(uiOutput("pv_group_ui"))
     ),
     div(
       class = "rc-preview-controls",
       div(uiOutput("pv_where_ui")),
       div(uiOutput("pv_cat_ui")),
-      div(),
+      div(uiOutput("pv_info_ui")),
       div(uiOutput("pv_ylock_ui"))
     ),
     uiOutput("pv_status"),
@@ -957,12 +968,12 @@ server <- function(input, output, session) {
       "code/figure_functions.R could not be loaded -- see the R console.")))
     sel <- fig_selection()
     sets <- list()
-    for (a in sel$analyses) for (s in sel$scales) for (v in sel$views) {
-      if (is.null(FIG_ENV$view_problem(a, s, v)))
-        sets[[length(sets) + 1]] <- list(analysis = a, scale = s, view = v)
+    for (a in sel$analyses) for (st in FIG_ENV$figure_sets(a, sel$scales, sel$views)) {
+      if (FIG_ENV$is_nmds(a) || length(sel$groups))
+        sets[[length(sets) + 1]] <- c(list(analysis = a), st)
     }
 
-    if (!length(sets) || !length(sel$groups)) {
+    if (!length(sets)) {
       return(div(class = "rc-plan",
                  span(class = "none", "Nothing selected \u2014 this step would write no figures."),
                  div(style = "color:#5F6B7A;margin-top:4px;",
@@ -972,21 +983,27 @@ server <- function(input, output, session) {
     }
 
     have <- isTRUE(fig_tables())
-    groups <- Filter(function(g) g$folder %in% sel$groups, FIG_ENV$metric_groups)
+    ## the NMDS is the algae community whatever the data-type boxes say
+    groups_for <- function(a) {
+      if (FIG_ENV$is_nmds(a)) list(FIG_ENV$group_by_folder("algae"))
+      else Filter(function(g) g$folder %in% sel$groups, FIG_ENV$metric_groups)
+    }
     count <- function(st) {
       if (!have) return(NA_integer_)
-      sum(vapply(groups, function(g)
+      sum(vapply(groups_for(st$analysis), function(g)
         length(FIG_ENV$figure_targets(st$analysis, st$scale, st$view, g)), integer(1)))
     }
     counts <- vapply(sets, count, integer(1))
 
     rows <- Map(function(st, n) {
+      nm <- FIG_ENV$is_nmds(st$analysis)
       tags$tr(
         tags$td(class = "f", sprintf("figs/%s/%s/%s/", FIG_ENV$ANALYSIS_FOLDER[[st$analysis]],
                                      FIG_ENV$SCALE_FOLDER[[st$scale]], st$view)),
         tags$td(class = "d", paste(label_of(ANALYSES, st$analysis), "\u00b7",
-                                   label_of(FIG_SCALES, st$scale), "\u00b7",
-                                   label_of(VIEWS, st$view))),
+                                   if (nm) "Transect" else label_of(FIG_SCALES, st$scale), "\u00b7",
+                                   if (nm) paste("colored by", tolower(label_of(FIG_ENV$NMDS_COLOR_BY, st$view)))
+                                   else label_of(VIEWS, st$view))),
         tags$td(class = "c", if (is.na(n)) "\u2014" else format(n, big.mark = ","))
       )
     }, sets, counts)
@@ -1026,17 +1043,50 @@ server <- function(input, output, session) {
     FIG_ENV$group_by_folder(g)
   })
 
+  ## The NMDS has controls of its own: one scale (the transect), a colouring in
+  ## place of the view, algae only, a species to size the points by, and the
+  ## arrows and ellipses in place of the y-axis switch.
+  pv_nmds <- reactive(FIG_OK && FIG_ENV$is_nmds(input$pv_analysis %||% ""))
+
+  output$pv_scale_ui <- renderUI({
+    if (!FIG_OK) return(NULL)
+    choices <- if (pv_nmds()) FIG_ENV$NMDS_SCALES else FIG_SCALES
+    keep <- isolate(input$pv_scale)
+    tagList(tags$h3("Scale"),
+            selectInput("pv_scale", NULL, width = "100%", choices = choices,
+                        selected = if (!is.null(keep) && keep %in% choices) keep
+                                   else if ("basin" %in% choices) "basin" else choices[[1]]))
+  })
+
   ## Views that make a figure for this analysis and scale. A Puget Sound
   ## "across" has only one place to lay a species across, and SD bands for every
   ## species on one set of axes bury each other, so those two are not offered.
+  ## For the NMDS this slot is what colours the points.
   output$pv_view_ui <- renderUI({
     if (!FIG_OK) return(NULL)
     a <- input$pv_analysis %||% "density"
-    s <- input$pv_scale %||% "basin"
-    ok <- VIEWS[vapply(VIEWS, function(v) is.null(FIG_ENV$view_problem(a, s, v)), logical(1))]
+    nm <- pv_nmds()
+    s <- if (nm) "transect" else input$pv_scale %||% "basin"
+    pool <- if (nm) FIG_ENV$NMDS_COLOR_BY else VIEWS
+    ok <- pool[vapply(pool, function(v) is.null(FIG_ENV$view_problem(a, s, v)), logical(1))]
     keep <- isolate(input$pv_view)
-    selectInput("pv_view", NULL, width = "100%", choices = ok,
-                selected = if (!is.null(keep) && keep %in% ok) keep else ok[[1]])
+    tagList(tags$h3(if (nm) "Color by" else "View"),
+            selectInput("pv_view", NULL, width = "100%", choices = ok,
+                        selected = if (!is.null(keep) && keep %in% ok) keep else ok[[1]]))
+  })
+
+  output$pv_group_ui <- renderUI({
+    choices <- if (pv_nmds()) c("Algae" = "algae") else FIG_GROUPS
+    keep <- isolate(input$pv_group)
+    tagList(tags$h3("Data"),
+            selectInput("pv_group", NULL, width = "100%", choices = choices,
+                        selected = if (!is.null(keep) && keep %in% choices) keep else "algae"))
+  })
+
+  nmds_basins <- reactive({
+    if (!isTRUE(fig_tables()) || is.null(FIG_ENV$nmds_points)) return(character(0))
+    b <- sort(unique(as.character(FIG_ENV$nmds_points$basin)))
+    setNames(b, gsub("_", " ", b))
   })
 
   sites_by_basin <- reactive({
@@ -1075,6 +1125,10 @@ server <- function(input, output, session) {
                           selected = if (!is.null(keep) && keep %in% flat) keep else NULL),
               if (!is.null(hint)) div(class = "rc-hint", hint))
     }
+    if (pv_nmds()) {
+      if (!identical(v, "site")) return(NULL)
+      return(pick("Basin", nmds_basins(), "its sites in color, the rest in gray"))
+    }
     if (identical(v, "across")) {
       if (identical(s, "site")) return(pick("Basin", basins(), "its sites become the panels"))
       return(NULL)
@@ -1086,6 +1140,15 @@ server <- function(input, output, session) {
   })
 
   output$pv_cat_ui <- renderUI({
+    if (pv_nmds()) {
+      if (!isTRUE(fig_tables())) return(NULL)
+      ch <- c("None" = "none", FIG_ENV$nmds_size_choices())
+      keep <- isolate(input$pv_cat)
+      return(tagList(tags$h3("Size by"),
+                     selectInput("pv_cat", NULL, width = "100%", choices = ch,
+                                 selected = if (!is.null(keep) && keep %in% ch) keep else "none"),
+                     div(class = "rc-hint", "point size: that species' density on the transect")))
+    }
     if (!identical(input$pv_view, "across")) return(NULL)
     grp <- pv_group_def()
     if (is.null(grp) || !isTRUE(fig_tables())) return(NULL)
@@ -1101,7 +1164,32 @@ server <- function(input, output, session) {
   ## Float gives every panel the range its own values need; lock puts every
   ## panel on one shared range, so panels can be compared by eye -- at the cost
   ## of flattening the small ones. A single-panel composite has nothing to lock.
+  ## For the NMDS: how well two dimensions hold the transects' dissimilarities
+  output$pv_info_ui <- renderUI({
+    if (!pv_nmds() || !isTRUE(fig_tables()) || is.null(FIG_ENV$nmds_stress)) return(NULL)
+    st <- FIG_ENV$nmds_stress
+    tagList(tags$h3("Stress"),
+            div(style = "font-size:13px;color:#333C47;margin-top:3px;",
+                sprintf("2-D %.3f  \u00b7  3-D %.3f", st$stress[st$k == 2], st$stress[st$k == 3])),
+            div(class = "rc-hint",
+                sprintf("%s transects \u00b7 under 0.2 is usable (Clarke 1993)",
+                        format(st$n_transects[1], big.mark = ","))))
+  })
+
+  ## Float gives every panel the range its own values need; lock puts every
+  ## panel on one shared range, so panels can be compared by eye -- at the cost
+  ## of flattening the small ones. A single-panel composite has nothing to lock.
+  ## The NMDS's switches go here instead: its species arrows and group ellipses.
+  ## (Two checkboxes rather than one group, so that unticking both is not the
+  ## same as "not drawn yet".)
   output$pv_ylock_ui <- renderUI({
+    if (pv_nmds()) {
+      return(tagList(tags$h3("Show"),
+                     checkboxInput("pv_arrows", "Species arrows",
+                                   value = isTRUE(isolate(input$pv_arrows %||% TRUE))),
+                     checkboxInput("pv_ellipses", "95% ellipses",
+                                   value = isTRUE(isolate(input$pv_ellipses %||% TRUE)))))
+    }
     if (identical(input$pv_view, "composite")) return(NULL)
     tagList(tags$h3("Y-axis"),
             input_switch("pv_ylock", "Lock y-axis across panels",
@@ -1112,6 +1200,15 @@ server <- function(input, output, session) {
   pv_request <- reactive({
     v <- input$pv_view
     s <- input$pv_scale
+    if (pv_nmds()) {
+      size <- input$pv_cat
+      return(list(analysis = input$pv_analysis, scale = "transect", view = v,
+                  grp = FIG_ENV$group_by_folder("algae"),
+                  where = if (identical(v, "site")) input$pv_where else NULL,
+                  category = if (is.null(size) || identical(size, "none")) NULL else size,
+                  arrows = !isFALSE(input$pv_arrows),
+                  ellipses = !isFALSE(input$pv_ellipses)))
+    }
     list(analysis = input$pv_analysis, scale = s, view = v, grp = pv_group_def(),
          where = if (identical(v, "across") && !identical(s, "site")) NULL else input$pv_where,
          category = if (identical(v, "across")) input$pv_cat else NULL,
@@ -1123,6 +1220,7 @@ server <- function(input, output, session) {
   ## choice; checking it against this keeps that moment from flashing a "nothing
   ## recorded" message.
   valid_where <- function(scale, view) {
+    if (identical(scale, "transect")) return(if (identical(view, "site")) unname(nmds_basins()) else NULL)
     if (identical(view, "across")) return(if (identical(scale, "site")) unname(basins()) else NULL)
     switch(scale,
            site  = unlist(sites_by_basin(), use.names = FALSE),
@@ -1135,6 +1233,13 @@ server <- function(input, output, session) {
     r <- pv_request()
     if (is.null(r$analysis) || is.null(r$scale) || is.null(r$view) || is.null(r$grp)) return(NULL)
     if (!is.null(FIG_ENV$view_problem(r$analysis, r$scale, r$view))) return(NULL)
+    if (FIG_ENV$is_nmds(r$analysis)) {
+      if (identical(r$view, "site") && (is.null(r$where) || !r$where %in% valid_where("transect", "site")))
+        return(NULL)
+      if (!is.null(r$category) && !r$category %in% FIG_ENV$nmds_size_choices()) return(NULL)
+      return(tryCatch(do.call(FIG_ENV$make_figure, r),
+                      error = function(e) list(ok = FALSE, reason = conditionMessage(e))))
+    }
     needs_where <- !identical(r$view, "across") || identical(r$scale, "site")
     if (needs_where && (is.null(r$where) || !r$where %in% valid_where(r$scale, r$view)))
       return(NULL)
@@ -1229,8 +1334,8 @@ server <- function(input, output, session) {
 
   ## Registered here rather than beside each definition: outputOptions() needs
   ## the output to exist already, so this has to follow all of them.
-  keep_live("pv_view_ui", "pv_where_ui", "pv_cat_ui", "pv_ylock_ui",
-            "pv_status", "pv_target")
+  keep_live("pv_scale_ui", "pv_view_ui", "pv_group_ui", "pv_where_ui", "pv_cat_ui",
+            "pv_info_ui", "pv_ylock_ui", "pv_status", "pv_target")
 
   ## ---- running -----------------------------------------------------------
 

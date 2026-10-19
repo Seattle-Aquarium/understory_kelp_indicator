@@ -1,0 +1,5 @@
+"k","stress","converged","tries","role","distance","transformation","n_transects","n_no_understory_algae","n_no_algae_survey","seed","fingerprint"
+1,0.293685748196926,FALSE,36,"stress profile","bray","wisconsin(sqrt(density))",881,15,3,20261019,"29d779bae43f5cfc97899bb70b698b21"
+2,0.160046044838486,FALSE,216,"figures (2-D)","bray","wisconsin(sqrt(density))",881,15,3,20261019,"29d779bae43f5cfc97899bb70b698b21"
+3,0.104725837762795,FALSE,54,"3-D scores stored","bray","wisconsin(sqrt(density))",881,15,3,20261019,"29d779bae43f5cfc97899bb70b698b21"
+4,0.0765908762691944,FALSE,36,"stress profile","bray","wisconsin(sqrt(density))",881,15,3,20261019,"29d779bae43f5cfc97899bb70b698b21"

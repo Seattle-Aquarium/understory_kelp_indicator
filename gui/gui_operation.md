@@ -31,18 +31,20 @@ From RStudio the app still runs the old way, on whatever R and packages are inst
     - The default save location for outputs is `understory_kelp_indicator\results`; however, users may again select "Browse..." to change save location.
     - Select "Run this step" to execute with your selections.
     - "Reset all locations" restores all file and save paths to default.
-2. **Build metrics** — Runs `metrics_across_scale.R` and then `temporal_trend.R`:
+2. **Build metrics** — Runs `metrics_across_scale.R`, `temporal_trend.R` and `nmds_algae.R`:
     - Transect, site, basin and Puget Sound-wide tables (`metrics_*_scale.csv`) for algae, UPC, invertebrates and fish: each category's average, standard deviation and variance at each scale. Algae, invertebrate and fish values are individuals per m² (count ÷ 60 m²); UPC values are proportions of transect points.
     - The temporal trend metric (`trend_*_scale.csv`, issue #2) at the site, basin and Puget Sound scales: each year's density as a percentage of the mean over up to five preceding years. See the header of `code/temporal_trend.R` for how zeros, new appearances (would-be Inf) and absences (would-be NaN) are handled.
-3. **Figures** — Preview any figure, and write whole figure sets to `figs/` (longest run time).
-    - **Preview a figure** is built from four choices, the same four that name the folders Run writes into:
-      - **Analysis** — *Temporal trend*, *Average density*, or *Average density with standard deviation*.
+    - An NMDS of the understory algae community (`nmds_algae_*.csv`), one point per transect: Bray–Curtis on Wisconsin-standardized square-root densities, 2-D (stress 0.160), with the 3-D scores and the stress for 1–4 dimensions stored too. It takes a few minutes and is only re-run when the transect table changes; see the header of `code/nmds_algae.R`.
+3. **Figures** — Explore any figure, and write whole figure sets to `figs/` (longest run time).
+    - **Explore data** builds a figure from four choices, the same four that name the folders Run writes into:
+      - **Analysis** — *Temporal trend*, *Average density*, *Average density with standard deviation*, or *NMDS Algae*.
       - **Scale** — *Site* (transects → site), *Basin* (sites → basin) or *Puget Sound* (basins → Puget Sound; *Washington-wide* is offered too when the withheld basins were kept).
       - **View** — *Species within geography* (one place, a panel per species), *Species across geography* (one species, a panel per basin — or, at the site scale, per site in a chosen basin), or *Species composite within geography* (one place, every species on one set of axes). Combinations that make no figure are not offered: Puget Sound is a single geography, so it has no "across" view, and standard-deviation bands are not drawn on a composite.
       - **Data** — Algae, or one of the four UPC groups.
     - A second row asks only for what that figure still needs — which site, basin or region, or which species — and has the **Lock y-axis** switch: off, each panel floats to its own range; on, every panel shares one range so they can be compared by eye.
+    - With **NMDS Algae** the controls relabel themselves: *Scale* is the transect, *View* becomes **Color by** (basin, site, year or depth zone — for *site*, pick the basin whose sites are colored, the rest staying gray), **Size by** sizes each point by one species' density on that transect (or all understory algae), **Show** switches the species arrows and the 95% ellipses, and the stress of the 2-D and 3-D solutions is shown alongside.
     - The preview is drawn exactly as the saved file will be. "Save this figure" writes it to the path shown beside the button; "Save as..." lets the user choose.
-    - **What to draw** picks whole sets for Run: any combination of analyses, scales, views and data types, plus float or lock. The box underneath counts the files and shows where they go: `figs/<analysis>/<scale>/<view>/<data type>/`. The site scale is unticked by default because it is about 1,500 files.
+    - **What to draw** picks whole sets for Run: any combination of analyses, scales, views and data types, plus float or lock. The box underneath counts the files and shows where they go: `figs/<analysis>/<scale>/<view>/<data type>/`. The site scale is unticked by default because it is about 1,500 files. *NMDS Algae* is a fixed set of 21 (every coloring, each basin's sites, and the basin coloring sized by each species), whatever scales, views and data types are ticked.
 4. **Run Everything** — Executes all three steps in Data Interpreter from data cleaning through visualizations (with whatever is ticked on each tab).
 
 ## Reading the figures
@@ -53,3 +55,4 @@ Every figure carries a caption saying what the blue line, gray lines and band ar
 * The subtitle gives the number of units behind each year (for example *Sites per year: 2022 (1) · 2023 (2) …*). Many sites joined the survey in 2023–2024, so part of a basin's change between years can come from which sites were surveyed, not from the kelp.
 * Facet titles end with *(2 of 3 sites)*: the units where the category was recorded at least once, of those surveyed.
 * Temporal-trend figures use a doubling (log) axis centered on 100% (no change). Triangles on the bottom edge mark a category **lost** (recorded in the baseline, absent now); on the top edge, **new** (absent from the baseline, recorded now). Values beyond 6.25%–1,600% are drawn at those limits and labeled with their value.
+* **NMDS** figures follow the ROV–diver comparison report's style. Each point is one transect, and points close together had similar algae communities. Arrows point to each species' score (the weighted average of the transects it occurs on), so transects in an arrow's direction have more of that species. Ellipses enclose 95% of each group's transects. NMDS1 and NMDS2 share one scale, but the axes themselves have no units or fixed meaning. Stress under 0.2 gives a usable two-dimensional picture (Clarke 1993); the 2-D solution's 0.160 supports reading the broad structure, but not fine detail.

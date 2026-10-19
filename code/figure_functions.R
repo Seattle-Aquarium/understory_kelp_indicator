@@ -224,7 +224,8 @@ region_basins <- function(all_basins, focal_region) {
 
 ANALYSES <- c("Temporal trend"                       = "trend",
               "Average density"                      = "density",
-              "Average density with standard deviation" = "density_sd")
+              "Average density with standard deviation" = "density_sd",
+              "NMDS Algae"                           = "nmds_algae")
 
 SCALES <- c("Site"        = "site",
             "Basin"       = "basin",
@@ -234,13 +235,38 @@ VIEWS <- c("Species within geography"           = "within",
            "Species across geography"           = "across",
            "Species composite within geography" = "composite")
 
+## The NMDS places individual transects, so it has one scale of its own, and
+## its third choice is what colours the points rather than how the species are
+## laid out
+NMDS_SCALES <- c("Transect" = "transect")
+NMDS_COLOR_BY <- c("Basin"      = "basin",
+                   "Site"       = "site",
+                   "Year"       = "year",
+                   "Depth zone" = "depth_zone")
+
+is_nmds <- function(analysis) identical(analysis, "nmds_algae")
+
 ## The folder each choice writes into under figs/
 ANALYSIS_FOLDER <- c(trend = "temporal_trend", density = "density",
-                     density_sd = "density_sd")
-SCALE_FOLDER <- c(site = "site", basin = "basin", puget = "puget_sound")
+                     density_sd = "density_sd", nmds_algae = "nmds_algae")
+SCALE_FOLDER <- c(site = "site", basin = "basin", puget = "puget_sound",
+                  transect = "transect")
 
 ## NULL when the combination makes a figure; otherwise why it does not
 view_problem <- function(analysis, scale, view) {
+  if (is_nmds(analysis)) {
+    if (!identical(scale, "transect"))
+      return("the NMDS places individual transects, so its scale is the transect")
+    if (!view %in% NMDS_COLOR_BY)
+      return("the NMDS colors its points by basin, site, year or depth zone")
+    return(NULL)
+  }
+  if (identical(scale, "transect"))
+    return("only the NMDS is drawn transect by transect")
+  ## a colouring left over from the NMDS, for the moment the app takes to swap
+  ## its controls back, is not a view
+  if (!view %in% VIEWS) return("that view belongs to the NMDS")
+  if (!scale %in% SCALES) return("that scale belongs to the NMDS")
   if (identical(view, "across") && identical(scale, "puget"))
     return(paste("Puget Sound is a single geography, so there is nothing to lay",
                  "a species out across -- the basin scale shows one species",
@@ -261,10 +287,14 @@ df_puget    <- NULL
 tr_site     <- NULL
 tr_basin    <- NULL
 tr_puget    <- NULL
+nmds_points  <- NULL
+nmds_species <- NULL
+nmds_stress  <- NULL
 
 ## Reads every table the builders use and puts them where the builders look.
 ## `paths` is a list with any of: transect, site, basin, puget, trend_site,
-## trend_basin, trend_puget. A missing file leaves its table NULL -- the builders
+## trend_basin, trend_puget, nmds_points, nmds_species, nmds_stress. A missing
+## file leaves its table NULL -- the builders
 ## then say what is missing -- so the density figures still draw before a trend
 ## table exists. `exclude` names basins to leave out (the EXCLUDED BASINS).
 load_figure_tables <- function(paths, exclude = character(0)) {
@@ -290,6 +320,9 @@ load_figure_tables <- function(paths, exclude = character(0)) {
   tr_site     <<- with_col(rd("trend_site"))
   tr_basin    <<- with_col(rd("trend_basin"))
   tr_puget    <<- with_col(rd("trend_puget"))
+  nmds_points  <<- rd("nmds_points")
+  nmds_species <<- rd("nmds_species")
+  nmds_stress  <<- rd("nmds_stress")
   invisible(TRUE)
 }
 
@@ -604,12 +637,21 @@ analysis_label <- function(analysis) names(ANALYSES)[match(analysis, ANALYSES)]
 #: Build one figure. `where` is the site, basin or region for the within and
 #: composite views, and the basin whose sites are compared for the across view
 #: at the site scale. `category` is the species column for the across view.
+#:
+#: For the NMDS, `view` is what colours the points (NMDS_COLOR_BY), `where` the
+#: basin whose sites are coloured when that is "site", and `category` the
+#: species whose density sizes the points (or "total_density"); `arrows` and
+#: `ellipses` switch the species arrows and the group ellipses.
 make_figure <- function(analysis, scale, view, grp, where = NULL, category = NULL,
-                        y_lock = FALSE) {
+                        y_lock = FALSE, arrows = TRUE, ellipses = TRUE) {
   fail <- function(...) list(ok = FALSE, reason = paste0(...))
 
   problem <- view_problem(analysis, scale, view)
   if (!is.null(problem)) return(fail(problem))
+  if (is_nmds(analysis)) {
+    return(draw_nmds(view, basin = where, size_by = category, arrows = arrows,
+                     ellipses = ellipses))
+  }
   if (is.null(df_basin)) return(fail("the basin-scale table is missing -- run step 2"))
 
   tbl_missing <- if (identical(analysis, "trend")) {
@@ -880,13 +922,202 @@ draw_composite <- function(analysis, scale, focal, members, cols, grp, title) {
       legend.position = "right")
 }
 
+## ---- NMDS --------------------------------------------------------------------------
+## Drawn in the style of the ROV-diver comparison report
+## (CCR_benthic_analyses/ROV_diver_comparison/code/NMDS_visualization_functions.R):
+## faded points coloured by group, a 95% ellipse per group, black arrows to the
+## species scores with repelled white labels, and NMDS1 and NMDS2 on one scale
+## (coord_fixed) so distances read the same in both directions.
+
+## A palette for n groups: Dark2 while it lasts, then Paired, then evenly spaced
+## hues for the largest basins' site lists
+qualitative <- function(n) {
+  if (n <= 8) RColorBrewer::brewer.pal(max(3, n), "Dark2")[seq_len(n)]
+  else if (n <= 12) RColorBrewer::brewer.pal(n, "Paired")
+  else scales::hue_pal(l = 55)(n)
+}
+
+## the transect column a size choice refers to: a species ("ak_sugar_kelp",
+## or the "_avg" form the other figures use) or the total of all of them
+nmds_size_column <- function(size_by) {
+  if (is.null(size_by) || !nzchar(size_by)) return(NULL)
+  if (identical(size_by, "total_density")) return("total_density")
+  make.names(sub("_avg$", "", size_by))
+}
+
+nmds_size_label <- function(size_by) {
+  if (identical(size_by, "total_density")) "all understory algae" else species_label(size_by)
+}
+
+## The species a NMDS figure can be sized by, label -> value, for the app
+nmds_size_choices <- function() {
+  if (is.null(nmds_species)) return(character(0))
+  spp <- as.character(nmds_species$category)
+  c(setNames(spp, vapply(spp, species_label, character(1))),
+    "All understory algae (total)" = "total_density")
+}
+
+## the scale the size legend reads in: densities per m^2, square-root spaced
+## so a transect with a little of the species is still visibly bigger than one
+## with none
+size_scale <- function(name) {
+  arg <- if (utils::packageVersion("ggplot2") >= "3.5.0") "transform" else "trans"
+  do.call(scale_size, c(setNames(list("sqrt"), arg),
+                        list(range = c(0.4, 6.5), name = name)))
+}
+
+draw_nmds <- function(color_by, basin = NULL, size_by = NULL, arrows = TRUE,
+                      ellipses = TRUE) {
+  fail <- function(...) list(ok = FALSE, reason = paste0(...))
+  if (is.null(nmds_points) || is.null(nmds_species) || is.null(nmds_stress))
+    return(fail("the NMDS tables are missing -- run step 2"))
+
+  pts <- nmds_points
+  stress2 <- nmds_stress$stress[nmds_stress$k == 2]
+  info <- nmds_stress[nmds_stress$k == 2, , drop = FALSE]
+
+  focus <- rep(TRUE, nrow(pts))
+  if (identical(color_by, "basin")) {
+    pts$.group <- place_label(pts$basin)
+    legend_title <- "Basin"
+  } else if (identical(color_by, "site")) {
+    if (is.null(basin) || !basin %in% pts$basin)
+      return(fail("choose the basin whose sites to color"))
+    focus <- as.character(pts$basin) == basin
+    pts$.group <- ifelse(focus, place_label(pts$site), NA_character_)
+    legend_title <- paste0("Site (", place_label(basin), ")")
+  } else if (identical(color_by, "year")) {
+    pts$.group <- as.character(pts$year)
+    legend_title <- "Year"
+  } else {
+    pts$.group <- c(offshore = "Offshore (transects 1-3)",
+                    inshore  = "Inshore (transects 4-6)")[as.character(pts$depth_zone)]
+    legend_title <- "Depth zone"
+  }
+
+  groups <- sort(unique(pts$.group[focus & !is.na(pts$.group)]))
+  if (identical(color_by, "depth_zone")) groups <- intersect(c("Offshore (transects 1-3)",
+                                                              "Inshore (transects 4-6)"), groups)
+  colours <- switch(color_by,
+    year = setNames(scales::viridis_pal(end = 0.88)(length(groups)), groups),
+    ## blue deeper, orange shallower -- the ROV-diver report's convention
+    depth_zone = setNames(c("#3182BD", "#E6550D")[seq_along(groups)], groups),
+    setNames(qualitative(length(groups)), groups))
+  fg <- pts[focus, , drop = FALSE]
+  fg$.group <- factor(fg$.group, levels = groups)
+
+  size_col <- nmds_size_column(size_by)
+  if (!is.null(size_col) && !size_col %in% names(pts))
+    return(fail("no density column for ", nmds_size_label(size_by)))
+
+  p <- ggplot(mapping = aes(x = NMDS1, y = NMDS2))
+
+  ## the other basins' transects stay in view, in gray, so a basin's sites are
+  ## seen against the whole ordination
+  if (!all(focus)) {
+    p <- p + geom_point(data = pts[!focus, , drop = FALSE], color = "gray78",
+                        alpha = 0.45, size = 1.1, shape = 16)
+  }
+
+  if (is.null(size_col)) {
+    p <- p + geom_point(data = fg, aes(color = .group), size = 1.6, alpha = 0.4, shape = 16)
+  } else {
+    ## largest on top would hide the rest; smallest on top keeps every point visible
+    fg <- fg[order(-fg[[size_col]]), , drop = FALSE]
+    p <- p +
+      geom_point(data = fg, aes(color = .group, size = .data[[size_col]]),
+                 alpha = 0.45, shape = 16) +
+      size_scale(paste0(nmds_size_label(size_by), "\n(per m\u00b2)"))
+  }
+
+  ## ellipses for groups with enough transects to estimate one
+  if (isTRUE(ellipses)) {
+    ell <- fg %>% group_by(.group) %>% filter(n() >= 5) %>% ungroup()
+    if (nrow(ell)) {
+      ## normal-theory rather than stat_ellipse()'s default multivariate t: the
+      ## t fit is iterative and does not always converge on these groups
+      p <- p + stat_ellipse(data = ell, aes(color = .group, group = .group),
+                            type = "norm", level = 0.95, linewidth = 1)
+    }
+  }
+
+  if (isTRUE(arrows)) {
+    spp <- nmds_species
+    spp$.label <- vapply(as.character(spp$category), species_label, character(1))
+    p <- p +
+      geom_segment(data = spp, aes(x = 0, y = 0, xend = NMDS1, yend = NMDS2),
+                   linewidth = 0.8, color = "black",
+                   arrow = arrow(length = unit(0.2, "cm"))) +
+      ggrepel::geom_label_repel(data = spp, aes(x = NMDS1, y = NMDS2, label = .label),
+                                size = 3.2, fontface = "bold", fill = "white",
+                                max.overlaps = Inf, min.segment.length = 0,
+                                segment.color = "gray40", seed = 42)
+  }
+
+  n_out <- info$n_no_understory_algae + info$n_no_algae_survey
+  subtitle <- paste0("Bray-Curtis on Wisconsin-standardized square-root densities \u00b7 ",
+                     sprintf("2-D stress %.3f", stress2), " \u00b7 ",
+                     format(info$n_transects, big.mark = ","), " transects",
+                     if (!all(focus)) paste0(" \u00b7 sites of ", place_label(basin),
+                                             " in color, the rest in gray"))
+  caption <- paste(
+    sprintf("Each point is one 30 x 2 m transect; %d with no understory algae and %d without an algae survey cannot be placed and are left out.",
+            info$n_no_understory_algae, info$n_no_algae_survey),
+    if (isTRUE(arrows)) "Arrows point to each species' score: the weighted average of the transects it occurs on.",
+    if (isTRUE(ellipses)) "Ellipses: 95% normal-theory ellipses for each group of 5 or more transects.",
+    if (!is.null(size_col)) sprintf("Point size: %s density on the transect.", nmds_size_label(size_by)),
+    "Stress under 0.2 gives a usable two-dimensional picture (Clarke 1993); fine detail should not be over-read.")
+  caption <- paste(strwrap(caption, width = 175), collapse = "\n")
+
+  p <- p +
+    scale_color_manual(values = colours, name = legend_title, drop = FALSE) +
+    guides(color = guide_legend(override.aes = list(alpha = 1, size = 3, linewidth = 0),
+                                order = 1)) +
+    coord_fixed() +
+    labs(x = "NMDS1", y = "NMDS2", title = "Transect-level NMDS: understory algae",
+         subtitle = subtitle, caption = caption) +
+    my.theme +
+    theme(axis.title = element_text(size = 14),
+          axis.text = element_text(size = 12),
+          plot.title = element_text(size = 15),
+          plot.subtitle = element_text(size = 10.5, colour = "gray30"),
+          plot.caption = element_text(hjust = 0, size = 8.5, colour = "gray35",
+                                      lineheight = 1.05),
+          plot.caption.position = "plot",
+          legend.title = element_text(size = 12),
+          legend.text = element_text(size = 11),
+          legend.key = element_blank())
+  list(ok = TRUE, plot = p)
+}
+
+## The NMDS figures Run writes: every colouring, plain; each basin's sites; and
+## the basin colouring sized by each species and by the total
+nmds_targets <- function(view) {
+  if (is.null(nmds_points)) return(list())
+  switch(view,
+    basin = c(list(list(where = NULL, category = NULL)),
+              lapply(unname(nmds_size_choices()), function(s) list(where = NULL, category = s))),
+    site = lapply(sort(unique(as.character(nmds_points$basin))),
+                  function(b) list(where = b, category = NULL)),
+    list(list(where = NULL, category = NULL)))
+}
+
 ## ---- WHERE A FIGURE BELONGS ------------------------------------------------------
 ## figs/<analysis>/<scale>/<view>/<group>/<name>.png, e.g.
 ##   figs/density/basin/within/algae/Hood_Canal.png
 ##   figs/temporal_trend/puget_sound/composite/algae/Puget_Sound.png
 ##   figs/density_sd/basin/across/algae/sugar_kelp.png
 ##   figs/density/site/across/algae/Hood_Canal_sugar_kelp.png
+##   figs/nmds_algae/transect/basin/algae/all_sized_by_sugar_kelp.png
 figure_file <- function(analysis, scale, view, grp, where = NULL, category = NULL) {
+  if (is_nmds(analysis)) {
+    stem <- if (identical(view, "site")) safe_file_name(where) else "all"
+    if (!is.null(category) && nzchar(category)) {
+      stem <- paste0(stem, "_sized_by_", safe_file_name(nmds_size_label(category)))
+    }
+    return(file.path(ANALYSIS_FOLDER[[analysis]], SCALE_FOLDER[[scale]], view,
+                     grp$folder, paste0(stem, ".png")))
+  }
   stem <- if (identical(view, "across")) {
     species <- safe_file_name(species_label(category))
     if (identical(scale, "site")) paste0(safe_file_name(where), "_", species) else species
@@ -901,7 +1132,9 @@ figure_file <- function(analysis, scale, view, grp, where = NULL, category = NUL
 ## list(where =, category =) -- what visualizations.R loops over and what the
 ## app counts to say how many files a selection will write.
 figure_targets <- function(analysis, scale, view, grp) {
-  if (!is.null(view_problem(analysis, scale, view)) || is.null(df_basin)) return(list())
+  if (!is.null(view_problem(analysis, scale, view))) return(list())
+  if (is_nmds(analysis)) return(if (identical(grp$folder, "algae")) nmds_targets(view) else list())
+  if (is.null(df_basin)) return(list())
   places <- switch(scale,
     site  = if (is.null(df_site)) character(0) else sort(unique(as.character(df_site$site))),
     basin = sort(unique(as.character(df_basin$basin))),
@@ -917,4 +1150,18 @@ figure_targets <- function(analysis, scale, view, grp) {
     return(out)
   }
   lapply(cols, function(cc) list(where = NULL, category = cc))
+}
+
+## The (scale, view) pairs Run draws for an analysis, given the scale and view
+## boxes ticked. The NMDS has a fixed set of its own -- the transect scale and
+## every colouring -- whatever those boxes say, since neither applies to it.
+figure_sets <- function(analysis, scales, views) {
+  if (is_nmds(analysis)) {
+    return(lapply(unname(NMDS_COLOR_BY), function(v) list(scale = "transect", view = v)))
+  }
+  out <- list()
+  for (s in scales) for (v in views) {
+    if (is.null(view_problem(analysis, s, v))) out[[length(out) + 1]] <- list(scale = s, view = v)
+  }
+  out
 }

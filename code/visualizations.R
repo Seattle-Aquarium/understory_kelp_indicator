@@ -33,7 +33,10 @@ table_paths <- list(
   puget       = from_env("UKELP_PUGET_CSV",       file.path(results, "metrics_puget_sound_scale.csv")),
   trend_site  = from_env("UKELP_TREND_SITE_CSV",  file.path(results, "trend_site_scale.csv")),
   trend_basin = from_env("UKELP_TREND_BASIN_CSV", file.path(results, "trend_basin_scale.csv")),
-  trend_puget = from_env("UKELP_TREND_PUGET_CSV", file.path(results, "trend_puget_sound_scale.csv"))
+  trend_puget = from_env("UKELP_TREND_PUGET_CSV", file.path(results, "trend_puget_sound_scale.csv")),
+  nmds_points  = from_env("UKELP_NMDS_POINTS_CSV",  file.path(results, "nmds_algae_points.csv")),
+  nmds_species = from_env("UKELP_NMDS_SPECIES_CSV", file.path(results, "nmds_algae_species.csv")),
+  nmds_stress  = from_env("UKELP_NMDS_STRESS_CSV",  file.path(results, "nmds_algae_stress.csv"))
 )
 figs <- from_env("UKELP_FIGS_DIR", figs)
 
@@ -93,7 +96,10 @@ show <- function(p) if (draw_to_screen) print(p) else invisible(p)
 ##              species (site scale)                  per site in that basin
 ##   composite  site, basin or region                 every species, one panel
 ##
-## into figs/<analysis>/<scale>/<view>/<group>/ -- see figure_file().
+## into figs/<analysis>/<scale>/<view>/<group>/ -- see figure_file(). The NMDS
+## of the algae community is a set of its own, whatever scales, views and data
+## types are ticked: coloured by basin (plain, and sized by each species and by
+## the total), by each basin's sites, by year and by depth zone.
 ##
 ## Run on its own this draws every analysis, view and group at the basin and
 ## Puget Sound scales. The site scale is left out unless asked for: it is one
@@ -126,28 +132,29 @@ message(sprintf("Drawing %s | %s | %s | %s, y-axis %s",
 made <- 0L
 skipped <- character(0)
 
+## figure_sets() turns the ticked scales and views into what each analysis
+## draws; the NMDS has a fixed set of its own (every colouring, at the transect
+## scale) and is the algae community whatever data types are ticked
 for (analysis in want_analyses) {
-  for (scale in want_scales) {
-    for (view in want_views) {
-      problem <- view_problem(analysis, scale, view)
-      if (!is.null(problem)) next
-      for (grp in Filter(function(g) g$folder %in% want_groups, metric_groups)) {
-        for (target in figure_targets(analysis, scale, view, grp)) {
-          res <- make_figure(analysis, scale, view, grp, where = target$where,
-                             category = target$category, y_lock = y_lock)
-          rel <- figure_file(analysis, scale, view, grp, target$where, target$category)
-          if (!isTRUE(res$ok)) {
-            skipped <- c(skipped, paste0(rel, " -- ", res$reason))
-            next
-          }
-          out <- file.path(figs, rel)
-          dir.create(dirname(out), recursive = TRUE, showWarnings = FALSE)
-          show(res$plot)
-          ggsave(out, plot = res$plot, width = fig_width, height = fig_height,
-                 dpi = fig_dpi, bg = "white")
-          made <- made + 1L
-          message("wrote ", out)
+  groups <- if (is_nmds(analysis)) list(group_by_folder("algae"))
+            else Filter(function(g) g$folder %in% want_groups, metric_groups)
+  for (set in figure_sets(analysis, want_scales, want_views)) {
+    for (grp in groups) {
+      for (target in figure_targets(analysis, set$scale, set$view, grp)) {
+        res <- make_figure(analysis, set$scale, set$view, grp, where = target$where,
+                           category = target$category, y_lock = y_lock)
+        rel <- figure_file(analysis, set$scale, set$view, grp, target$where, target$category)
+        if (!isTRUE(res$ok)) {
+          skipped <- c(skipped, paste0(rel, " -- ", res$reason))
+          next
         }
+        out <- file.path(figs, rel)
+        dir.create(dirname(out), recursive = TRUE, showWarnings = FALSE)
+        show(res$plot)
+        ggsave(out, plot = res$plot, width = fig_width, height = fig_height,
+               dpi = fig_dpi, bg = "white")
+        made <- made + 1L
+        message("wrote ", out)
       }
     }
   }
