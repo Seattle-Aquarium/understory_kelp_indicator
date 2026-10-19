@@ -7,8 +7,8 @@ REM  window stays open while the app runs and closes itself a few seconds after
 REM  you close the browser tab.
 REM
 REM  Nothing has to be installed first -- not even R. The first time, it
-REM  downloads its own copy of R and the R packages the app needs (about 250 MB,
-REM  a few minutes, internet needed once) into
+REM  downloads its own copy of R and the R packages the app needs (about 140 MB
+REM  to download and 310 MB on disk, a few minutes, internet needed once) into
 REM      %LOCALAPPDATA%\CCR\understory_kelp_indicator
 REM  and from then on starts straight away, using only that. Other R versions,
 REM  package libraries, .Renviron and .Rprofile files on the computer are never

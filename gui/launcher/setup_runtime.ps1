@@ -16,8 +16,8 @@
 #    3. runtime-<version>.cmd, which tells the launcher which Rscript to run.
 #
 #  Everything lives under %LOCALAPPDATA%\CCR\understory_kelp_indicator -- out
-#  of Dropbox on purpose: an R installation plus its packages is tens of
-#  thousands of files, which the sync client would push to every computer that
+#  of Dropbox on purpose: an R installation plus its packages is over 8,000
+#  files and 300 MB, which the sync client would push to every computer that
 #  shares the folder. Deleting that folder resets everything.
 # ---------------------------------------------------------------------------
 param(
