@@ -21,3 +21,19 @@ The purpose of this repository is to organize the reproducible code and reportin
 </p>
 
 Photo credit: Tim McClure
+
+## Running the Data Interpreter
+
+Double-click **`run_data_interpreter.bat`**. Nothing needs to be installed first: the first run sets up the app's own copy of R and its packages (a few minutes, internet needed once), and every run after that opens the app in your browser straight away. `Create Desktop Shortcut.bat` puts it on the desktop. See [`gui/gui_operation.md`](gui/gui_operation.md) for the details.
+
+## What is where
+
+| | |
+|---|---|
+| `data/Reef_Check/` | the four raw Reef Check exports (algae, UPC, invertebrates, fish) |
+| `code/rc_full_data_clean.R` | step 1: one row per transect, all four datasets → `results/reef_check_cleaned.csv` |
+| `code/metrics_across_scale.R` | step 2: transect, site, basin and Puget Sound tables (mean, SD, variance) → `results/metrics_*_scale.csv` |
+| `code/temporal_trend.R` | step 2: the temporal trend metric ([issue #2](https://github.com/Seattle-Aquarium/understory_kelp_indicator/issues/2)) → `results/trend_*_scale.csv` |
+| `code/figure_functions.R`, `code/visualizations.R` | step 3: the figures → `figs/<analysis>/<scale>/<view>/<data type>/` |
+| `gui/` | the Data Interpreter (Shiny app) and its launcher |
+| `documents/` | the metric definitions (LaTeX) and the code review |

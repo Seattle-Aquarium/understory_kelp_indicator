@@ -508,8 +508,8 @@ df_invert <- df_invert %>%
 ## Fish are counted on up to 25 transects per site, but only transects 1-6 share
 ## their numbers -- and so their rows -- with the algae, UPC and invert
 ## transects. The rest are dropped here, which is right for a one-row-per-
-## transect table but discards roughly two thirds of the fish counts; a
-## fish-only site average would want all of them.
+## transect table but discards about 70% of the fish counted (transects 1-6
+## hold 30% of them); a fish-only site average would want all of them.
 df_fish <- df_fish %>%
   filter(transect %in% 1:6) %>%
   mutate(
