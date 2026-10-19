@@ -199,27 +199,19 @@ try {
     '@rem written by gui\launcher\setup_runtime.ps1',
     "@set ""UKI_RSCRIPT=$rscript""")
 
-  # ---- tidy up after a version change ---------------------------------------
-  # A new R_VERSION, CRAN_SNAPSHOT or LIBRARY_REV gets a new folder; the ones it
-  # replaced are a few hundred MB each, so they go.
+  # ---- environments for other versions ----------------------------------------
+  # A new R_VERSION, CRAN_SNAPSHOT or LIBRARY_REV gets a folder of its own, and
+  # the others are kept: two branches of this repository can pin different
+  # package sets (NMDS adds vegan), and deleting the other's folder here would
+  # make every switch between them a reinstall. They are named so they can be
+  # deleted by hand once nothing uses them.
   $libRoot = Split-Path -Parent $Lib
   Get-ChildItem -LiteralPath $libRoot -Directory -ErrorAction SilentlyContinue |
     Where-Object { $_.FullName -ne $Lib -and $_.Name -like 'R-*' } |
-    ForEach-Object { Say "Removing an older package library: $($_.Name)"; Remove-Item -LiteralPath $_.FullName -Recurse -Force }
-  # An older private R goes through its own uninstaller, which also takes its
-  # entry out of Apps & Features; deleting the folder alone would strand that.
+    ForEach-Object { Say "Also present, kept: package library $($_.Name)" }
   Get-ChildItem -LiteralPath $UkiHome -Directory -Filter 'R-*' -ErrorAction SilentlyContinue |
     Where-Object { $_.FullName -ne $privateR } |
-    ForEach-Object {
-      Say "Removing an older R: $($_.Name)"
-      $unins = Join-Path $_.FullName 'unins000.exe'
-      if (Test-Path -LiteralPath $unins) {
-        Start-Process -FilePath $unins -ArgumentList @('/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART') -Wait | Out-Null
-      }
-      if (Test-Path -LiteralPath $_.FullName) {
-        Remove-Item -LiteralPath $_.FullName -Recurse -Force -ErrorAction SilentlyContinue
-      }
-    }
+    ForEach-Object { Say "Also present, kept: $($_.Name) (uninstall it from Apps & Features when unused)" }
 
   Write-Host ''
   Say 'Setup complete.'

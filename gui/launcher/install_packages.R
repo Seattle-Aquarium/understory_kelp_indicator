@@ -21,7 +21,8 @@ options(repos = c(CRAN = repo), timeout = 900,
 ## What the app and the step scripts load; install.packages() brings in what
 ## these depend on. Change this list and bump LIBRARY_REV in runtime.cfg.
 need <- c("shiny", "bslib", "processx",          # the app
-          "dplyr", "tidyr", "tibble", "ggplot2")  # the step scripts
+          "dplyr", "tidyr", "tibble", "ggplot2",  # the step scripts
+          "vegan", "ggrepel")                     # the NMDS and its labels
 
 installed <- function() rownames(installed.packages(lib.loc = lib))
 
