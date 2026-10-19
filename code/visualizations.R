@@ -36,7 +36,13 @@ table_paths <- list(
   trend_puget = from_env("UKELP_TREND_PUGET_CSV", file.path(results, "trend_puget_sound_scale.csv")),
   nmds_points  = from_env("UKELP_NMDS_POINTS_CSV",  file.path(results, "nmds_algae_points.csv")),
   nmds_species = from_env("UKELP_NMDS_SPECIES_CSV", file.path(results, "nmds_algae_species.csv")),
-  nmds_stress  = from_env("UKELP_NMDS_STRESS_CSV",  file.path(results, "nmds_algae_stress.csv"))
+  nmds_stress  = from_env("UKELP_NMDS_STRESS_CSV",  file.path(results, "nmds_algae_stress.csv")),
+  nmds_envfit  = from_env("UKELP_NMDS_ENVFIT_CSV",  file.path(results, "nmds_algae_envfit.csv")),
+  dbrda_points  = from_env("UKELP_DBRDA_POINTS_CSV",  file.path(results, "dbrda_algae_points.csv")),
+  dbrda_species = from_env("UKELP_DBRDA_SPECIES_CSV", file.path(results, "dbrda_algae_species.csv")),
+  dbrda_terms   = from_env("UKELP_DBRDA_TERMS_CSV",   file.path(results, "dbrda_algae_terms.csv")),
+  dbrda_summary = from_env("UKELP_DBRDA_SUMMARY_CSV", file.path(results, "dbrda_algae_summary.csv")),
+  dbrda_varpart = from_env("UKELP_DBRDA_VARPART_CSV", file.path(results, "dbrda_algae_varpart.csv"))
 )
 figs <- from_env("UKELP_FIGS_DIR", figs)
 
@@ -96,10 +102,11 @@ show <- function(p) if (draw_to_screen) print(p) else invisible(p)
 ##              species (site scale)                  per site in that basin
 ##   composite  site, basin or region                 every species, one panel
 ##
-## into figs/<analysis>/<scale>/<view>/<group>/ -- see figure_file(). The NMDS
-## of the algae community is a set of its own, whatever scales, views and data
-## types are ticked: coloured by basin (plain, and sized by each species and by
-## the total), by each basin's sites, by year and by depth zone.
+## into figs/<analysis>/<scale>/<view>/<group>/ -- see figure_file(). The two
+## ordinations of the algae community are sets of their own, whatever scales,
+## views and data types are ticked: coloured by basin, by each basin's sites,
+## by year and by depth zone -- and the NMDS coloured by basin also with its
+## substrate vectors, and sized by each species and by the total.
 ##
 ## Run on its own this draws every analysis, view and group at the basin and
 ## Puget Sound scales. The site scale is left out unless asked for: it is one
@@ -133,17 +140,20 @@ made <- 0L
 skipped <- character(0)
 
 ## figure_sets() turns the ticked scales and views into what each analysis
-## draws; the NMDS has a fixed set of its own (every colouring, at the transect
-## scale) and is the algae community whatever data types are ticked
+## draws; the ordinations have a fixed set of their own (every colouring, at the
+## transect scale) and are the algae community whatever data types are ticked
 for (analysis in want_analyses) {
-  groups <- if (is_nmds(analysis)) list(group_by_folder("algae"))
+  groups <- if (is_ordination(analysis)) list(group_by_folder("algae"))
             else Filter(function(g) g$folder %in% want_groups, metric_groups)
   for (set in figure_sets(analysis, want_scales, want_views)) {
     for (grp in groups) {
       for (target in figure_targets(analysis, set$scale, set$view, grp)) {
+        substrate <- isTRUE(target$substrate)
         res <- make_figure(analysis, set$scale, set$view, grp, where = target$where,
-                           category = target$category, y_lock = y_lock)
-        rel <- figure_file(analysis, set$scale, set$view, grp, target$where, target$category)
+                           category = target$category, y_lock = y_lock,
+                           substrate = substrate)
+        rel <- figure_file(analysis, set$scale, set$view, grp, target$where, target$category,
+                           substrate = substrate)
         if (!isTRUE(res$ok)) {
           skipped <- c(skipped, paste0(rel, " -- ", res$reason))
           next

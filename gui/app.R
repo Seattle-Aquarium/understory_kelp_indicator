@@ -130,6 +130,18 @@ FILES <- list(
                       default = file.path(RESULTS, "nmds_algae_species.csv")),
   nmds_stress  = list(label = "NMDS, stress", env = "UKELP_NMDS_STRESS_CSV", kind = "save",
                       default = file.path(RESULTS, "nmds_algae_stress.csv")),
+  nmds_envfit  = list(label = "NMDS, substrate vectors", env = "UKELP_NMDS_ENVFIT_CSV", kind = "save",
+                      default = file.path(RESULTS, "nmds_algae_envfit.csv")),
+  dbrda_points  = list(label = "db-RDA, transects", env = "UKELP_DBRDA_POINTS_CSV", kind = "save",
+                       default = file.path(RESULTS, "dbrda_algae_points.csv")),
+  dbrda_species = list(label = "db-RDA, species", env = "UKELP_DBRDA_SPECIES_CSV", kind = "save",
+                       default = file.path(RESULTS, "dbrda_algae_species.csv")),
+  dbrda_terms   = list(label = "db-RDA, substrate terms", env = "UKELP_DBRDA_TERMS_CSV", kind = "save",
+                       default = file.path(RESULTS, "dbrda_algae_terms.csv")),
+  dbrda_summary = list(label = "db-RDA, summary", env = "UKELP_DBRDA_SUMMARY_CSV", kind = "save",
+                       default = file.path(RESULTS, "dbrda_algae_summary.csv")),
+  dbrda_varpart = list(label = "db-RDA, variation partitioning", env = "UKELP_DBRDA_VARPART_CSV",
+                       kind = "save", default = file.path(RESULTS, "dbrda_algae_varpart.csv")),
   figs    = list(label = "Figures folder", env = "UKELP_FIGS_DIR",  kind = "dir",
                  default = FIGS)
 )
@@ -148,23 +160,29 @@ STEPS <- list(
        ins = c("algae", "upc", "invert", "fish"),
        outs = c("cleaned")),
   list(id = "metrics", n = 2, title = "Build metrics",
-       scripts = c("metrics_across_scale.R", "temporal_trend.R", "nmds_algae.R"),
+       scripts = c("metrics_across_scale.R", "temporal_trend.R", "nmds_algae.R",
+                   "substrate_algae.R"),
        blurb = paste("Turns the combined table into transect, site, basin and Puget",
                      "Sound-wide tables -- each average with its standard deviation",
                      "and variance -- then computes the temporal trend (each year's",
-                     "density as a percentage of the preceding years' mean) and an",
+                     "density as a percentage of the preceding years' mean), an",
                      "NMDS of the understory algae community, one point per",
-                     "transect. The NMDS takes a few minutes, and is only re-run",
-                     "when the transect table has changed."),
+                     "transect, and how that community relates to substrate:",
+                     "substrate vectors on the NMDS and a db-RDA constrained by",
+                     "substrate, with their permutation tests. The NMDS and the",
+                     "tests take about ten minutes the first time, and are only",
+                     "re-run when the transect table has changed."),
        ins = c("cleaned"),
        outs = c("transect", "site", "basin", "puget",
                 "trend_site", "trend_basin", "trend_puget",
-                "nmds_points", "nmds_species", "nmds_stress")),
+                "nmds_points", "nmds_species", "nmds_stress", "nmds_envfit",
+                "dbrda_points", "dbrda_species", "dbrda_terms", "dbrda_summary",
+                "dbrda_varpart")),
   list(id = "figures", n = 3, title = "Figures",
        scripts = "visualizations.R",
        blurb = paste("Draws every figure set ticked below into the figures folder,",
                      "by analysis, scale, view and data type. This is the slowest",
-                     "step: the default selection is about 320 files and takes",
+                     "step: the default selection is about 350 files and takes",
                      "20-30 minutes."),
        ins = c("site", "basin", "puget"),
        outs = c("figs"))
@@ -201,7 +219,9 @@ if (FIG_OK) {
 ## the tables the figures read, by FILES key
 FIG_TABLES <- c("transect", "site", "basin", "puget",
                 "trend_site", "trend_basin", "trend_puget",
-                "nmds_points", "nmds_species", "nmds_stress")
+                "nmds_points", "nmds_species", "nmds_stress", "nmds_envfit",
+                "dbrda_points", "dbrda_species", "dbrda_terms", "dbrda_summary",
+                "dbrda_varpart")
 
 ## ---------------------------------------------------------------------------
 ## The three withheld basins
@@ -333,7 +353,8 @@ describe <- function(path, kind) {
                    error = function(e) NA_integer_)
   head <- if (kind == "save") "exists, will be overwritten  \u00b7  " else ""
   text <- if (is.na(rows)) size
-          else sprintf("%s rows  \u00b7  %s", format(rows, big.mark = ","), size)
+          else sprintf("%s %s  \u00b7  %s", format(rows, big.mark = ","),
+                       if (rows == 1) "row" else "rows", size)
   list(ok = TRUE,
        text = sprintf("%s%s  \u00b7  %s", head, text,
                       format(info$mtime, "%Y-%m-%d %H:%M")),
@@ -608,17 +629,20 @@ include_box <- function(scope) {
 ## define the figure -- the same four that name the folders Run writes into:
 ##
 ##   analysis  temporal trend, average density, density with its SD band, or
-##             the NMDS of the algae community
-##   scale     site, basin or Puget Sound (the NMDS: the transect)
+##             one of the two ordinations of the algae community: the NMDS, and
+##             the db-RDA constrained by substrate
+##   scale     site, basin or Puget Sound (the ordinations: the transect)
 ##   view      species within one geography (a panel per species), one species
 ##             across geographies (a panel per place), or every species
-##             composited on one set of axes for one geography -- for the NMDS,
-##             what colours the points: basin, site, year or depth zone
-##   data      algae or one of the four UPC groups (the NMDS: algae)
+##             composited on one set of axes for one geography -- for the
+##             ordinations, what colours the points: basin, site, year or depth
+##             zone
+##   data      algae or one of the four UPC groups (the ordinations: algae)
 ##
 ## and a second row then asks only for what that figure still needs -- which
-## site, basin or region, which species, or for the NMDS which species sizes
-## the points -- plus the y-axis switch (for the NMDS, arrows and ellipses).
+## site, basin or region, which species, or for the ordinations which species
+## sizes the points -- plus the y-axis switch (for the ordinations, which
+## arrows and ellipses to show).
 ## The slots relabel themselves with the analysis, so no control changes
 ## meaning without saying so.
 preview_card <- function() {
@@ -969,7 +993,7 @@ server <- function(input, output, session) {
     sel <- fig_selection()
     sets <- list()
     for (a in sel$analyses) for (st in FIG_ENV$figure_sets(a, sel$scales, sel$views)) {
-      if (FIG_ENV$is_nmds(a) || length(sel$groups))
+      if (FIG_ENV$is_ordination(a) || length(sel$groups))
         sets[[length(sets) + 1]] <- c(list(analysis = a), st)
     }
 
@@ -983,9 +1007,9 @@ server <- function(input, output, session) {
     }
 
     have <- isTRUE(fig_tables())
-    ## the NMDS is the algae community whatever the data-type boxes say
+    ## the ordinations are the algae community whatever the data-type boxes say
     groups_for <- function(a) {
-      if (FIG_ENV$is_nmds(a)) list(FIG_ENV$group_by_folder("algae"))
+      if (FIG_ENV$is_ordination(a)) list(FIG_ENV$group_by_folder("algae"))
       else Filter(function(g) g$folder %in% sel$groups, FIG_ENV$metric_groups)
     }
     count <- function(st) {
@@ -996,13 +1020,13 @@ server <- function(input, output, session) {
     counts <- vapply(sets, count, integer(1))
 
     rows <- Map(function(st, n) {
-      nm <- FIG_ENV$is_nmds(st$analysis)
+      nm <- FIG_ENV$is_ordination(st$analysis)
       tags$tr(
         tags$td(class = "f", sprintf("figs/%s/%s/%s/", FIG_ENV$ANALYSIS_FOLDER[[st$analysis]],
                                      FIG_ENV$SCALE_FOLDER[[st$scale]], st$view)),
         tags$td(class = "d", paste(label_of(ANALYSES, st$analysis), "\u00b7",
                                    if (nm) "Transect" else label_of(FIG_SCALES, st$scale), "\u00b7",
-                                   if (nm) paste("colored by", tolower(label_of(FIG_ENV$NMDS_COLOR_BY, st$view)))
+                                   if (nm) paste("colored by", tolower(label_of(FIG_ENV$ORDINATION_COLOR_BY, st$view)))
                                    else label_of(VIEWS, st$view))),
         tags$td(class = "c", if (is.na(n)) "\u2014" else format(n, big.mark = ","))
       )
@@ -1043,14 +1067,15 @@ server <- function(input, output, session) {
     FIG_ENV$group_by_folder(g)
   })
 
-  ## The NMDS has controls of its own: one scale (the transect), a colouring in
-  ## place of the view, algae only, a species to size the points by, and the
-  ## arrows and ellipses in place of the y-axis switch.
+  ## The ordinations have controls of their own: one scale (the transect), a
+  ## colouring in place of the view, algae only, a species to size the points
+  ## by, and which arrows and ellipses to show in place of the y-axis switch.
+  pv_ord  <- reactive(FIG_OK && FIG_ENV$is_ordination(input$pv_analysis %||% ""))
   pv_nmds <- reactive(FIG_OK && FIG_ENV$is_nmds(input$pv_analysis %||% ""))
 
   output$pv_scale_ui <- renderUI({
     if (!FIG_OK) return(NULL)
-    choices <- if (pv_nmds()) FIG_ENV$NMDS_SCALES else FIG_SCALES
+    choices <- if (pv_ord()) FIG_ENV$ORDINATION_SCALES else FIG_SCALES
     keep <- isolate(input$pv_scale)
     tagList(tags$h3("Scale"),
             selectInput("pv_scale", NULL, width = "100%", choices = choices,
@@ -1061,14 +1086,20 @@ server <- function(input, output, session) {
   ## Views that make a figure for this analysis and scale. A Puget Sound
   ## "across" has only one place to lay a species across, and SD bands for every
   ## species on one set of axes bury each other, so those two are not offered.
-  ## For the NMDS this slot is what colours the points.
+  ## For the ordinations this slot is what colours the points.
   output$pv_view_ui <- renderUI({
     if (!FIG_OK) return(NULL)
     a <- input$pv_analysis %||% "density"
-    nm <- pv_nmds()
+    nm <- pv_ord()
+    ## Leaving an ordination, this re-renders before the scale does, so for a
+    ## moment input$pv_scale still says "transect" -- which no other analysis
+    ## draws, so no view would be offered. The default scale stands in until
+    ## the scale catches up.
     s <- if (nm) "transect" else input$pv_scale %||% "basin"
-    pool <- if (nm) FIG_ENV$NMDS_COLOR_BY else VIEWS
+    if (!nm && !s %in% FIG_SCALES) s <- "basin"
+    pool <- if (nm) FIG_ENV$ORDINATION_COLOR_BY else VIEWS
     ok <- pool[vapply(pool, function(v) is.null(FIG_ENV$view_problem(a, s, v)), logical(1))]
+    if (!length(ok)) return(NULL)
     keep <- isolate(input$pv_view)
     tagList(tags$h3(if (nm) "Color by" else "View"),
             selectInput("pv_view", NULL, width = "100%", choices = ok,
@@ -1076,16 +1107,19 @@ server <- function(input, output, session) {
   })
 
   output$pv_group_ui <- renderUI({
-    choices <- if (pv_nmds()) c("Algae" = "algae") else FIG_GROUPS
+    choices <- if (pv_ord()) c("Algae" = "algae") else FIG_GROUPS
     keep <- isolate(input$pv_group)
     tagList(tags$h3("Data"),
             selectInput("pv_group", NULL, width = "100%", choices = choices,
                         selected = if (!is.null(keep) && keep %in% choices) keep else "algae"))
   })
 
-  nmds_basins <- reactive({
-    if (!isTRUE(fig_tables()) || is.null(FIG_ENV$nmds_points)) return(character(0))
-    b <- sort(unique(as.character(FIG_ENV$nmds_points$basin)))
+  ## the basins the chosen ordination placed transects in
+  ord_basins <- reactive({
+    if (!isTRUE(fig_tables()) || !pv_ord()) return(character(0))
+    pts <- FIG_ENV$ordination_points(input$pv_analysis)
+    if (is.null(pts)) return(character(0))
+    b <- sort(unique(as.character(pts$basin)))
     setNames(b, gsub("_", " ", b))
   })
 
@@ -1125,9 +1159,9 @@ server <- function(input, output, session) {
                           selected = if (!is.null(keep) && keep %in% flat) keep else NULL),
               if (!is.null(hint)) div(class = "rc-hint", hint))
     }
-    if (pv_nmds()) {
+    if (pv_ord()) {
       if (!identical(v, "site")) return(NULL)
-      return(pick("Basin", nmds_basins(), "its sites in color, the rest in gray"))
+      return(pick("Basin", ord_basins(), "its sites in color, the rest in gray"))
     }
     if (identical(v, "across")) {
       if (identical(s, "site")) return(pick("Basin", basins(), "its sites become the panels"))
@@ -1140,9 +1174,9 @@ server <- function(input, output, session) {
   })
 
   output$pv_cat_ui <- renderUI({
-    if (pv_nmds()) {
+    if (pv_ord()) {
       if (!isTRUE(fig_tables())) return(NULL)
-      ch <- c("None" = "none", FIG_ENV$nmds_size_choices())
+      ch <- c("None" = "none", FIG_ENV$point_size_choices())
       keep <- isolate(input$pv_cat)
       return(tagList(tags$h3("Size by"),
                      selectInput("pv_cat", NULL, width = "100%", choices = ch,
@@ -1161,32 +1195,48 @@ server <- function(input, output, session) {
             div(class = "rc-hint", "one panel per place"))
   })
 
-  ## Float gives every panel the range its own values need; lock puts every
-  ## panel on one shared range, so panels can be compared by eye -- at the cost
-  ## of flattening the small ones. A single-panel composite has nothing to lock.
-  ## For the NMDS: how well two dimensions hold the transects' dissimilarities
+  ## For the NMDS: how well two dimensions hold the transects' dissimilarities.
+  ## For the db-RDA: how much of the community substrate explains, and the
+  ## tests between and within sites.
   output$pv_info_ui <- renderUI({
-    if (!pv_nmds() || !isTRUE(fig_tables()) || is.null(FIG_ENV$nmds_stress)) return(NULL)
-    st <- FIG_ENV$nmds_stress
-    tagList(tags$h3("Stress"),
+    if (!pv_ord() || !isTRUE(fig_tables())) return(NULL)
+    if (pv_nmds()) {
+      st <- FIG_ENV$nmds_stress
+      if (is.null(st)) return(NULL)
+      return(tagList(tags$h3("Stress"),
+                     div(style = "font-size:13px;color:#333C47;margin-top:3px;",
+                         sprintf("2-D %.3f  \u00b7  3-D %.3f", st$stress[st$k == 2], st$stress[st$k == 3])),
+                     div(class = "rc-hint",
+                         sprintf("%s transects \u00b7 under 0.2 is usable (Clarke 1993)",
+                                 format(st$n_transects[1], big.mark = ",")))))
+    }
+    s <- FIG_ENV$dbrda_summary
+    if (is.null(s)) return(NULL)
+    tagList(tags$h3("Explained by substrate"),
             div(style = "font-size:13px;color:#333C47;margin-top:3px;",
-                sprintf("2-D %.3f  \u00b7  3-D %.3f", st$stress[st$k == 2], st$stress[st$k == 3])),
+                sprintf("%.1f%%  \u00b7  adjusted %.1f%%", 100 * s$r2[1], 100 * s$adj_r2[1])),
             div(class = "rc-hint",
-                sprintf("%s transects \u00b7 under 0.2 is usable (Clarke 1993)",
-                        format(st$n_transects[1], big.mark = ","))))
+                sprintf("between sites %.1f%%, p = %.3f \u00b7 within sites %.1f%%, p = %.3f",
+                        100 * s$between_adj_r2[1], s$between_p[1],
+                        100 * s$within_share_of_within_site[1], s$within_p[1])))
   })
 
   ## Float gives every panel the range its own values need; lock puts every
   ## panel on one shared range, so panels can be compared by eye -- at the cost
   ## of flattening the small ones. A single-panel composite has nothing to lock.
-  ## The NMDS's switches go here instead: its species arrows and group ellipses.
-  ## (Two checkboxes rather than one group, so that unticking both is not the
-  ## same as "not drawn yet".)
+  ## The ordinations' switches go here instead: species arrows and group
+  ## ellipses, and on the NMDS the substrate vectors (the db-RDA always has its
+  ## substrate arrows -- they are what it is constrained by). Separate
+  ## checkboxes rather than one group, so that unticking all of them is not the
+  ## same as "not drawn yet".
   output$pv_ylock_ui <- renderUI({
-    if (pv_nmds()) {
+    if (pv_ord()) {
       return(tagList(tags$h3("Show"),
                      checkboxInput("pv_arrows", "Species arrows",
                                    value = isTRUE(isolate(input$pv_arrows %||% TRUE))),
+                     if (pv_nmds())
+                       checkboxInput("pv_substrate", "Substrate vectors",
+                                     value = isTRUE(isolate(input$pv_substrate))),
                      checkboxInput("pv_ellipses", "95% ellipses",
                                    value = isTRUE(isolate(input$pv_ellipses %||% TRUE)))))
     }
@@ -1200,14 +1250,15 @@ server <- function(input, output, session) {
   pv_request <- reactive({
     v <- input$pv_view
     s <- input$pv_scale
-    if (pv_nmds()) {
+    if (pv_ord()) {
       size <- input$pv_cat
-      return(list(analysis = input$pv_analysis, scale = "transect", view = v,
-                  grp = FIG_ENV$group_by_folder("algae"),
-                  where = if (identical(v, "site")) input$pv_where else NULL,
-                  category = if (is.null(size) || identical(size, "none")) NULL else size,
-                  arrows = !isFALSE(input$pv_arrows),
-                  ellipses = !isFALSE(input$pv_ellipses)))
+      return(c(list(analysis = input$pv_analysis, scale = "transect", view = v,
+                    grp = FIG_ENV$group_by_folder("algae"),
+                    where = if (identical(v, "site")) input$pv_where else NULL,
+                    category = if (is.null(size) || identical(size, "none")) NULL else size,
+                    arrows = !isFALSE(input$pv_arrows),
+                    ellipses = !isFALSE(input$pv_ellipses)),
+               if (pv_nmds()) list(substrate = isTRUE(input$pv_substrate))))
     }
     list(analysis = input$pv_analysis, scale = s, view = v, grp = pv_group_def(),
          where = if (identical(v, "across") && !identical(s, "site")) NULL else input$pv_where,
@@ -1220,7 +1271,7 @@ server <- function(input, output, session) {
   ## choice; checking it against this keeps that moment from flashing a "nothing
   ## recorded" message.
   valid_where <- function(scale, view) {
-    if (identical(scale, "transect")) return(if (identical(view, "site")) unname(nmds_basins()) else NULL)
+    if (identical(scale, "transect")) return(if (identical(view, "site")) unname(ord_basins()) else NULL)
     if (identical(view, "across")) return(if (identical(scale, "site")) unname(basins()) else NULL)
     switch(scale,
            site  = unlist(sites_by_basin(), use.names = FALSE),
@@ -1233,10 +1284,10 @@ server <- function(input, output, session) {
     r <- pv_request()
     if (is.null(r$analysis) || is.null(r$scale) || is.null(r$view) || is.null(r$grp)) return(NULL)
     if (!is.null(FIG_ENV$view_problem(r$analysis, r$scale, r$view))) return(NULL)
-    if (FIG_ENV$is_nmds(r$analysis)) {
+    if (FIG_ENV$is_ordination(r$analysis)) {
       if (identical(r$view, "site") && (is.null(r$where) || !r$where %in% valid_where("transect", "site")))
         return(NULL)
-      if (!is.null(r$category) && !r$category %in% FIG_ENV$nmds_size_choices()) return(NULL)
+      if (!is.null(r$category) && !r$category %in% FIG_ENV$point_size_choices()) return(NULL)
       return(tryCatch(do.call(FIG_ENV$make_figure, r),
                       error = function(e) list(ok = FALSE, reason = conditionMessage(e))))
     }
@@ -1289,7 +1340,8 @@ server <- function(input, output, session) {
     if (!isTRUE(res$ok)) return(NULL)
     r <- pv_request()
     file.path(current_path("figs"),
-              FIG_ENV$figure_file(r$analysis, r$scale, r$view, r$grp, r$where, r$category))
+              FIG_ENV$figure_file(r$analysis, r$scale, r$view, r$grp, r$where, r$category,
+                                  substrate = isTRUE(r$substrate)))
   })
 
   output$pv_target <- renderUI({

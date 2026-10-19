@@ -35,6 +35,7 @@ Double-click **`run_data_interpreter.bat`**. Nothing needs to be installed first
 | `code/metrics_across_scale.R` | step 2: transect, site, basin and Puget Sound tables (mean, SD, variance) → `results/metrics_*_scale.csv` |
 | `code/temporal_trend.R` | step 2: the temporal trend metric ([issue #2](https://github.com/Seattle-Aquarium/understory_kelp_indicator/issues/2)) → `results/trend_*_scale.csv` |
 | `code/nmds_algae.R` | step 2: NMDS of the understory algae community, one point per transect → `results/nmds_algae_*.csv` |
+| `code/substrate_algae.R` | step 2: substrate and that community — substrate vectors on the NMDS, and a db-RDA constrained by substrate, with permutation tests → `results/nmds_algae_envfit.csv`, `results/dbrda_algae_*.csv` |
 | `code/figure_functions.R`, `code/visualizations.R` | step 3: the figures → `figs/<analysis>/<scale>/<view>/<data type>/` |
 | `gui/` | the Data Interpreter (Shiny app) and its launcher |
 | `documents/` | the metric definitions (LaTeX) and the code review |

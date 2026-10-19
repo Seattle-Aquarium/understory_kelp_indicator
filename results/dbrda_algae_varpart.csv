@@ -1,0 +1,9 @@
+"fraction","adj_r2"
+"substrate alone",0.0497109468813373
+"basin alone",0.189428929896786
+"year alone",0.00163782621333641
+"substrate and basin together",0.136358318152143
+"basin and year together",0.00342777638393132
+"substrate and year together",0.000693194907771422
+"all three together",0.00727997719388773
+"unexplained",0.611463030370807
