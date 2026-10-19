@@ -1,24 +1,30 @@
-## Understory Kelp Forests Analyzer -- desktop application
+## Understory Kelp Indicator: Data Interpreter -- desktop application
 ##
 ## A front end to the repository's R scripts. It does not reimplement any step:
-## it collects the file locations a step needs, starts that script as its own R
-## process, and shows what comes back as it happens.
+## it collects the file locations a step needs, starts that step's scripts as
+## their own R process, and shows what comes back as it happens.
 ##
 ##   1. Clean data      code/rc_full_data_clean.R
-##   2. Build metrics   code/metrics_across_scale.R
+##   2. Build metrics   code/metrics_across_scale.R, then code/temporal_trend.R
 ##   3. Figures         code/visualizations.R
 ##   Run everything     all three in order, stopping at the first failure
 ##
-## Run it with run_understory_kelp_gui.bat, or from R:
-##   shiny::runApp("gui")
+## Start it by double-clicking run_data_interpreter.bat in the repository
+## folder, which sets up a private copy of R and the packages the first time and
+## starts straight away after that. From R or RStudio it also runs as
+##   shiny::runApp("gui")        from the repository folder
+## or with RStudio's Run App button, or by selecting all of this file and
+## running it.
 ##
 ## Design follows ReefCheck_BasicLogoGuide.pdf. That guide fixes two colors --
 ## #003A70 and #00C4B3 -- and two licensed typefaces, and says nothing about
 ## surfaces or states, so everything beyond the two colors is derived here and
 ## the derivation is written down rather than left to taste.
 
-library(shiny)
-library(bslib)
+suppressPackageStartupMessages({
+  library(shiny)
+  library(bslib)
+})
 
 ## ---------------------------------------------------------------------------
 ## Brand
@@ -48,14 +54,45 @@ FONT_STACK <- '"Museo Sans","Museo","Segoe UI",system-ui,-apple-system,sans-seri
 ## Where things are
 ## ---------------------------------------------------------------------------
 
+## The folder this file is in. runApp("gui") -- the launcher, and RStudio's Run
+## App button -- makes it the working directory, but selecting all of app.R and
+## running it does not: the working directory is then wherever R happens to be,
+## and nothing ties the code to its folder. So the candidates are tried in turn
+## and the first that holds app.R and www/ wins.
+APP_DIR <- local({
+  is_app_dir <- function(d) {
+    length(d) == 1 && !is.na(d) && nzchar(d) &&
+      file.exists(file.path(d, "app.R")) && dir.exists(file.path(d, "www"))
+  }
+  from_editor <- tryCatch({
+    if (requireNamespace("rstudioapi", quietly = TRUE) && rstudioapi::isAvailable())
+      dirname(rstudioapi::getSourceEditorContext()$path) else NULL
+  }, error = function(e) NULL)
+  from_source <- tryCatch(dirname(sys.frame(1)$ofile), error = function(e) NULL)
+  candidates <- list(getwd(), file.path(getwd(), "gui"), from_editor, from_source)
+  hit <- Filter(is_app_dir, candidates)
+  if (!length(hit)) {
+    stop("Could not find the app's folder (gui/, with app.R and www/ in it). ",
+         "Start the app with run_data_interpreter.bat, or with ",
+         "shiny::runApp(\"gui\") from the repository folder.", call. = FALSE)
+  }
+  normalizePath(hit[[1]], winslash = "/")
+})
+
 ## The app directory is gui/; the repository is its parent.
-REPO    <- normalizePath("..", winslash = "/", mustWork = FALSE)
+REPO    <- dirname(APP_DIR)
 CODE    <- file.path(REPO, "code")
 DATA    <- file.path(REPO, "data", "Reef_Check")
 RESULTS <- file.path(REPO, "results")
 FIGS    <- file.path(REPO, "figs")
 
-## Every file location the three scripts between them care about. One registry
+## The logos. Shiny serves www/ by itself only when the app is started as a
+## folder -- runApp("gui") or Run App -- and not when app.R is run line by
+## line, which is why the logos showed for some people and only their alt text
+## for others. Naming the folder here serves it either way.
+addResourcePath("ukelp", file.path(APP_DIR, "www"))
+
+## Every file location the three steps between them care about. One registry
 ## rather than one per step, because the steps share files: step 1's output is
 ## step 2's input, and step 2's outputs are step 3's inputs. Pointing step 1
 ## somewhere new therefore carries through the chain without being retyped.
@@ -73,122 +110,88 @@ FILES <- list(
                  default = file.path(DATA, "Fish_Washington_raw.csv")),
   cleaned = list(label = "Combined table", env = "UKELP_CLEANED_CSV", kind = "save",
                  default = file.path(RESULTS, "reef_check_cleaned.csv")),
+  transect = list(label = "Transect scale", env = "UKELP_TRANSECT_CSV", kind = "save",
+                  default = file.path(RESULTS, "metrics_transect_scale.csv")),
   site    = list(label = "Site scale",   env = "UKELP_SITE_CSV",    kind = "save",
                  default = file.path(RESULTS, "metrics_site_scale.csv")),
   basin   = list(label = "Basin scale",  env = "UKELP_BASIN_CSV",   kind = "save",
                  default = file.path(RESULTS, "metrics_basin_scale.csv")),
   puget   = list(label = "Puget Sound-wide", env = "UKELP_PUGET_CSV", kind = "save",
                  default = file.path(RESULTS, "metrics_puget_sound_scale.csv")),
+  trend_site  = list(label = "Trend, site",  env = "UKELP_TREND_SITE_CSV", kind = "save",
+                     default = file.path(RESULTS, "trend_site_scale.csv")),
+  trend_basin = list(label = "Trend, basin", env = "UKELP_TREND_BASIN_CSV", kind = "save",
+                     default = file.path(RESULTS, "trend_basin_scale.csv")),
+  trend_puget = list(label = "Trend, Puget Sound", env = "UKELP_TREND_PUGET_CSV", kind = "save",
+                     default = file.path(RESULTS, "trend_puget_sound_scale.csv")),
   figs    = list(label = "Figures folder", env = "UKELP_FIGS_DIR",  kind = "dir",
                  default = FIGS)
 )
 
+## `scripts` run in order, as one step: a failure in the first stops the step
+## before the second starts.
 STEPS <- list(
   list(id = "clean", n = 1, title = "Clean data",
-       script = "rc_full_data_clean.R",
+       scripts = "rc_full_data_clean.R",
        blurb = paste("Reads the four raw Reef Check exports, drops Canadian sites",
-                     "and the excluded basins, corrects known site-name",
-                     "misspellings, removes the duplicate winter 2025 surveys,",
-                     "and assigns one unique key per dive."),
+                     "and the withheld basins, corrects known site-name",
+                     "misspellings, removes the duplicate winter 2025 surveys, and",
+                     "writes one row per transect. A 0 means looked for and not",
+                     "found; a blank means the category was not on that survey's",
+                     "datasheet (several were added in 2022-2024)."),
        ins = c("algae", "upc", "invert", "fish"),
        outs = c("cleaned")),
   list(id = "metrics", n = 2, title = "Build metrics",
-       script = "metrics_across_scale.R",
-       blurb = paste("Aggregates the combined table into site, basin and Puget",
-                     "Sound-wide averages, each with its standard deviation and",
-                     "variance."),
+       scripts = c("metrics_across_scale.R", "temporal_trend.R"),
+       blurb = paste("Turns the combined table into transect, site, basin and Puget",
+                     "Sound-wide tables -- each average with its standard deviation",
+                     "and variance -- then computes the temporal trend: each year's",
+                     "density as a percentage of the preceding years' mean, at the",
+                     "site, basin and Puget Sound scales."),
        ins = c("cleaned"),
-       outs = c("site", "basin", "puget")),
+       outs = c("transect", "site", "basin", "puget",
+                "trend_site", "trend_basin", "trend_puget")),
   list(id = "figures", n = 3, title = "Figures",
-       script = "visualizations.R",
-       blurb = paste("Draws every figure set for algae and the four UPC groups,",
-                     "into the figures folder by group. This is the slowest step",
-                     "-- it writes a few hundred files."),
+       scripts = "visualizations.R",
+       blurb = paste("Draws every figure set ticked below into the figures folder,",
+                     "by analysis, scale, view and data type. This is the slowest",
+                     "step: the default selection is about 320 files and takes",
+                     "20-30 minutes."),
        ins = c("site", "basin", "puget"),
        outs = c("figs"))
 )
 names(STEPS) <- vapply(STEPS, function(s) s$id, character(1))
 
 ## ---------------------------------------------------------------------------
-## What the figures step can draw
+## What the figures can show
 ## ---------------------------------------------------------------------------
 ##
-## Three choices -- scale, data type, figure type -- and one set of figures for
-## each valid (scale, type) pair. The table below is the whole mapping; change a
-## folder here and the summary, the counts and the script all follow.
-##
-## "composite" exists only at the basin scale: there is no site or sound-wide
-## equivalent of the one-axis layout, so asking for it alone draws nothing.
+## The figure definitions -- and the choices that name them -- live in
+## code/figure_functions.R, which visualizations.R uses as well, so the preview
+## and the files Run writes are the same figures by construction. It is loaded
+## here, before the UI is built, because the dropdowns are made from it.
+FIG_ENV <- new.env(parent = globalenv())
+FIG_OK <- tryCatch({
+  sys.source(file.path(CODE, "figure_functions.R"), envir = FIG_ENV)
+  TRUE
+}, error = function(e) {
+  warning("Could not load figure_functions.R: ", conditionMessage(e))
+  FALSE
+})
 
-FIG_GROUPS <- c("Algae"             = "algae",
-                "Cover (cv_)"       = "cover",
-                "Relief (rf_)"      = "relief",
-                "Substrate (sb_)"   = "substrate",
-                "Superlayer (sp_)"  = "superlayer")
-
-## The displayed label only. The value stays "site" because it is what the
-## scripts read from UKELP_FIG_SCALES and what FIG_SETS keys on -- renaming the
-## value would ripple into visualizations.R for no gain.
-FIG_SCALES <- c("Invert to Category" = "site",
-                "Basin"              = "basin",
-                "Puget Sound"        = "puget",
-                "Washington-wide"    = "washington",
-                "Percentage"         = "percent")
-
-FIG_TYPES <- c("Density / proportion"                        = "plain",
-               "Density / proportion with standard deviation" = "sd",
-               "Basin and species composites"                 = "composite")
-
-#: `per` is what one file covers, which is how the file counts are worked out:
-#:   basin     -> one file per basin
-#:   category  -> one file per category in the group
-#:   one       -> a single sound-wide file
-FIG_SETS <- list(
-  list(scale = "site",  type = "plain",     folder = "species_composites",
-       per = "category", about = "one file per category, faceted by basin"),
-  list(scale = "site",  type = "sd",        folder = "species_composites_sd",
-       per = "category", about = "the same, with a standard deviation band"),
-  list(scale = "basin", type = "plain",     folder = "basin_composites",
-       per = "basin",    about = "one file per basin, faceted by category"),
-  list(scale = "basin", type = "sd",        folder = "basin_composites_sd",
-       per = "basin",    about = "the same, with a standard deviation band"),
-  list(scale = "basin", type = "composite", folder = "basin_species",
-       per = "basin",    about = "one file per basin, every category on one axis"),
-  list(scale = "puget", type = "plain",     folder = "puget_sound",
-       per = "one",      about = "Puget_Sound, faceted by category"),
-  list(scale = "puget", type = "sd",        folder = "puget_sound_sd",
-       per = "one",      about = "the same, with a standard deviation band"),
-  list(scale = "washington", type = "plain", folder = "puget_sound",
-       per = "one",      about = "Washington_wide, faceted by category"),
-  list(scale = "washington", type = "sd",    folder = "puget_sound_sd",
-       per = "one",      about = "the same, with a standard deviation band"),
-  ## No plain/sd/composite variants -- this scale answers to itself alone, so it
-  ## is listed against every type and de-duplicated when the plan is built.
-  list(scale = "percent", type = NA, folder = "percent_change",
-       per = "basin_category",
-       about = paste("one file per basin and category, percent difference from",
-                     "other years (fewer -- combinations with no honest answer",
-                     "are skipped)"))
-)
-
-#: Which metrics region each region scale needs, so an unavailable one can be
-#: greyed out rather than silently drawing the wrong thing.
-SCALE_REGION <- c(puget = "Puget_Sound", washington = "Washington_wide")
-
-#: The regions a metrics table actually holds.
-regions_present <- function(path) {
-  if (is.null(path) || !nzchar(path) || !file.exists(path)) return(character(0))
-  d <- tryCatch(read.csv(path, check.names = FALSE), error = function(e) NULL)
-  if (is.null(d) || !"region" %in% names(d)) return(character(0))
-  unique(as.character(d$region))
+if (FIG_OK) {
+  ANALYSES   <- FIG_ENV$ANALYSES
+  FIG_SCALES <- FIG_ENV$SCALES
+  VIEWS      <- FIG_ENV$VIEWS
+  FIG_GROUPS <- setNames(vapply(FIG_ENV$metric_groups, function(g) g$folder, character(1)),
+                         vapply(FIG_ENV$metric_groups, function(g) g$label, character(1)))
+} else {
+  ANALYSES <- FIG_SCALES <- VIEWS <- FIG_GROUPS <- character(0)
 }
 
-#: Prefixes and the algae exclusions, so the summary can count categories from
-#: the basin-scale table rather than from a number written down here.
-GROUP_PREFIX <- c(algae = "ak_", cover = "cv_", relief = "rf_",
-                  substrate = "sb_", superlayer = "sp_")
-EXCLUDED_CATEGORIES <- c("ak_bull_kelp_avg", "ak_feather_boa_n_avg",
-                         "ak_giant_kelp_n_avg")
+## the tables the figures read, by FILES key
+FIG_TABLES <- c("transect", "site", "basin", "puget",
+                "trend_site", "trend_basin", "trend_puget")
 
 ## ---------------------------------------------------------------------------
 ## The three withheld basins
@@ -215,7 +218,8 @@ INCLUDE_KEYS <- c(north = "Northern Coast",
 
 INCLUDE_HEADING <- "Withheld basins"
 INCLUDE_BLURB <- paste("Left out of every output unless ticked. Tick them",
-                       "independently -- one, two or all three.")
+                       "independently -- one, two or all three. With any of them",
+                       "kept, the Puget Sound scale also offers Washington-wide.")
 
 #: Which of the three appear in a csv's `basin` column. Names are compared with
 #: underscores collapsed to spaces, since the cleaned tables carry the
@@ -277,13 +281,14 @@ pick_open <- function(caption, initial) {
     filetypes = "{{CSV files} {.csv}} {{All files} {*}}"))))
 }
 
-pick_save <- function(caption, initial) {
+pick_save <- function(caption, initial, ext = ".csv",
+                      types = "{{CSV files} {.csv}} {{All files} {*}}") {
   clean_path(with_tk_parent(function(tt) as.character(tcltk::tkgetSaveFile(
     parent = tt, title = caption,
     initialfile = basename(initial),
     initialdir = if (nzchar(initial)) dirname(initial) else REPO,
-    defaultextension = ".csv",
-    filetypes = "{{CSV files} {.csv}} {{All files} {*}}"))))
+    defaultextension = ext,
+    filetypes = types))))
 }
 
 pick_dir <- function(caption, initial) {
@@ -316,11 +321,11 @@ describe <- function(path, kind) {
           else sprintf("%.1f MB", info$size / 1024^2)
   rows <- tryCatch(max(0L, length(readLines(path, warn = FALSE)) - 1L),
                    error = function(e) NA_integer_)
-  head <- if (kind == "save") "exists, will be overwritten  ·  " else ""
+  head <- if (kind == "save") "exists, will be overwritten  \u00b7  " else ""
   text <- if (is.na(rows)) size
-          else sprintf("%s rows  ·  %s", format(rows, big.mark = ","), size)
+          else sprintf("%s rows  \u00b7  %s", format(rows, big.mark = ","), size)
   list(ok = TRUE,
-       text = sprintf("%s%s  ·  %s", head, text,
+       text = sprintf("%s%s  \u00b7  %s", head, text,
                       format(info$mtime, "%Y-%m-%d %H:%M")),
        class = "meta-ok")
 }
@@ -334,11 +339,14 @@ rc_theme <- bs_theme(
   primary = NAVY, secondary = INK_MUTED, success = TEAL_INK
 )
 
-app_css <- sprintf('
+## Only the brand colors and the font go through sprintf(): the whole sheet is
+## longer than the 8,192 characters sprintf() accepts as a format.
+app_css <- paste0(sprintf('
   :root { --navy:%s; --teal:%s; --teal-ink:%s; --ink:%s; --ink-muted:%s;
           --panel:%s; --line:%s; --warn:%s; --err:%s; }
   body { font-family: %s; background:#fff; }
-
+', NAVY, TEAL, TEAL_INK, INK, INK_MUTED, PANEL, LINE,
+                          WARN_AMBER, ERR_RED, FONT_STACK), '
   /* Banner. The supplied logo is a white outline, so it needs the navy ground
      the logo guide itself shows the reversed mark on. */
   .rc-banner { background: var(--navy); color:#fff; display:flex;
@@ -351,7 +359,7 @@ app_css <- sprintf('
      single object carrying no type, which is where a gradient earns its keep. */
   .rc-rule { height:5px; background:linear-gradient(90deg,var(--navy),var(--teal)); }
 
-  .rc-wrap { max-width:1080px; margin:0 auto; padding:20px 24px 44px 24px; }
+  .rc-wrap { max-width:1180px; margin:0 auto; padding:20px 24px 44px 24px; }
 
   .rc-card { background:var(--panel); border:1px solid var(--line);
              border-radius:10px; padding:18px 20px; margin-bottom:18px; }
@@ -364,7 +372,7 @@ app_css <- sprintf('
              gap:12px; padding:9px 0; border-bottom:1px dashed var(--line); }
   .rc-file:last-of-type { border-bottom:0; }
   .rc-file .who { font-weight:600; font-size:13px; color:var(--ink); padding-top:7px; }
-  .rc-file .form-group, .rc-file .shiny-input-container { margin-bottom:0; width:100%%; }
+  .rc-file .form-group, .rc-file .shiny-input-container { margin-bottom:0; width:100%; }
   .rc-file input.form-control { font-family:Consolas,"Courier New",monospace;
              font-size:12px; padding:5px 9px; border-color:var(--line); }
   .rc-meta { font-size:11.5px; margin-top:3px; }
@@ -402,21 +410,24 @@ app_css <- sprintf('
   .nav-pills .nav-link.active { background:#fff !important; color:var(--navy) !important;
             border:2px solid var(--teal); font-weight:600; }
 
-  /* The three choice columns on the Figures tab */
-  .rc-choices { display:grid; grid-template-columns:1fr 1fr 1.35fr; gap:26px; }
+  /* The choice columns on the Figures tab */
+  .rc-choices { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:20px; }
+  /* Shiny gives every input a fixed 300px, which five columns cannot hold */
+  .rc-choices .shiny-input-container { width:100% !important; }
   .rc-choices h3 { font-size:12px; font-weight:700; letter-spacing:.06em;
                    text-transform:uppercase; color:var(--navy);
                    margin:0 0 8px 0; padding-bottom:5px;
                    border-bottom:2px solid var(--teal); }
   .rc-choices .shiny-options-group { margin-top:0; }
-  .rc-choices .checkbox { margin:0 0 5px 0; }
-  .rc-choices .checkbox label { font-size:13px; color:var(--ink); line-height:1.4; }
-  @media (max-width: 820px) { .rc-choices { grid-template-columns:1fr; gap:14px; } }
+  .rc-choices .checkbox, .rc-choices .radio { margin:0 0 5px 0; }
+  .rc-choices .checkbox label, .rc-choices .radio label { font-size:13px; color:var(--ink);
+                                                          line-height:1.4; }
+  @media (max-width: 980px) { .rc-choices { grid-template-columns:1fr 1fr; gap:14px; } }
 
   .rc-plan { background:#fff; border:1px solid var(--line); border-radius:8px;
              padding:12px 14px; margin-top:14px; font-size:12.5px; }
   .rc-plan .hd { font-weight:600; color:var(--navy); margin-bottom:6px; }
-  .rc-plan table { width:100%%; border-collapse:collapse; }
+  .rc-plan table { width:100%; border-collapse:collapse; }
   .rc-plan td { padding:3px 0; vertical-align:top; }
   .rc-plan td.f { font-family:Consolas,"Courier New",monospace; color:var(--ink);
                   white-space:nowrap; padding-right:14px; }
@@ -440,15 +451,21 @@ app_css <- sprintf('
   .rc-include .note.ok { color:var(--teal-ink); }
   .rc-include .note.muted { color:var(--ink-muted); }
 
-  /* The preview */
-  .rc-preview-controls { display:grid; grid-template-columns:repeat(4,1fr); gap:16px;
-                         margin-bottom:6px; }
+  /* The preview: four choices that define the figure, then where or what, and
+     the y-axis switch */
+  .rc-preview-controls { display:grid; grid-template-columns:repeat(4,minmax(0,1fr));
+                         gap:16px; margin-bottom:10px; }
+  .rc-preview-controls .shiny-input-container { width:100% !important; }
+  .rc-preview-stage img { width:100%; height:auto; display:block; }
   .rc-preview-controls h3 { font-size:12px; font-weight:700; letter-spacing:.06em;
                             text-transform:uppercase; color:var(--navy);
                             margin:0 0 7px 0; padding-bottom:5px;
                             border-bottom:2px solid var(--teal); }
   .rc-preview-controls .form-group { margin-bottom:0; }
   .rc-preview-controls select { font-size:13px; }
+  .rc-preview-controls .rc-hint { font-size:11.5px; color:var(--ink-muted); margin-top:5px; }
+  .rc-preview-controls .form-switch { margin-top:6px; }
+  .rc-preview-controls .form-check-label { font-size:13px; color:var(--ink); }
   @media (max-width: 900px) { .rc-preview-controls { grid-template-columns:1fr 1fr; } }
 
   .rc-preview-stage { background:#fff; border:1px solid var(--line);
@@ -462,7 +479,7 @@ app_css <- sprintf('
   .rc-chain { font-size:13px; color:var(--ink); line-height:1.9; margin:0 0 6px 0; }
   .rc-chain .n { display:inline-block; min-width:22px; font-weight:700; color:var(--navy); }
   .rc-foot { font-size:11.5px; color:var(--ink-muted); margin-top:8px; }
-', NAVY, TEAL, TEAL_INK, INK, INK_MUTED, PANEL, LINE, WARN_AMBER, ERR_RED, FONT_STACK)
+')
 
 ## ---------------------------------------------------------------------------
 ## UI
@@ -477,8 +494,12 @@ file_row <- function(key) {
       textInput(paste0("path_", key), label = NULL, value = f$default, width = "100%"),
       div(class = "rc-meta", uiOutput(paste0("meta_", key), inline = TRUE))
     ),
-    actionButton(paste0("browse_", key), "Browse…", class = "btn-browse")
+    actionButton(paste0("browse_", key), "Browse\u2026", class = "btn-browse")
   )
+}
+
+runs_line <- function(step) {
+  sprintf("Runs %s", paste0("code/", step$scripts, collapse = ", then "))
 }
 
 step_panel <- function(step) {
@@ -489,51 +510,48 @@ step_panel <- function(step) {
       class = "rc-card",
       h2(sprintf("%d.  %s", step$n, step$title)),
       p(class = "blurb", step$blurb),
-      tags$div(style = "font-size:12px;color:#5F6B7A;margin:0 0 6px 0;",
-               sprintf("Runs code/%s", step$script))
+      tags$div(style = "font-size:12px;color:#5F6B7A;margin:0 0 6px 0;", runs_line(step))
     ),
     ## The preview comes first on the Figures tab: looking at one figure is how
     ## a person works out which sets are worth generating, so it belongs above
     ## the checkboxes that decide what Run writes rather than below them.
     if (identical(step$id, "figures")) preview_card() else NULL,
     if (identical(step$id, "figures")) {
-      ## The three tables this step reads are step 2's outputs and are set on
-      ## that tab, so repeating the pickers here would be two places to change
-      ## one path. This tab chooses what to draw instead.
+      ## The tables this step reads are step 2's outputs and are set on that
+      ## tab, so repeating the pickers here would be two places to change one
+      ## path. This tab chooses what to draw instead.
       div(
         class = "rc-card",
         h2("What to draw"),
         p(class = "blurb",
-          paste("Every combination of the three below is one set of figures.",
-                "Reads the site, basin and Puget Sound-wide tables from step 2.")),
+          paste("Every combination of the boxes below is one set of figures,",
+                "written to figs/<analysis>/<scale>/<view>/<data type>/. These",
+                "are independent of the preview above.")),
         div(
           class = "rc-choices",
-          div(
-            tags$h3("Scale"),
-            ## Washington-wide is left unticked: it needs the held-out basins,
-            ## which are themselves off by default, so ticking it here would
-            ## promise a figure the data cannot produce.
-            checkboxGroupInput("fig_scales", label = NULL, choices = FIG_SCALES,
-                               selected = setdiff(unname(FIG_SCALES), "washington"))
-          ),
-          div(
-            tags$h3("Data type"),
-            checkboxGroupInput("fig_groups", label = NULL, choices = FIG_GROUPS,
-                               selected = unname(FIG_GROUPS))
-          ),
-          div(
-            tags$h3("Figure type"),
-            checkboxGroupInput("fig_types", label = NULL, choices = FIG_TYPES,
-                               selected = unname(FIG_TYPES))
-          )
+          div(tags$h3("Analysis"),
+              checkboxGroupInput("fig_analyses", label = NULL, choices = ANALYSES,
+                                 selected = unname(ANALYSES))),
+          ## The site scale is one file per site per data type per view --
+          ## about 1,500 files -- so it is there to be ticked, not ticked.
+          div(tags$h3("Scale"),
+              checkboxGroupInput("fig_scales", label = NULL, choices = FIG_SCALES,
+                                 selected = setdiff(unname(FIG_SCALES), "site"))),
+          div(tags$h3("View"),
+              checkboxGroupInput("fig_views", label = NULL, choices = VIEWS,
+                                 selected = unname(VIEWS))),
+          div(tags$h3("Data type"),
+              checkboxGroupInput("fig_groups", label = NULL, choices = FIG_GROUPS,
+                                 selected = unname(FIG_GROUPS))),
+          div(tags$h3("Y-axis"),
+              radioButtons("fig_ylock", label = NULL,
+                           choices = c("Float -- each panel its own range" = "float",
+                                       "Lock -- one range for every panel" = "lock"),
+                           selected = "float"))
         ),
         include_box(step$id),
         div(style = "margin-top:4px;", uiOutput("fig_plan"))
       )
-      ## The preview card follows, built separately so the two controls are
-      ## visibly different things: the checkboxes above decide what Run writes,
-      ## the dropdowns below decide what you are looking at. They are
-      ## deliberately independent of each other.
     } else {
       div(
         class = "rc-card",
@@ -576,51 +594,66 @@ include_box <- function(scope) {
 ## The preview
 ## ---------------------------------------------------------------------------
 ##
-## Build one figure and look at it before anything is written. Four dropdowns,
-## each narrowing the one after it:
+## Build one figure and look at it before anything is written. Four choices
+## define the figure -- the same four that name the folders Run writes into:
 ##
-##   scale  ->  which basin, or which region  ->  figure type  ->  data group
+##   analysis  temporal trend, average density, or density with its SD band
+##   scale     site, basin or Puget Sound
+##   view      species within one geography (a panel per species), one species
+##             across geographies (a panel per place), or every species
+##             composited on one set of axes for one geography
+##   data      algae or one of the four UPC groups
 ##
-## "Invert to Category" turns the basin figures inside out: one file per
-## category, faceted by basin, rather than one file per basin faceted by
-## category. Its value is still "site" internally -- see FIG_SCALES.
+## and a second row then asks only for what that figure still needs -- which
+## site, basin or region, which species -- plus the y-axis switch.
 preview_card <- function() {
   div(
     class = "rc-card",
     h2("Preview a figure"),
     p(class = "blurb",
-      paste("Build one figure and look at it. These dropdowns are independent",
-            "of the checkboxes above -- they decide what you are looking at,",
-            "not what Run writes.")),
+      paste("Build one figure and look at it. These choices are independent of",
+            "the checkboxes below -- they decide what you are looking at, not",
+            "what Run writes.")),
     div(
       class = "rc-preview-controls",
-      ## Slots 2-4 are relabelled by the scale: under Percentage they become
-      ## "Narrow by" and then the two halves of a basin x category address, so
-      ## no control ever changes meaning without saying so.
-      div(tags$h3("Scale"), uiOutput("pv_scale_ui")),
-      div(uiOutput("pv_h2"), uiOutput("pv_where_ui")),
-      div(uiOutput("pv_h3"), uiOutput("pv_type_ui")),
-      div(uiOutput("pv_h4"), uiOutput("pv_group_ui"))
+      div(tags$h3("Analysis"),
+          selectInput("pv_analysis", NULL, choices = ANALYSES, selected = "density",
+                      width = "100%")),
+      div(tags$h3("Scale"),
+          selectInput("pv_scale", NULL, choices = FIG_SCALES, selected = "basin",
+                      width = "100%")),
+      div(tags$h3("View"), uiOutput("pv_view_ui")),
+      div(tags$h3("Data"),
+          selectInput("pv_group", NULL, choices = FIG_GROUPS, selected = "algae",
+                      width = "100%"))
+    ),
+    div(
+      class = "rc-preview-controls",
+      div(uiOutput("pv_where_ui")),
+      div(uiOutput("pv_cat_ui")),
+      div(),
+      div(uiOutput("pv_ylock_ui"))
     ),
     uiOutput("pv_status"),
-    div(class = "rc-preview-stage", plotOutput("pv_plot", height = "620px")),
+    div(class = "rc-preview-stage", imageOutput("pv_plot", height = "auto")),
     div(style = "display:flex;align-items:center;flex-wrap:wrap;margin-top:12px;",
         actionButton("pv_save", "Save this figure", class = "btn-run"),
         div(style = "width:8px;"),
-        actionButton("pv_save_as", "Save as…", class = "btn-browse"),
+        actionButton("pv_save_as", "Save as\u2026", class = "btn-browse"),
         uiOutput("pv_target", inline = TRUE))
   )
 }
 
 ui <- page_fluid(
   theme = rc_theme,
-  tags$head(tags$style(HTML(app_css)), tags$title("Understory Kelp Indicator: Data Interpreter")),
+  tags$head(tags$style(HTML(app_css)),
+            tags$title("Understory Kelp Indicator: Data Interpreter")),
 
   div(class = "rc-banner",
-      tags$img(src = "rc_logo.png", alt = "Reef Check"),
-      tags$img(src = "seaq_logo.png", alt = "Seattle Aquarium"),
+      tags$img(src = "ukelp/rc_logo.png", alt = "Reef Check"),
+      tags$img(src = "ukelp/seaq_logo.png", alt = "Seattle Aquarium"),
       div(h1("Understory Kelp Indicator: Data Interpreter", class = "rc-title"),
-          p("Reef Check  ·  Seattle Aquarium", class = "rc-sub"))),
+          p("Reef Check  \u00b7  Seattle Aquarium", class = "rc-sub"))),
   div(class = "rc-rule"),
 
   div(
@@ -642,14 +675,16 @@ ui <- page_fluid(
           div(class = "rc-chain",
               lapply(STEPS, function(s)
                 div(span(class = "n", paste0(s$n, ".")), s$title,
-                    span(style = "color:#5F6B7A;", paste0("  —  code/", s$script))))),
+                    span(style = "color:#5F6B7A;",
+                         paste0("  \u2014  ", paste0("code/", s$scripts, collapse = ", ")))))),
           include_box("all"),
           div(style = "margin-top:14px;",
               actionButton("run_all", "Run all three steps", class = "btn-all")),
           div(class = "rc-foot",
               paste("File locations come from the three step tabs, and the",
-                    "figures step draws whatever is ticked there. The figures",
-                    "step writes a few hundred files and takes the longest."))
+                    "figures step draws whatever is ticked there. Steps 1 and 2",
+                    "take seconds; the figures step takes the longest -- 20-30",
+                    "minutes for the default selection."))
         )
       )
     ),
@@ -723,10 +758,12 @@ server <- function(input, output, session) {
   rscript <- rscript_path()
 
   rv <- reactiveValues(
-    proc = NULL,                 # processx handle for the running step
+    proc = NULL,                 # processx handle for the running script
     current = NULL,              # which step id is running
+    scripts = character(0),      # that step's scripts still to run
     queue = character(0),        # step ids still to run, for "Run everything"
     all_run = FALSE,             # chain started from the "Run everything" tab
+    tables_version = 0L,         # bumped when a step finishes, so the preview rereads
     log = character(0),
     state = list(text = "Not run yet", class = "s-idle")
   )
@@ -734,7 +771,8 @@ server <- function(input, output, session) {
   output$rinfo <- renderText({
     if (is.null(rscript))
       "R was not found. Install R, or start this app from an R session."
-    else sprintf("Using %s  ·  %s", R.version.string, rscript)
+    else sprintf("Using %s  \u00b7  %s  \u00b7  packages from %s", R.version.string, rscript,
+                 .libPaths()[1])
   })
 
   ## ---- the path fields ---------------------------------------------------
@@ -771,37 +809,11 @@ server <- function(input, output, session) {
     }, ignoreInit = TRUE)
 
     output[[paste0("meta_", key)]] <- renderUI({
+      rv$tables_version
       d <- describe(current_path(key), f$kind)
       span(class = d$class, d$text)
     })
   })
-
-  ## Washington-wide is the average over every basin, the three held-out ones
-  ## included. Drawing it while they are filtered out of df_basin puts a
-  ## ten-basin average behind seven basin trajectories -- the blue line and the
-  ## gray lines would disagree. So choosing that scale ticks the basins it
-  ## depends on: on the Figures tab, which governs the figures step, and on Run
-  ## everything, which governs the whole chain and would otherwise skip the
-  ## scale outright for want of Washington_wide rows upstream.
-  observeEvent(input$fig_scales, {
-    if (!"washington" %in% (input$fig_scales %||% character(0))) return()
-    flipped <- FALSE
-    for (scope in c("figures", "all")) {
-      for (k in names(INCLUDE_KEYS)) {
-        id <- paste0("include_", scope, "_", k)
-        if (!isTRUE(input[[id]])) {
-          updateCheckboxInput(session, id, value = TRUE)
-          flipped <- TRUE
-        }
-      }
-    }
-    if (flipped) {
-      showNotification(
-        paste("Washington-wide covers every basin, so the three held-out basins",
-              "have been ticked. Untick Washington-wide to leave them out again."),
-        duration = 9)
-    }
-  }, ignoreInit = TRUE)
 
   observeEvent(input$reset, {
     for (key in names(FILES)) {
@@ -868,6 +880,7 @@ server <- function(input, output, session) {
 
   lapply(names(STEPS), function(id) {
     output[[paste0("include_note_", id)]] <- renderUI({
+      rv$tables_version
       picked <- include_picked(id)
       if (!length(picked)) {
         return(div(class = "note muted",
@@ -886,7 +899,7 @@ server <- function(input, output, session) {
       src <- FILES[[key]]$label
       if (is.null(have)) {
         return(div(class = "note muted",
-                   sprintf("Cannot tell yet — %s has not been written.", src)))
+                   sprintf("Cannot tell yet \u2014 %s has not been written.", src)))
       }
       missing <- setdiff(picked, have)
       usable <- intersect(picked, have)
@@ -909,88 +922,94 @@ server <- function(input, output, session) {
   keep_live("include_note_all",
             paste0("include_note_", names(STEPS)))
 
+  ## ---- the tables the figures read ----------------------------------------
+  ##
+  ## Figures are drawn in this process rather than by starting R again: a
+  ## subprocess costs about 1.3 s per preview (R start-up plus the packages plus
+  ## reading the tables), which is tiresome across an exploration loop. The
+  ## tables are reread whenever a path changes or a step finishes, so a preview
+  ## never shows figures built from a table that has since been rewritten.
+  fig_tables <- reactive({
+    rv$tables_version
+    if (!FIG_OK) return(FALSE)
+    paths <- setNames(lapply(FIG_TABLES, current_path), FIG_TABLES)
+    ok <- tryCatch({
+      FIG_ENV$load_figure_tables(paths)
+      !is.null(FIG_ENV$df_basin)
+    }, error = function(e) FALSE)
+    ok
+  })
+
   ## ---- what the figures step will draw -----------------------------------
 
-  ## Basin count and categories-per-group come from the basin-scale table rather
-  ## than from numbers written down here, so the summary stays right when the
-  ## excluded basins or the species list change.
-  fig_scale <- reactive({
-    p <- current_path("basin")
-    if (!nzchar(p) || !file.exists(p)) return(NULL)
-    d <- tryCatch(read.csv(p, check.names = FALSE), error = function(e) NULL)
-    if (is.null(d) || !"basin" %in% names(d)) return(NULL)
-    list(
-      basins = length(unique(d$basin)),
-      categories = vapply(GROUP_PREFIX, function(px) {
-        cols <- grep(paste0("^", px, ".*_avg$"), names(d), value = TRUE)
-        length(setdiff(cols, EXCLUDED_CATEGORIES))
-      }, integer(1))
-    )
+  fig_selection <- reactive({
+    list(analyses = input$fig_analyses %||% character(0),
+         scales   = input$fig_scales   %||% character(0),
+         views    = input$fig_views    %||% character(0),
+         groups   = input$fig_groups   %||% character(0),
+         y_lock   = identical(input$fig_ylock, "lock"))
   })
 
-  fig_selection <- reactive({
-    list(groups = input$fig_groups %||% character(0),
-         scales = input$fig_scales %||% character(0),
-         types  = input$fig_types  %||% character(0))
-  })
+  label_of <- function(choices, value) names(choices)[match(value, choices)]
 
   output$fig_plan <- renderUI({
+    if (!FIG_OK) return(div(class = "rc-plan", span(class = "none",
+      "code/figure_functions.R could not be loaded -- see the R console.")))
     sel <- fig_selection()
-    sets <- Filter(function(s) {
-      if (identical(s$scale, "percent")) "percent" %in% sel$scales
-      else s$scale %in% sel$scales && s$type %in% sel$types
-    }, FIG_SETS)
+    sets <- list()
+    for (a in sel$analyses) for (s in sel$scales) for (v in sel$views) {
+      if (is.null(FIG_ENV$view_problem(a, s, v)))
+        sets[[length(sets) + 1]] <- list(analysis = a, scale = s, view = v)
+    }
 
     if (!length(sets) || !length(sel$groups)) {
       return(div(class = "rc-plan",
-                 span(class = "none", "Nothing selected — this step would write no figures."),
+                 span(class = "none", "Nothing selected \u2014 this step would write no figures."),
                  div(style = "color:#5F6B7A;margin-top:4px;",
-                     "Pick at least one scale, one data type and one figure type.")))
+                     paste("Pick at least one analysis, scale, view and data type",
+                           "(a composite has no standard-deviation version, and",
+                           "Puget Sound has no 'across' view)."))))
     }
 
-    sc <- fig_scale()
-    per_file <- function(s, grp) {
-      if (is.null(sc)) return(NA_integer_)
-      switch(s$per,
-             basin = sc$basins,
-             category = unname(sc$categories[[grp]]),
-             ## one file per basin AND category -- the only set whose count is a
-             ## product rather than a lookup
-             basin_category = sc$basins * unname(sc$categories[[grp]]),
-             one = 1L)
+    have <- isTRUE(fig_tables())
+    groups <- Filter(function(g) g$folder %in% sel$groups, FIG_ENV$metric_groups)
+    count <- function(st) {
+      if (!have) return(NA_integer_)
+      sum(vapply(groups, function(g)
+        length(FIG_ENV$figure_targets(st$analysis, st$scale, st$view, g)), integer(1)))
     }
+    counts <- vapply(sets, count, integer(1))
 
-    rows <- lapply(sets, function(s) {
-      n <- if (is.null(sc)) NA_integer_
-           else sum(vapply(sel$groups, function(g) per_file(s, g), integer(1)))
+    rows <- Map(function(st, n) {
       tags$tr(
-        tags$td(class = "f", paste0("figs/", s$folder, "/")),
-        tags$td(class = "d", s$about),
-        tags$td(class = "c", if (is.na(n)) "—" else format(n, big.mark = ","))
+        tags$td(class = "f", sprintf("figs/%s/%s/%s/", FIG_ENV$ANALYSIS_FOLDER[[st$analysis]],
+                                     FIG_ENV$SCALE_FOLDER[[st$scale]], st$view)),
+        tags$td(class = "d", paste(label_of(ANALYSES, st$analysis), "\u00b7",
+                                   label_of(FIG_SCALES, st$scale), "\u00b7",
+                                   label_of(VIEWS, st$view))),
+        tags$td(class = "c", if (is.na(n)) "\u2014" else format(n, big.mark = ","))
       )
-    })
+    }, sets, counts)
 
-    total <- if (is.null(sc)) NA_integer_
-             else sum(vapply(sets, function(s)
-               sum(vapply(sel$groups, function(g) per_file(s, g), integer(1))),
-               integer(1)))
+    total <- if (!have) NA_integer_ else sum(counts)
 
     div(
       class = "rc-plan",
-      div(class = "hd", sprintf("%d figure %s, across %d data %s",
+      div(class = "hd", sprintf("%d figure %s, across %d data %s, y-axis %s",
                                 length(sets),
                                 if (length(sets) == 1) "set" else "sets",
                                 length(sel$groups),
-                                if (length(sel$groups) == 1) "type" else "types")),
+                                if (length(sel$groups) == 1) "type" else "types",
+                                if (sel$y_lock) "locked" else "floating")),
       tags$table(
         tags$tbody(
           rows,
           tags$tr(class = "tot",
                   tags$td(class = "f", "total"),
-                  tags$td(class = "d", if (is.null(sc))
+                  tags$td(class = "d", if (!have)
                     "run step 2 first for a file count" else ""),
                   tags$td(class = "c",
-                          if (is.na(total)) "—"
+                          if (is.na(total)) "\u2014"
                           else paste(format(total, big.mark = ","), "files")))
         )
       )
@@ -1000,306 +1019,172 @@ server <- function(input, output, session) {
   keep_live("fig_plan")
 
   ## ---- the preview -------------------------------------------------------
-  ##
-  ## Figures are drawn in this process rather than by starting R again: a
-  ## subprocess costs about 1.3 s per preview (R start-up plus tidyverse plus
-  ## reading the tables), which is tiresome across an exploration loop, and the
-  ## tables are already in memory here. The builders come from the same
-  ## figure_functions.R the script uses, so the preview and the saved file are
-  ## the same figure by construction.
-
-  FIG_ENV <- new.env(parent = globalenv())
-  fig_env_ok <- tryCatch({
-    sys.source(file.path(CODE, "figure_functions.R"), envir = FIG_ENV)
-    TRUE
-  }, error = function(e) {
-    warning("Could not load figure_functions.R: ", conditionMessage(e))
-    FALSE
-  })
-
-  ## The three tables, reloaded whenever a path or its timestamp changes, so a
-  ## preview never shows figures built from a table that has since been rewritten.
-  pv_data <- reactive({
-    if (!fig_env_ok) return(NULL)
-    paths <- vapply(c("site", "basin", "puget"), current_path, character(1))
-    if (!all(file.exists(paths))) return(NULL)
-    invisible(vapply(paths, function(p) as.numeric(file.mtime(p)), numeric(1)))
-
-    d <- tryCatch(list(
-      site  = read.csv(paths[["site"]]),
-      basin = read.csv(paths[["basin"]]),
-      puget = read.csv(paths[["puget"]])
-    ), error = function(e) NULL)
-    if (is.null(d)) return(NULL)
-
-    ## the same factor conversions visualizations.R applies before drawing
-    d$site$site   <- as.factor(d$site$site)
-    d$site$year   <- as.factor(d$site$year)
-    d$basin$basin <- as.factor(d$basin$basin)
-    d$basin$year  <- as.factor(d$basin$year)
-    d$puget$region <- as.factor(d$puget$region)
-    d$puget$year   <- as.factor(d$puget$year)
-    d
-  })
-
-  pv_regions <- reactive({
-    d <- pv_data()
-    if (is.null(d)) character(0) else unique(as.character(d$puget$region))
-  })
-
-  pv_basins <- reactive({
-    d <- pv_data()
-    if (is.null(d)) character(0) else sort(unique(as.character(d$basin$basin)))
-  })
-
-  ## ---- the four dropdowns, each narrowing the next ----
-
-  pv_is_percent <- reactive(identical(input$pv_scale, "percent"))
-
-  ## One file per category, faceted by basin -- the species_composites set. It
-  ## is the one scale whose figure covers a single category rather than a whole
-  ## group, so the group is chosen first and then narrows the category list.
-  pv_is_site <- reactive(identical(input$pv_scale, "site"))
-
-  output$pv_scale_ui <- renderUI(
-    selectInput("pv_scale", NULL, width = "100%",
-                choices = c("Invert to Category" = "site", "Basin" = "basin",
-                            "Region-wide" = "region", "Percentage" = "percent"),
-                selected = isolate(input$pv_scale) %||% "basin"))
-
-  ## Every category in the tables, grouped by data type so a 40-entry list stays
-  ## navigable. Values are raw column names; labels are the readable form.
-  pv_all_categories <- reactive({
-    d <- pv_data()
-    if (is.null(d)) return(list())
-    out <- list()
-    for (grp in FIG_ENV$metric_groups) {
-      cols <- FIG_ENV$group_cols(grp)
-      if (!length(cols)) next
-      labels <- vapply(cols, FIG_ENV$species_label, character(1))
-      out[[names(FIG_GROUPS)[match(grp$folder, FIG_GROUPS)]]] <-
-        setNames(as.list(cols), labels)
-    }
-    out
-  })
-
-  ## headings, so a relabelled slot always announces itself
-  output$pv_h2 <- renderUI(tags$h3(
-    if (pv_is_percent()) "Narrow by" else if (pv_is_site()) "Data" else "Which"))
-  output$pv_h3 <- renderUI(tags$h3(
-    if (!pv_is_percent()) "Figure type"
-    else if (identical(input$pv_narrow, "category")) "Category" else "Basin"))
-  output$pv_h4 <- renderUI(tags$h3(
-    if (pv_is_site()) "Category"
-    else if (!pv_is_percent()) "Data"
-    else if (identical(input$pv_narrow, "category")) "Basin" else "Category"))
-
-  output$pv_where_ui <- renderUI({
-    if (pv_is_site()) {
-      return(selectInput("pv_group", NULL, width = "100%", choices = FIG_GROUPS,
-                         selected = isolate(input$pv_group) %||% "algae"))
-    }
-    if (pv_is_percent()) {
-      return(selectInput("pv_narrow", NULL, width = "100%",
-                         choices = c("Basin" = "basin", "Category" = "category"),
-                         selected = isolate(input$pv_narrow) %||% "basin"))
-    }
-    if (identical(input$pv_scale, "region")) {
-      have <- pv_regions()
-      ## Washington-wide is offered only when the metrics table holds it, which
-      ## is what happens when the outer basins were kept upstream.
-      choices <- c("Puget Sound" = "Puget_Sound")
-      if ("Washington_wide" %in% have)
-        choices <- c(choices, "Washington-wide" = "Washington_wide")
-      selectInput("pv_where", NULL, width = "100%", choices = choices)
-    } else {
-      b <- pv_basins()
-      if (!length(b)) return(selectInput("pv_where", NULL, choices = character(0),
-                                         width = "100%"))
-      labels <- gsub("_", " ", b)
-      selectInput("pv_where", NULL, width = "100%",
-                  choices = setNames(b, labels))
-    }
-  })
-
-  output$pv_type_ui <- renderUI({
-    if (pv_is_percent()) {
-      ## whichever half the person chose to lead with
-      if (identical(input$pv_narrow, "category")) {
-        return(selectInput("pv_a", NULL, width = "100%",
-                           choices = pv_all_categories()))
-      }
-      b <- pv_basins()
-      return(selectInput("pv_a", NULL, width = "100%",
-                         choices = setNames(b, gsub("_", " ", b))))
-    }
-    ## the one-axis composite layout exists only at the basin scale
-    choices <- c("Density / proportion" = "plain",
-                 "With standard deviation" = "sd")
-    if (identical(input$pv_scale, "basin"))
-      choices <- c(choices, "Basin and species composite" = "composite")
-    selectInput("pv_type", NULL, width = "100%", choices = choices)
-  })
-
-  output$pv_group_ui <- renderUI({
-    if (pv_is_site()) {
-      grp <- pv_group_def()
-      if (is.null(grp)) return(selectInput("pv_cat", NULL, choices = character(0),
-                                           width = "100%"))
-      cols <- FIG_ENV$group_cols(grp)
-      labels <- vapply(cols, FIG_ENV$species_label, character(1))
-      return(selectInput("pv_cat", NULL, width = "100%",
-                         choices = setNames(cols, labels)))
-    }
-    if (pv_is_percent()) {
-      ## the complement of slot 3, so the pair is always a complete address
-      if (identical(input$pv_narrow, "category")) {
-        b <- pv_basins()
-        return(selectInput("pv_b", NULL, width = "100%",
-                           choices = setNames(b, gsub("_", " ", b))))
-      }
-      return(selectInput("pv_b", NULL, width = "100%",
-                         choices = pv_all_categories()))
-    }
-    selectInput("pv_group", NULL, width = "100%", choices = FIG_GROUPS,
-                selected = isolate(input$pv_group) %||% "algae")
-  })
-
-  ## The basin and the category, whichever order they were chosen in.
-  pv_pair <- reactive({
-    if (!pv_is_percent()) return(NULL)
-    if (identical(input$pv_narrow, "category"))
-      list(basin = input$pv_b, col = input$pv_a)
-    else
-      list(basin = input$pv_a, col = input$pv_b)
-  })
-
-  ## ---- building it ----
 
   pv_group_def <- reactive({
     g <- input$pv_group
-    if (is.null(g)) return(NULL)
-    hit <- Filter(function(x) identical(x$folder, g), FIG_ENV$metric_groups)
-    if (length(hit)) hit[[1]] else NULL
+    if (is.null(g) || !FIG_OK) return(NULL)
+    FIG_ENV$group_by_folder(g)
   })
 
-  pv_figure <- reactive({
-    d <- pv_data()
-    if (is.null(d)) return(NULL)
+  ## Views that make a figure for this analysis and scale. A Puget Sound
+  ## "across" has only one place to lay a species across, and SD bands for every
+  ## species on one set of axes bury each other, so those two are not offered.
+  output$pv_view_ui <- renderUI({
+    if (!FIG_OK) return(NULL)
+    a <- input$pv_analysis %||% "density"
+    s <- input$pv_scale %||% "basin"
+    ok <- VIEWS[vapply(VIEWS, function(v) is.null(FIG_ENV$view_problem(a, s, v)), logical(1))]
+    keep <- isolate(input$pv_view)
+    selectInput("pv_view", NULL, width = "100%", choices = ok,
+                selected = if (!is.null(keep) && keep %in% ok) keep else ok[[1]])
+  })
 
-    ## Percentage answers to a basin and a category, and refuses to draw where
-    ## the comparison has no honest answer -- the builder returns the reason.
-    if (pv_is_percent()) {
-      pair <- pv_pair()
-      if (is.null(pair) || is.null(pair$basin) || is.null(pair$col) ||
-          !nzchar(pair$basin) || !nzchar(pair$col)) return(NULL)
-      FIG_ENV$df_site <- d$site; FIG_ENV$df_basin <- d$basin
-      FIG_ENV$df_puget <- d$puget
-      res <- tryCatch(FIG_ENV$percent_change_figure(pair$basin, pair$col),
-                      error = function(e)
-                        list(ok = FALSE, reason = conditionMessage(e)))
-      if (!isTRUE(res$ok)) return(structure(res$reason, class = "pv_error"))
-      return(res$plot)
+  sites_by_basin <- reactive({
+    if (!isTRUE(fig_tables()) || is.null(FIG_ENV$df_site)) return(list())
+    d <- unique(FIG_ENV$df_site[, c("basin", "site")])
+    d <- d[order(d$basin, d$site), ]
+    ## as.list() so a basin with a single site still gets its own heading --
+    ## selectInput() flattens a one-element vector into a plain option
+    out <- lapply(split(d$site, d$basin), function(s) as.list(setNames(s, gsub("_", " ", s))))
+    setNames(out, gsub("_", " ", names(out)))
+  })
+
+  basins <- reactive({
+    if (!isTRUE(fig_tables())) return(character(0))
+    b <- sort(unique(as.character(FIG_ENV$df_basin$basin)))
+    setNames(b, gsub("_", " ", b))
+  })
+
+  regions <- reactive({
+    if (!isTRUE(fig_tables()) || is.null(FIG_ENV$df_puget)) return(c("Puget Sound" = "Puget_Sound"))
+    r <- unique(as.character(FIG_ENV$df_puget$region))
+    setNames(r, unname(FIG_ENV$place_label(r)))
+  })
+
+  ## What the second row asks for. Within and composite need a place: a site,
+  ## a basin or a region, by scale. Across needs a species, and at the site scale
+  ## a basin too -- its sites become the panels.
+  output$pv_where_ui <- renderUI({
+    s <- input$pv_scale %||% "basin"
+    v <- input$pv_view %||% "within"
+    keep <- isolate(input$pv_where)
+    pick <- function(heading, choices, hint = NULL) {
+      flat <- unlist(choices, use.names = FALSE)
+      tagList(tags$h3(heading),
+              selectInput("pv_where", NULL, width = "100%", choices = choices,
+                          selected = if (!is.null(keep) && keep %in% flat) keep else NULL),
+              if (!is.null(hint)) div(class = "rc-hint", hint))
     }
+    if (identical(v, "across")) {
+      if (identical(s, "site")) return(pick("Basin", basins(), "its sites become the panels"))
+      return(NULL)
+    }
+    switch(s,
+           site  = pick("Site", sites_by_basin()),
+           basin = pick("Basin", basins()),
+           puget = pick("Region", regions()))
+  })
 
+  output$pv_cat_ui <- renderUI({
+    if (!identical(input$pv_view, "across")) return(NULL)
     grp <- pv_group_def()
+    if (is.null(grp) || !isTRUE(fig_tables())) return(NULL)
+    cols <- FIG_ENV$group_cols(grp)
+    keep <- isolate(input$pv_cat)
+    tagList(tags$h3("Species"),
+            selectInput("pv_cat", NULL, width = "100%",
+                        choices = setNames(cols, vapply(cols, FIG_ENV$species_label, character(1))),
+                        selected = if (!is.null(keep) && keep %in% cols) keep else NULL),
+            div(class = "rc-hint", "one panel per place"))
+  })
 
-    if (pv_is_site()) {
-      if (is.null(grp) || is.null(input$pv_cat) || !nzchar(input$pv_cat) ||
-          is.null(input$pv_type)) return(NULL)
-      FIG_ENV$df_site <- d$site; FIG_ENV$df_basin <- d$basin
-      FIG_ENV$df_puget <- d$puget
-      return(tryCatch(
-        FIG_ENV$species_density_figure(input$pv_cat, grp,
-                                       identical(input$pv_type, "sd")),
-        error = function(e) structure(conditionMessage(e), class = "pv_error")))
-    }
+  ## Float gives every panel the range its own values need; lock puts every
+  ## panel on one shared range, so panels can be compared by eye -- at the cost
+  ## of flattening the small ones. A single-panel composite has nothing to lock.
+  output$pv_ylock_ui <- renderUI({
+    if (identical(input$pv_view, "composite")) return(NULL)
+    tagList(tags$h3("Y-axis"),
+            input_switch("pv_ylock", "Lock y-axis across panels",
+                         value = isTRUE(isolate(input$pv_ylock))),
+            div(class = "rc-hint", "off: each panel floats to its own range"))
+  })
 
-    req_ok <- !is.null(d) && !is.null(grp) && !is.null(input$pv_type) &&
-      !is.null(input$pv_where) && nzchar(input$pv_where)
-    if (!req_ok) return(NULL)
+  pv_request <- reactive({
+    v <- input$pv_view
+    s <- input$pv_scale
+    list(analysis = input$pv_analysis, scale = s, view = v, grp = pv_group_def(),
+         where = if (identical(v, "across") && !identical(s, "site")) NULL else input$pv_where,
+         category = if (identical(v, "across")) input$pv_cat else NULL,
+         y_lock = isTRUE(input$pv_ylock))
+  })
 
-    FIG_ENV$df_site  <- d$site
-    FIG_ENV$df_basin <- d$basin
-    FIG_ENV$df_puget <- d$puget
+  ## What `where` may be for a scale and view. Switching the scale re-renders the
+  ## second row, but for a moment input$pv_where still holds the old scale's
+  ## choice; checking it against this keeps that moment from flashing a "nothing
+  ## recorded" message.
+  valid_where <- function(scale, view) {
+    if (identical(view, "across")) return(if (identical(scale, "site")) unname(basins()) else NULL)
+    switch(scale,
+           site  = unlist(sites_by_basin(), use.names = FALSE),
+           basin = unname(basins()),
+           puget = unname(regions()))
+  }
 
-    tryCatch({
-      if (identical(input$pv_scale, "region")) {
-        FIG_ENV$sound_density_figure(grp, identical(input$pv_type, "sd"),
-                                     input$pv_where)
-      } else if (identical(input$pv_type, "composite")) {
-        FIG_ENV$basin_species_figure(input$pv_where, grp)
-      } else {
-        FIG_ENV$basin_density_figure(input$pv_where, grp,
-                                     identical(input$pv_type, "sd"))
-      }
-    }, error = function(e) structure(conditionMessage(e), class = "pv_error"))
+  pv_figure <- reactive({
+    if (!isTRUE(fig_tables())) return(NULL)
+    r <- pv_request()
+    if (is.null(r$analysis) || is.null(r$scale) || is.null(r$view) || is.null(r$grp)) return(NULL)
+    if (!is.null(FIG_ENV$view_problem(r$analysis, r$scale, r$view))) return(NULL)
+    needs_where <- !identical(r$view, "across") || identical(r$scale, "site")
+    if (needs_where && (is.null(r$where) || !r$where %in% valid_where(r$scale, r$view)))
+      return(NULL)
+    if (identical(r$view, "across") &&
+        (is.null(r$category) || !r$category %in% FIG_ENV$group_cols(r$grp))) return(NULL)
+    tryCatch(do.call(FIG_ENV$make_figure, r),
+             error = function(e) list(ok = FALSE, reason = conditionMessage(e)))
   })
 
   output$pv_status <- renderUI({
-    if (!fig_env_ok)
+    if (!FIG_OK)
       return(div(class = "rc-pv-msg warn",
                  "code/figure_functions.R could not be loaded, so previews are unavailable."))
-    if (is.null(pv_data()))
+    if (!isTRUE(fig_tables()))
       return(div(class = "rc-pv-msg muted",
-                 "Run step 2 first -- the preview reads the site, basin and region tables."))
-    p <- pv_figure()
-    if (inherits(p, "pv_error"))
+                 "Run step 2 first -- the preview reads the tables it writes."))
+    res <- pv_figure()
+    if (!is.null(res) && !isTRUE(res$ok))
       return(div(class = "rc-pv-msg warn",
-                 paste0("No figure for this combination — ", as.character(p), ".")))
+                 paste0("No figure for this combination \u2014 ", res$reason, ".")))
     NULL
   })
 
-  ## Rendered larger than the exported geometry on purpose: the file is 12x6 in
-  ## at 300 dpi, which puts 8pt facet labels on screen at 8pt. A higher res over
-  ## the same box means a smaller canvas in inches, so the same type reads
-  ## bigger. Saving still writes the canonical 12x6.
-  output$pv_plot <- renderPlot({
-    p <- pv_figure()
-    validate(need(!is.null(p) && !inherits(p, "pv_error"), ""))
-    p
-  }, res = 110)
+  ## The preview is the saved file: the figure is drawn on the same 12 x 7 in
+  ## canvas Save writes, at whatever resolution fills the panel, and shown
+  ## scaled to fit. Drawing it straight into the panel instead -- as renderPlot()
+  ## does -- lays it out on a canvas as wide as the window, so in a narrow window
+  ## the facet titles clipped and the caption fell off the bottom, none of which
+  ## would happen in the file.
+  output$pv_plot <- renderImage({
+    res <- pv_figure()
+    validate(need(isTRUE(res$ok), ""))
+    px <- session$clientData$output_pv_plot_width %||% 1000
+    ratio <- session$clientData$pixelratio %||% 1
+    dpi <- max(60, min(300, round(px * ratio / FIG_ENV$fig_width)))
+    f <- tempfile(fileext = ".png")
+    ggplot2::ggsave(f, plot = res$plot, width = FIG_ENV$fig_width,
+                    height = FIG_ENV$fig_height, dpi = dpi, bg = "white")
+    list(src = f, contentType = "image/png", width = "100%",
+         alt = "Figure preview")
+  }, deleteFile = TRUE)
 
   ## ---- where saving would put it ----
 
   pv_target <- reactive({
-    if (pv_is_percent()) {
-      pair <- pv_pair()
-      if (is.null(pair) || is.null(pair$basin) || is.null(pair$col) ||
-          !nzchar(pair$basin) || !nzchar(pair$col)) return(NULL)
-      grp <- Filter(function(g) pair$col %in% FIG_ENV$group_cols(g),
-                    FIG_ENV$metric_groups)
-      if (!length(grp)) return(NULL)
-      return(file.path(current_path("figs"),
-                       FIG_ENV$percent_change_file(pair$basin, pair$col,
-                                                   grp[[1]]$folder)))
-    }
-    if (pv_is_site()) {
-      if (is.null(input$pv_group) || is.null(input$pv_cat) ||
-          !nzchar(input$pv_cat)) return(NULL)
-      set_dir <- if (identical(input$pv_type, "sd")) "species_composites_sd"
-                 else "species_composites"
-      return(file.path(current_path("figs"), set_dir, input$pv_group,
-                       paste0(FIG_ENV$safe_file_name(
-                         FIG_ENV$species_label(input$pv_cat)),
-                         "_avg_density.png")))
-    }
-    grp <- input$pv_group
-    if (is.null(grp) || is.null(input$pv_where) || !nzchar(input$pv_where)) return(NULL)
-    figs_root <- current_path("figs")
-    set_dir <- if (identical(input$pv_scale, "region")) {
-      if (identical(input$pv_type, "sd")) "puget_sound_sd" else "puget_sound"
-    } else if (identical(input$pv_type, "composite")) {
-      "basin_species"
-    } else if (identical(input$pv_type, "sd")) {
-      "basin_composites_sd"
-    } else {
-      "basin_composites"
-    }
-    stem <- FIG_ENV$safe_file_name(input$pv_where)
-    name <- if (identical(set_dir, "basin_species"))
-      paste0(stem, "_species_avg_density.png") else paste0(stem, "_avg_density.png")
-    file.path(figs_root, set_dir, grp, name)
+    res <- pv_figure()
+    if (!isTRUE(res$ok)) return(NULL)
+    r <- pv_request()
+    file.path(current_path("figs"),
+              FIG_ENV$figure_file(r$analysis, r$scale, r$view, r$grp, r$where, r$category))
   })
 
   output$pv_target <- renderUI({
@@ -1310,14 +1195,14 @@ server <- function(input, output, session) {
   })
 
   save_preview <- function(path) {
-    p <- pv_figure()
-    if (is.null(p) || inherits(p, "pv_error")) {
+    res <- pv_figure()
+    if (!isTRUE(res$ok)) {
       showNotification("There is no figure to save yet.", type = "warning")
       return(invisible(FALSE))
     }
     dir.create(dirname(path), recursive = TRUE, showWarnings = FALSE)
     ok <- tryCatch({
-      ggplot2::ggsave(path, plot = p, width = FIG_ENV$fig_width,
+      ggplot2::ggsave(path, plot = res$plot, width = FIG_ENV$fig_width,
                       height = FIG_ENV$fig_height, dpi = FIG_ENV$fig_dpi,
                       bg = "white")
       TRUE
@@ -1335,23 +1220,24 @@ server <- function(input, output, session) {
     if (!is.null(t)) save_preview(t)
   }, ignoreInit = TRUE)
 
-  ## Registered here rather than beside each definition: outputOptions() needs
-  ## the output to exist already, so this has to follow all of them.
-  keep_live("pv_scale_ui", "pv_where_ui", "pv_type_ui", "pv_group_ui",
-            "pv_h2", "pv_h3", "pv_h4", "pv_status", "pv_target")
-
   observeEvent(input$pv_save_as, {
     t <- pv_target()
-    chosen <- pick_save("Save this figure as", t %||% file.path(REPO, "figure.png"))
+    chosen <- pick_save("Save this figure as", t %||% file.path(REPO, "figure.png"),
+                        ext = ".png", types = "{{PNG images} {.png}} {{All files} {*}}")
     if (!is.null(chosen)) save_preview(chosen)
   }, ignoreInit = TRUE)
+
+  ## Registered here rather than beside each definition: outputOptions() needs
+  ## the output to exist already, so this has to follow all of them.
+  keep_live("pv_view_ui", "pv_where_ui", "pv_cat_ui", "pv_ylock_ui",
+            "pv_status", "pv_target")
 
   ## ---- running -----------------------------------------------------------
 
   say <- function(...) rv$log <- c(rv$log, ...)
 
   ## Every script gets every path. Each reads only the variables it knows about,
-  ## so one environment serves all three and nothing has to be kept in step.
+  ## so one environment serves all of them and nothing has to be kept in step.
   run_env <- function(step_id) {
     vals <- vapply(names(FILES), current_path, character(1))
     names(vals) <- vapply(FILES, function(f) f$env, character(1))
@@ -1362,17 +1248,17 @@ server <- function(input, output, session) {
               UKELP_INCLUDE_BASINS = paste(include_for(step_id), collapse = ","))
 
     ## The figures step also takes what to draw. Empty means "everything", which
-    ## is what the script does when the variable is unset -- so a deliberately
-    ## empty selection is sent as a value no set matches rather than as "".
+    ## is what the script does when a variable is unset -- so a deliberately
+    ## empty selection is sent as a value nothing matches rather than as "".
     sel <- fig_selection()
     none <- "__none__"
+    as_list <- function(x) paste(c(x, if (!length(x)) none), collapse = ",")
     vals <- c(vals,
-              UKELP_FIG_GROUPS = paste(c(sel$groups, if (!length(sel$groups)) none),
-                                       collapse = ","),
-              UKELP_FIG_SCALES = paste(c(sel$scales, if (!length(sel$scales)) none),
-                                       collapse = ","),
-              UKELP_FIG_TYPES  = paste(c(sel$types,  if (!length(sel$types))  none),
-                                       collapse = ","))
+              UKELP_FIG_ANALYSES = as_list(sel$analyses),
+              UKELP_FIG_SCALES   = as_list(sel$scales),
+              UKELP_FIG_VIEWS    = as_list(sel$views),
+              UKELP_FIG_GROUPS   = as_list(sel$groups),
+              UKELP_FIG_YLOCK    = if (sel$y_lock) "1" else "0")
     c("current", vals)
   }
 
@@ -1384,10 +1270,19 @@ server <- function(input, output, session) {
     }, logical(1))]
   }
 
-  ## Started as its own R process rather than sourced: each script opens with
-  ## rm(list=ls()) and setwd("../"), both of which would reach into this running
-  ## app if it shared the session. A separate process also means Stop can
-  ## actually stop it.
+  ## Each script is started as its own R process rather than sourced: each opens
+  ## with rm(list=ls()) and setwd("../"), both of which would reach into this
+  ## running app if it shared the session. A separate process also means Stop
+  ## can actually stop it.
+  start_script <- function() {
+    script <- rv$scripts[1]
+    rv$scripts <- rv$scripts[-1]
+    say(sprintf("Running code/%s", script))
+    rv$proc <- processx::process$new(rscript, script, wd = CODE,
+                                     env = run_env(rv$current), stdout = "|",
+                                     stderr = "2>&1")
+  }
+
   begin <- function(step_id) {
     step <- STEPS[[step_id]]
 
@@ -1409,7 +1304,6 @@ server <- function(input, output, session) {
 
     say(strrep("-", 72),
         sprintf("Step %d of 3 -- %s", step$n, step$title),
-        sprintf("Running code/%s", step$script),
         strrep("-", 72))
 
     ## What was ticked, and whether this step can actually honor it.
@@ -1441,11 +1335,11 @@ server <- function(input, output, session) {
       }
     }
 
-    rv$state <- list(text = sprintf("Step %d of 3: %s…", step$n, step$title),
+    rv$state <- list(text = sprintf("Step %d of 3: %s\u2026", step$n, step$title),
                      class = "s-busy")
     rv$current <- step_id
-    rv$proc <- processx::process$new(rscript, step$script, wd = CODE,
-                                     env = run_env(step_id), stdout = "|", stderr = "2>&1")
+    rv$scripts <- step$scripts
+    start_script()
     invisible(TRUE)
   }
 
@@ -1470,6 +1364,7 @@ server <- function(input, output, session) {
     p <- rv$proc
     if (!is.null(p) && p$is_alive()) {
       rv$queue <- character(0)
+      rv$scripts <- character(0)
       rv$state <- list(text = "Stopped before it finished", class = "s-warn")
       p$kill()
     }
@@ -1481,7 +1376,8 @@ server <- function(input, output, session) {
 
   ## Drain the running process on a timer. processx buffers for us, so this only
   ## moves whatever has arrived since the last tick, then decides what happens
-  ## when the process ends.
+  ## when the process ends: the step's next script, the chain's next step, or
+  ## the end.
   observe({
     p <- rv$proc
     if (is.null(p)) return()
@@ -1492,20 +1388,28 @@ server <- function(input, output, session) {
       if (length(new)) say(new)
       if (p$is_alive()) return()
 
-      rest <- tryCatch(p$read_output_lines(), error = function(e) character(0))
+      ## read_all, not read: the process has ended, but what it wrote last can
+      ## still be in the pipe, and a single non-blocking read can come back
+      ## without it -- the script's final lines then never reach the log
+      rest <- tryCatch(p$read_all_output_lines(), error = function(e) character(0))
       if (length(rest)) say(rest)
       code <- tryCatch(p$get_exit_status(), error = function(e) NA_integer_)
 
       stopped <- identical(rv$state$class, "s-warn")
       rv$proc <- NULL
       done <- STEPS[[rv$current]]
-      rv$current <- NULL
 
       if (stopped) {
         say("Stopped. Anything already written was left as it is.")
         rv$queue <- character(0)
+        rv$current <- NULL
+        rv$tables_version <- rv$tables_version + 1L
+      } else if (identical(code, 0L) && length(rv$scripts)) {
+        start_script()
       } else if (identical(code, 0L)) {
         say(sprintf("Step %d finished successfully.", done$n))
+        rv$current <- NULL
+        rv$tables_version <- rv$tables_version + 1L
         if (length(rv$queue)) {
           nxt <- rv$queue[1]; rv$queue <- rv$queue[-1]
           begin(nxt)
@@ -1513,6 +1417,8 @@ server <- function(input, output, session) {
           rv$state <- list(text = "Finished successfully", class = "s-ok")
         }
       } else {
+        rv$current <- NULL
+        rv$scripts <- character(0)
         rv$state <- list(
           text = sprintf("Step %d failed (R exited with code %s)", done$n, code),
           class = "s-err")
