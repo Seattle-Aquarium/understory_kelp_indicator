@@ -312,10 +312,19 @@ focal_long <- function(analysis, scale, cols) {
   if (identical(analysis, "trend")) {
     tbl <- switch(scale, site = tr_site, basin = tr_basin, puget = tr_puget)
     if (is.null(tbl)) return(NULL)
+    ## how many members a lost or new value stands for -- sites behind a basin,
+    ## basins behind a region -- printed beside its triangle
+    unit_word <- if (identical(scale, "puget")) "basins" else "sites"
+    n_new  <- if (identical(scale, "site")) NA_integer_ else tbl[[paste0("n_", unit_word, "_new")]]
+    n_lost <- if (identical(scale, "site")) NA_integer_ else tbl[[paste0("n_", unit_word, "_lost")]]
     return(tbl %>%
+             mutate(.n_new = n_new, .n_lost = n_lost) %>%
              filter(col %in% cols) %>%
              transmute(unit = as.character(.data[[key]]), year = as.integer(year),
-                       col, value = trend_pct, sd = NA_real_, status))
+                       col, value = trend_pct, sd = NA_real_, status,
+                       n_mark = case_when(status == "new" ~ as.integer(.n_new),
+                                          status == "lost" ~ as.integer(.n_lost),
+                                          TRUE ~ NA_integer_)))
   }
   tbl <- switch(scale, site = df_site, basin = df_basin, puget = df_puget)
   if (is.null(tbl)) return(NULL)
@@ -570,7 +579,10 @@ caption_for <- function(analysis, scale, view, squished = FALSE) {
   if (identical(analysis, "trend")) {
     line <- paste(line, "Dashed: 100% (no change).",
                   "Triangles on the bottom edge: lost (in the baseline, not this year);",
-                  "on the top edge: new (not in the baseline).")
+                  "on the top edge: new (not in the baseline).",
+                  if (!identical(scale, "site"))
+                    sprintf("The number beside a triangle is how many %s it stands for.",
+                            if (identical(scale, "puget")) "basins" else "sites"))
     if (isTRUE(squished)) {
       line <- paste(line, sprintf("Values beyond %s-%s are drawn at those limits%s.",
                                   pct_label(trend_cap[1]), pct_label(trend_cap[2]),
@@ -709,14 +721,21 @@ draw_facets <- function(analysis, scale, view, focal, members, facet_var, levels
       geom_hline(yintercept = 100, linetype = "dashed", linewidth = 0.5, color = "gray45")
     if (!is.null(members_drawn)) {
       member_lines <- with_runs(members_drawn, c(".facet", "member", "col"), trend_drawable)
-      member_marks <- filter(members_drawn, status %in% c("lost", "new"))
+      ## every site lost (or new) in the same year lands on the same spot, so
+      ## one triangle there stood for anything from one site to many; it is
+      ## drawn once, with the number of sites beside it
+      member_marks <- members_drawn %>%
+        filter(status %in% c("lost", "new")) %>%
+        count(.facet, .x, status, y, name = "n")
       p <- p +
         geom_path(data = paths_of(member_lines), aes(x = .x, y = y, group = .grp),
                   color = member_color, linewidth = 0.6, alpha = 0.6) +
         geom_point(data = member_lines, aes(x = .x, y = y),
                    color = member_color, size = 1, alpha = 0.7) +
         geom_point(data = member_marks, aes(x = .x, y = y, shape = status),
-                   color = "gray55", fill = member_color, size = 1.8, alpha = 0.8)
+                   color = "gray55", fill = member_color, size = 1.8, alpha = 0.8) +
+        geom_text(data = member_marks, aes(x = .x, y = y, label = n),
+                  nudge_x = 0.1, hjust = 0, size = 2.8, color = "gray25")
     }
     focal_lines <- with_runs(focal, c(".facet", "unit", "col"), trend_drawable)
     focal_marks <- filter(focal, status %in% c("lost", "new"))
@@ -804,15 +823,25 @@ draw_composite <- function(analysis, scale, focal, members, cols, grp, title) {
                (value < trend_cap[1] | value > trend_cap[2]))
     squished <- any(focal$.off)
     lines <- with_runs(focal, "col", trend_drawable)
-    marks <- filter(focal, status %in% c("lost", "new"))
+    ## Every category lost (or new) in the same year would land on one spot and
+    ## hide all but the last, so they are spread sideways around their year,
+    ## each with the number of sites (or basins) it stands for beside it.
+    marks <- focal %>%
+      filter(status %in% c("lost", "new")) %>%
+      group_by(.x, status) %>%
+      mutate(.xn = as.numeric(.x) + (rank(as.integer(col)) - (n() + 1) / 2) * 0.17) %>%
+      ungroup()
     p <- p +
       geom_blank(data = tibble(y = unname(e)), aes(y = y)) +
       geom_hline(yintercept = 100, linetype = "dashed", linewidth = 0.5, color = "gray45") +
       geom_path(data = paths_of(lines), aes(x = .x, y = y, group = .grp, color = col),
                 linewidth = 1.1) +
       geom_point(data = lines, aes(x = .x, y = y, color = col), size = 2.4) +
-      geom_point(data = marks, aes(x = .x, y = y, color = col, fill = col, shape = status),
+      geom_point(data = marks, aes(x = .xn, y = y, color = col, fill = col, shape = status),
                  size = 2.8) +
+      (if (any(!is.na(marks$n_mark)))
+        geom_text(data = filter(marks, !is.na(n_mark)), aes(x = .xn, y = y, label = n_mark),
+                  nudge_x = 0.06, hjust = 0, size = 2.7, color = "gray25")) +
       off_scale_labels(focal, color = "gray20") +
       scale_shape_manual(values = c(lost = 25, new = 24), guide = "none") +
       scale_fill_brewer(palette = "Paired", labels = lab, guide = "none", drop = FALSE) +
