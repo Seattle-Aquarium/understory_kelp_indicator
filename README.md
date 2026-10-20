@@ -42,3 +42,4 @@ Double-click **`run_data_interpreter.bat`**. Nothing needs to be installed first
 | `code/figure_functions.R`, `code/visualizations.R` | step 3: the figures → `figs/<analysis>/<scale>/<view>/<data type>/` |
 | `gui/` | the Data Interpreter (Shiny app) and its launcher |
 | `documents/` | the metric definitions (LaTeX) and the code review |
+| `INVARIANTS.md`, `code/check_invariants.R` | the rules every data step and metric must keep, and a script that checks `results/` against them |

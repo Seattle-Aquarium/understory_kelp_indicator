@@ -148,6 +148,8 @@ FILES <- list(
                       default = file.path(RESULTS, "glmm_algae_curves.csv")),
   glmm_sites   = list(label = "GLMMs, site means", env = "UKELP_GLMM_SITES_CSV", kind = "save",
                       default = file.path(RESULTS, "glmm_algae_sites.csv")),
+  glmm_bins    = list(label = "GLMMs, within-site bins", env = "UKELP_GLMM_BINS_CSV", kind = "save",
+                      default = file.path(RESULTS, "glmm_algae_bins.csv")),
   glmm_summary = list(label = "GLMMs, summary", env = "UKELP_GLMM_SUMMARY_CSV", kind = "save",
                       default = file.path(RESULTS, "glmm_algae_summary.csv")),
   figs    = list(label = "Figures folder", env = "UKELP_FIGS_DIR",  kind = "dir",
@@ -188,7 +190,7 @@ STEPS <- list(
                 "nmds_points", "nmds_species", "nmds_stress", "nmds_envfit",
                 "dbrda_points", "dbrda_species", "dbrda_terms", "dbrda_summary",
                 "dbrda_varpart", "glmm_terms", "glmm_curves", "glmm_sites",
-                "glmm_summary")),
+                "glmm_bins", "glmm_summary")),
   ## The tab opens on Explore data rather than an introduction, so this
   ## blurb heads the "What to draw" card instead.
   list(id = "figures", n = 3, title = "Data",
@@ -236,7 +238,7 @@ FIG_TABLES <- c("transect", "site", "basin", "puget",
                 "nmds_points", "nmds_species", "nmds_stress", "nmds_envfit",
                 "dbrda_points", "dbrda_species", "dbrda_terms", "dbrda_summary",
                 "dbrda_varpart", "glmm_terms", "glmm_curves", "glmm_sites",
-                "glmm_summary")
+                "glmm_bins", "glmm_summary")
 
 ## ---------------------------------------------------------------------------
 ## The three withheld basins

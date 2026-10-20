@@ -4,6 +4,7 @@
 ## Writes: results/glmm_algae_terms.csv    every coefficient: rate ratio, CI, p and q
 ##         results/glmm_algae_curves.csv   the fitted curves the figures draw
 ##         results/glmm_algae_sites.csv    each site's mean share and density, per species
+##         results/glmm_algae_bins.csv     the transects binned by departure, for the within panel
 ##         results/glmm_algae_summary.csv  per species: transects, how many with it, settings
 ##
 ## Modelled on CCR_benthic_analyses/ROV_diver_comparison/code/abundance_models.R:
@@ -46,6 +47,17 @@
 ##          the data. The mean over sites runs higher, by exp(site variance / 2).
 ## within:  the count relative to the site's typical transect, over the middle
 ##          95% of the transects' departures.
+## bins:    the data behind the within curve. Each transect's expected count
+##          with the within-site term left out is its site's typical transect
+##          in its year and depth zone (site effect included). The middle 95% of
+##          departures is cut into ten equal steps; each bin is its transects'
+##          total count over that total expected, plotted at their mean
+##          departure. Zeros count as they are, which a per-transect ratio on a
+##          log axis could not show. The 95% interval resamples the bin's sites
+##          (999 times), since transects at one site are not independent. A bin
+##          with fewer than 10 transects or 3 sites is left out. The figures
+##          draw no bins for a species on under 5% of transects (torn kelp):
+##          there a few transects with large expected counts decide every bin.
 
 rm(list=ls())
 suppressPackageStartupMessages({
@@ -75,17 +87,19 @@ cleaned_csv  <- from_env("UKELP_CLEANED_CSV",      file.path(results, "reef_chec
 terms_csv    <- from_env("UKELP_GLMM_TERMS_CSV",   file.path(results, "glmm_algae_terms.csv"))
 curves_csv   <- from_env("UKELP_GLMM_CURVES_CSV",  file.path(results, "glmm_algae_curves.csv"))
 sites_csv    <- from_env("UKELP_GLMM_SITES_CSV",   file.path(results, "glmm_algae_sites.csv"))
+bins_csv     <- from_env("UKELP_GLMM_BINS_CSV",    file.path(results, "glmm_algae_bins.csv"))
 summary_csv  <- from_env("UKELP_GLMM_SUMMARY_CSV", file.path(results, "glmm_algae_summary.csv"))
 
 cores <- max(1, parallel::detectCores() - 2)
-version <- "glmm-v1"
+version <- "glmm-v2"   # v2: the within-site bins
+seed <- 20261020       # the bins' bootstrap; each fit adds its row number
 
 if (!requireNamespace("glmmTMB", quietly = TRUE)) {
   stop("The GLMMs need the glmmTMB package. Start the app with run_data_interpreter.bat ",
        "(it installs it), or install.packages(\"glmmTMB\") to run this from RStudio.")
 }
 
-outputs <- c(terms_csv, curves_csv, sites_csv, summary_csv)
+outputs <- c(terms_csv, curves_csv, sites_csv, bins_csv, summary_csv)
 for (folder in unique(dirname(outputs))) dir.create(folder, recursive = TRUE, showWarnings = FALSE)
 
 df_tr <- read.csv(transect_csv, check.names = FALSE)
@@ -198,6 +212,7 @@ fit_one <- function(i) {
                  site_sd = sqrt(as.numeric(sm$varcor$cond$site)), theta = stats::sigma(fit),
                  row.names = NULL)
   curves <- NULL
+  bins <- NULL
   if (t$form == "split" && ok) {
     scale_x <- if (t$predictor == "relief") 1 else 100       # m, or percent
     beta <- glmmTMB::fixef(fit)$cond; V <- stats::vcov(fit)$cond
@@ -231,15 +246,33 @@ fit_one <- function(i) {
                          hi = exp((bw[1] + 1.96 * bw[2]) * dx / u))
     curves <- cbind(species = t$species, predictor = t$predictor,
                     rbind(do.call(rbind, between), within))
+
+    ## the bins (see Curves above): the line's range in ten equal steps
+    expected <- exp(stats::predict(fit, type = "link") - bw[1] * dd[[paste0(id, "_within")]])
+    edges <- seq(min(dx), max(dx), length.out = 11)
+    inside <- which(dep >= edges[1] & dep <= edges[11])
+    bin <- cut(dep[inside], edges, include.lowest = TRUE, labels = FALSE)
+    set.seed(seed + i)
+    bins <- do.call(rbind, lapply(sort(unique(bin)), function(b) {
+      k <- inside[bin == b]
+      at <- droplevels(dd$site[k])
+      if (length(k) < 10 || nlevels(at) < 3) return(NULL)
+      ys <- tapply(dd$y[k], at, sum); es <- tapply(expected[k], at, sum)
+      boot <- replicate(999, { j <- sample.int(length(ys), replace = TRUE); sum(ys[j]) / sum(es[j]) })
+      data.frame(bin = b, x = mean(dep[k]) * scale_x, ratio = sum(dd$y[k]) / sum(expected[k]),
+                 lo = unname(stats::quantile(boot, 0.025)), hi = unname(stats::quantile(boot, 0.975)),
+                 n = length(k), n_sites = nlevels(at))
+    }))
+    if (!is.null(bins)) bins <- cbind(species = t$species, predictor = t$predictor, bins)
   }
-  list(terms = terms, curves = curves)
+  list(terms = terms, curves = curves, bins = bins)
 }
 
 cat(sprintf("Fitting %d negative binomial GLMMs on %d cores.\n", nrow(tasks), cores))
 t0 <- Sys.time()
 cl_ <- parallel::makeCluster(cores)
 invisible(parallel::clusterCall(cl_, function(p) { .libPaths(p); invisible(NULL) }, .libPaths()))
-parallel::clusterExport(cl_, c("tasks", "d", "ids", "unit_of", "grouped"))
+parallel::clusterExport(cl_, c("tasks", "d", "ids", "unit_of", "grouped", "seed"))
 fits <- parallel::parLapply(cl_, seq_len(nrow(tasks)), fit_one)
 parallel::stopCluster(cl_)
 cat(sprintf("  done in %.0f s\n", as.numeric(difftime(Sys.time(), t0, units = "secs"))))
@@ -253,6 +286,7 @@ for (fm in c("pooled", "split")) {
   terms_out$q[k] <- p.adjust(terms_out$p[k], "BH")
 }
 curves_out <- bind_rows(lapply(fits, `[[`, "curves"))
+bins_out   <- bind_rows(lapply(fits, `[[`, "bins"))
 
 ## each site's mean share and mean density, per species and class: the
 ## points the between-site panels draw
@@ -282,6 +316,7 @@ summary_out$prevalence <- summary_out$n_present / summary_out$n_transects
 write.csv(terms_out,   terms_csv,   row.names = FALSE)
 write.csv(curves_out,  curves_csv,  row.names = FALSE)
 write.csv(sites_out,   sites_csv,   row.names = FALSE)
+write.csv(bins_out,    bins_csv,    row.names = FALSE)
 write.csv(summary_out, summary_csv, row.names = FALSE)
 
 cat(sprintf("%d of %d fits clean; %d flagged (see the note column): %s\n",

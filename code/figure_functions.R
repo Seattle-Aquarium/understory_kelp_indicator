@@ -337,13 +337,14 @@ dbrda_varpart <- NULL
 glmm_terms    <- NULL
 glmm_curves   <- NULL
 glmm_sites    <- NULL
+glmm_bins     <- NULL
 glmm_summary  <- NULL
 
 ## Reads every table the builders use and puts them where the builders look.
 ## `paths` is a list with any of: transect, site, basin, puget, trend_site,
 ## trend_basin, trend_puget, nmds_points, nmds_species, nmds_stress,
 ## nmds_envfit, dbrda_points, dbrda_species, dbrda_terms, dbrda_summary,
-## dbrda_varpart, glmm_terms, glmm_curves, glmm_sites, glmm_summary. A missing
+## dbrda_varpart, glmm_terms, glmm_curves, glmm_sites, glmm_bins, glmm_summary. A missing
 ## file leaves its table NULL -- the builders
 ## then say what is missing -- so the density figures still draw before a trend
 ## table exists. `exclude` names basins to leave out (the EXCLUDED BASINS).
@@ -382,6 +383,7 @@ load_figure_tables <- function(paths, exclude = character(0)) {
   glmm_terms    <<- rd("glmm_terms")
   glmm_curves   <<- rd("glmm_curves")
   glmm_sites    <<- rd("glmm_sites")
+  glmm_bins     <<- rd("glmm_bins")
   glmm_summary  <<- rd("glmm_summary")
   invisible(TRUE)
 }
@@ -1553,7 +1555,8 @@ draw_glmm_rates <- function(set = c("individual", "grouped"), panel = c("both", 
 
 ## One species against one class: between sites (the site means, and the
 ## expected density at a typical site) beside within sites (how a transect's
-## count changes with more of the class than its site's average)
+## count changes with more of the class than its site's average, with the
+## transects binned behind the line)
 draw_glmm_pair <- function(species, predictor) {
   fail <- function(...) list(ok = FALSE, reason = paste0(...))
   if (is.null(glmm_terms) || is.null(glmm_curves) || is.null(glmm_sites))
@@ -1592,13 +1595,45 @@ draw_glmm_pair <- function(species, predictor) {
          y = paste(sp, "per m\u00b2 at the site")) +
     theme_bw(base_size = 11) + theme(panel.grid.minor = element_blank())
 
+  ## the transects behind the within line, binned (glmm_substrate.R): the
+  ## axis stretches past 1/4x-4x to hold every bin, up to 1/16x-16x; a bin
+  ## beyond that -- or with none of the species, which a log axis cannot
+  ## place -- is an open triangle on the edge it passed, as in the trend figures
   cw <- cv[cv$panel == "within", ]
+  bn <- if (is.null(glmm_bins)) NULL else
+    glmm_bins[glmm_bins$species == species & glmm_bins$predictor == predictor, ]
+  ## a species on under 5% of transects is too patchy to bin: a handful of
+  ## transects where the model expects large counts would decide every bin
+  rare <- tm$n_present[1] / tm$n[1] < 0.05
+  has_bins <- !is.null(bn) && nrow(bn) > 0 && !rare
+  cap <- c(1 / 16, 16)
+  pos   <- if (has_bins) bn[bn$ratio >= cap[1] & bn$ratio <= cap[2], ] else NULL
+  below <- if (has_bins) bn[bn$ratio < cap[1], ] else NULL
+  above <- if (has_bins) bn[bn$ratio > cap[2], ] else NULL
+  lim <- c(0.25, 4)
+  if (!is.null(pos) && nrow(pos)) {
+    lim <- c(max(cap[1], min(lim[1], min(pos$ratio) / 1.25)), min(cap[2], max(lim[2], max(pos$ratio) * 1.25)))
+  }
+  if (!is.null(below) && nrow(below)) lim[1] <- cap[1]
+  if (!is.null(above) && nrow(above)) lim[2] <- cap[2]
+  breaks <- 2^(ceiling(log2(lim[1])):floor(log2(lim[2])))
   pw <- ggplot() +
     geom_hline(yintercept = 1, color = "gray50", linetype = 2) +
     { if (nrow(cw)) geom_ribbon(data = cw, aes(x, ymin = pmin(lo, hi), ymax = pmax(lo, hi)), fill = col, alpha = 0.18) } +
     { if (nrow(cw)) geom_line(data = cw, aes(x, fit), color = col, linewidth = 1) } +
-    scale_y_continuous(trans = "log2", breaks = c(0.25, 0.5, 1, 2, 4)) +
-    coord_cartesian(ylim = c(0.25, 4)) +
+    { if (!is.null(pos) && nrow(pos))
+        geom_linerange(data = pos, aes(x, ymin = pmax(lo, lim[1]), ymax = pmin(hi, lim[2])),
+                       color = "gray35", linewidth = 0.5) } +
+    { if (!is.null(pos) && nrow(pos))
+        geom_point(data = pos, aes(x, ratio, size = n), shape = 21, fill = col, color = "white", alpha = 0.9) } +
+    { if (!is.null(below) && nrow(below))
+        geom_point(data = below, aes(x, lim[1] * 1.08), shape = 6, size = 2.5, color = col) } +
+    { if (!is.null(above) && nrow(above))
+        geom_point(data = above, aes(x, lim[2] / 1.08), shape = 2, size = 2.5, color = col) } +
+    scale_y_continuous(trans = "log2", breaks = breaks,
+                       labels = format(breaks, drop0trailing = TRUE, trim = TRUE)) +
+    scale_size_area(max_size = 5, name = "transects\nin the bin") +
+    coord_cartesian(ylim = lim) +
     labs(title = "Within sites", subtitle = paste0(per, " above the site's own mean:\n", est("within")),
          x = if (relief) "transect's mean relief minus its site's mean (m)"
              else "transect's share minus its site's mean (percentage points)",
@@ -1610,11 +1645,16 @@ draw_glmm_pair <- function(species, predictor) {
     sprintf("Negative binomial GLMM: count ~ between + within + depth zone + year + (1 | site), %s transects at %d sites (%d with %s).",
             format(n_tr, big.mark = ","), n_si, tm$n_present[1], sp),
     "Between sites: each point is one site, at its mean over all its transects and years, sized by how many transects that mean averages; the line is the expected density at a typical site, over the range of site means, averaged over depth zones and the years the species was recorded.",
-    "Within sites: the change in a transect's count with more of the class than its site's average, over the middle 95% of transects.",
+    "Within sites: the line is the change in a transect's count with more of the class than its site's average, over the middle 95% of transects.",
+    if (has_bins) "Each point pools the transects in one of ten equal steps of that departure: their total count over the total the model expects for their sites' typical transects, sized by how many transects, with a 95% interval from resampling sites.",
+    if (has_bins && (nrow(below) || nrow(above)))
+      paste0("Open triangles mark steps off the axis: ",
+             paste(c(if (nrow(below)) sprintf("on the bottom edge, under 1/16\u00d7 or no %s at all", sp),
+                     if (nrow(above)) "on the top edge, over 16\u00d7"), collapse = "; "), "."),
     if (!is.na(tm$q[1])) "q: Benjamini-Hochberg across all between and within terms.",
     if (flagged) paste0("This fit warned (", tm$note[!is.na(tm$note)][1], "), so no curve is drawn: too few transects with the species to trust it.")
-    else if (tm$n_present[1] / tm$n[1] < 0.05)
-      sprintf("With %s on only %d transects, the curves rest on a handful of sites: read them as direction at most.",
+    else if (rare)
+      sprintf("With %s on only %d transects, the curves rest on a handful of sites: read them as direction at most. Its transects are too few to bin.",
               sp, tm$n_present[1]))
 
   p <- patchwork::wrap_plots(pb, pw) + patchwork::plot_annotation(

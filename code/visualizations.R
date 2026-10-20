@@ -46,6 +46,7 @@ table_paths <- list(
   glmm_terms    = from_env("UKELP_GLMM_TERMS_CSV",    file.path(results, "glmm_algae_terms.csv")),
   glmm_curves   = from_env("UKELP_GLMM_CURVES_CSV",   file.path(results, "glmm_algae_curves.csv")),
   glmm_sites    = from_env("UKELP_GLMM_SITES_CSV",    file.path(results, "glmm_algae_sites.csv")),
+  glmm_bins     = from_env("UKELP_GLMM_BINS_CSV",     file.path(results, "glmm_algae_bins.csv")),
   glmm_summary  = from_env("UKELP_GLMM_SUMMARY_CSV",  file.path(results, "glmm_algae_summary.csv"))
 )
 figs <- from_env("UKELP_FIGS_DIR", figs)
