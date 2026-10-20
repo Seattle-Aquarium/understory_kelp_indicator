@@ -1430,9 +1430,10 @@ draw_glmm_rates <- function(set = c("individual", "grouped")) {
   order_sp <- glmm_species_order()
   tm$row <- factor(row_label(as.character(tm$species)), levels = row_label(order_sp))
   tm$col <- factor(col_label(as.character(tm$predictor)), levels = col_label(preds))
-  tm$panel <- factor(ifelse(tm$term == "between", "Between sites: site means",
-                            "Within sites: transect vs its site's mean"),
-                     levels = c("Between sites: site means", "Within sites: transect vs its site's mean"))
+  ## two lines each: on one, the within-site label ran past the panel's end
+  panels <- c(between = "Between sites\n(site means)",
+              within  = "Within sites\n(transect vs its site's mean)")
+  tm$panel <- factor(unname(panels[tm$term]), levels = unname(panels))
   tm$l2 <- pmax(-2, pmin(2, log2(tm$rate_ratio)))
   tm$lab <- paste0(ifelse(tm$rate_ratio >= 9.95, sprintf("%.0f", tm$rate_ratio), sprintf("%.2f", tm$rate_ratio)),
                    glmm_stars(tm$q), ifelse(tm$ok, "", "\u2020"))

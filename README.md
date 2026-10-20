@@ -38,7 +38,7 @@ Double-click **`run_data_interpreter.bat`**. Nothing needs to be installed first
 | `code/substrate_algae.R` | step 2: substrate and that community — substrate vectors on the NMDS, and a db-RDA constrained by substrate, with permutation tests → `results/nmds_algae_envfit.csv`, `results/dbrda_algae_*.csv` |
 | `code/glmm_substrate.R` | step 2: a negative binomial GLMM of each understory alga's count against each substrate class, between and within sites → `results/glmm_algae_*.csv` |
 | `code/substrate_classes.R` | the UPC substrate classes and how the grouped analyses combine them, shared by the db-RDA and the GLMMs |
-| `code/supplementary/` | checks behind the methods, run by hand rather than from the app: transformations, predictor sets, between vs within sites → `results/supplementary/`, `figs/supplementary/` |
+| `code/supplementary/` | checks behind the methods, run by hand rather than from the app: transformations, predictor sets, between vs within sites, GLMM checks and sensitivity analyses → `results/supplementary/`, `figs/supplementary/` |
 | `code/figure_functions.R`, `code/visualizations.R` | step 3: the figures → `figs/<analysis>/<scale>/<view>/<data type>/` |
 | `gui/` | the Data Interpreter (Shiny app) and its launcher |
 | `documents/` | the metric definitions (LaTeX) and the code review |

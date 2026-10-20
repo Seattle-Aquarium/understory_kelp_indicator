@@ -17,11 +17,12 @@ substrate_groups <- list(
   soft  = c("sb_sand", "sb_clay-wa", "sb_shell_hash-wa"))
 
 ## the individual classes the GLMMs model one at a time, in the order the
-## figures show them. Clay (first recorded in 2023, on 19 of 721 transects
-## since) and "other" (0.3% of points) are too scarce to model.
+## figures show them: by size, largest first, then the sediments. Clay (first
+## recorded in 2023, on 19 of 721 transects since) and "other" (0.3% of
+## points) are too scarce to model.
 substrate_individual <- c("reef" = "sb_reef", "large boulder" = "sb_l_boulder-wa",
-                          "small boulder" = "sb_s_boulder-wa", "cobble" = "sb_cobble-wa",
-                          "rock" = "sb_rock", "pebble" = "sb_pebble-wa", "sand" = "sb_sand",
+                          "small boulder" = "sb_s_boulder-wa", "rock" = "sb_rock",
+                          "cobble" = "sb_cobble-wa", "pebble" = "sb_pebble-wa", "sand" = "sb_sand",
                           "shell hash" = "sb_shell_hash-wa")
 
 ## relief as one number: the mean relief of the transect's points, in metres,
