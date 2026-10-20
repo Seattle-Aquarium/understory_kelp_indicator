@@ -111,7 +111,8 @@ show <- function(p) if (draw_to_screen) print(p) else invisible(p)
 ## views and data types are ticked: coloured by basin, by each basin's sites,
 ## by year and by depth zone -- and the NMDS coloured by basin also with its
 ## substrate vectors, and sized by each species and by the total. So are the
-## GLMMs: both rate-ratio grids, and every species against every class.
+## GLMMs: the rate-ratio grids (each set between sites, within sites, and the
+## two stacked), and every species against every class.
 ##
 ## Run on its own this draws every analysis, view and group at the basin and
 ## Puget Sound scales. The site scale is left out unless asked for: it is one

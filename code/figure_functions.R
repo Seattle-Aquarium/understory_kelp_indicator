@@ -252,10 +252,16 @@ ORDINATION_COLOR_BY <- c("Basin"      = "basin",
                          "Year"       = "year",
                          "Depth zone" = "depth_zone")
 
-## The GLMMs model individual transects too; their third choice is which figure
-GLMM_VIEWS <- c("Rate ratios: individual UPC classes" = "rates_individual",
-                "Rate ratios: grouped classes"        = "rates_grouped",
-                "One species, one substrate class"    = "pair")
+## The GLMMs model individual transects too; their third choice is which
+## figure. Each grid of rate ratios comes between sites, within sites, or the
+## two stacked: one half on its own is easier to take in, on a slide say.
+GLMM_VIEWS <- c("Rate ratios, individual UPC classes: between sites"     = "rates_individual_between",
+                "Rate ratios, individual UPC classes: within sites"      = "rates_individual_within",
+                "Rate ratios, individual UPC classes: between and within" = "rates_individual",
+                "Rate ratios, grouped classes: between sites"            = "rates_grouped_between",
+                "Rate ratios, grouped classes: within sites"             = "rates_grouped_within",
+                "Rate ratios, grouped classes: between and within"       = "rates_grouped",
+                "One species, one substrate class"                       = "pair")
 
 is_nmds       <- function(analysis) identical(analysis, "nmds_algae")
 is_dbrda      <- function(analysis) identical(analysis, "dbrda_algae")
@@ -716,7 +722,9 @@ make_figure <- function(analysis, scale, view, grp, where = NULL, category = NUL
   ## the GLMMs: `category` is the species and `where` the substrate class
   if (is_glmm(analysis)) {
     if (identical(view, "pair")) return(draw_glmm_pair(species = category, predictor = where))
-    return(draw_glmm_rates(sub("^rates_", "", view)))
+    ## rates_<set>, or rates_<set>_<between|within> for one half on its own
+    parts <- strsplit(sub("^rates_", "", view), "_", fixed = TRUE)[[1]]
+    return(draw_glmm_rates(parts[1], panel = if (length(parts) > 1) parts[2] else "both"))
   }
   if (is.null(df_basin)) return(fail("the basin-scale table is missing -- run step 2"))
 
@@ -1459,14 +1467,18 @@ glmm_stars <- function(q) {
 }
 
 ## Every species against every class of one set, between sites (top) and
-## within sites (bottom): the rate ratio in each cell, coloured on a doubling
-## scale
-draw_glmm_rates <- function(set = c("individual", "grouped")) {
+## within sites (bottom), or either half on its own: the rate ratio in each
+## cell, coloured on a doubling scale. Both halves share that scale, so they
+## can be set side by side.
+draw_glmm_rates <- function(set = c("individual", "grouped"), panel = c("both", "between", "within")) {
   set <- match.arg(set)
+  panel <- match.arg(panel)
+  one <- panel != "both"
   fail <- function(...) list(ok = FALSE, reason = paste0(...))
   if (is.null(glmm_terms) || is.null(glmm_summary))
     return(fail("the GLMM tables are missing -- run step 2"))
   tm <- glmm_terms[glmm_terms$form == "split" & glmm_terms$set == set & !is.na(glmm_terms$term), ]
+  if (one) tm <- tm[tm$term == panel, ]
   if (!nrow(tm)) return(fail("no GLMM results for the ", set, " classes"))
 
   preds <- unique(as.character(tm$predictor))
@@ -1489,35 +1501,48 @@ draw_glmm_rates <- function(set = c("individual", "grouped")) {
   caption <- caption_text(
     sprintf("Negative binomial GLMMs of each species' count per 30 x 2 m transect, one class at a time: count ~ between + within + depth zone + year + (1 | site); %s transects at %d sites.",
             format(n_tr, big.mark = ","), n_si),
-    "Between: the site's mean share over all its transects and years. Within: the transect's share minus its site's mean.",
+    switch(panel,
+      both    = "Between: the site's mean share over all its transects and years. Within: the transect's share minus its site's mean.",
+      between = "Between sites: each site's mean share over all its transects and years, so each cell compares sites.",
+      within  = "Within sites: each transect's share minus its site's mean, so each cell compares transects at the same site."),
     "Species run from hard-substrate (top) to soft-bottom (bottom) along the db-RDA's substrate axis; in brackets, the share of transects with any.",
     "* q < 0.05, ** q < 0.01, *** q < 0.001 (Benjamini-Hochberg across all between and within terms); \u2020 the fit warned, too few transects with the species to trust.",
     if (set == "individual") c(
-      "Between-site ratios for the boulder classes are per +10 points of a site's mean share, which few sites reach (most site means are under 10%): read those large values as direction, not size.",
+      if (panel != "within") "Between-site ratios for the boulder classes are per +10 points of a site's mean share, which few sites reach (most site means are under 10%): read those large values as direction, not size.",
       "Clay (first recorded in 2023, on 2% of transects since) and 'other' are too scarce to model."),
     if (set == "grouped") sprintf("Hard = %s; mixed = %s; soft = %s.", glmm_class_members[["hard"]],
                                   glmm_class_members[["mixed"]], glmm_class_members[["soft"]]))
 
+  what <- if (set == "individual") "UPC substrate class" else "substrate group"
+  relief_note <- if ("relief" %in% preds) "(relief: per +0.25 m of mean relief)"
+  subtitle <- switch(panel,
+    both    = paste("Rate ratio: how many times as many individuals per +10 percentage points of the class",
+                    if (is.null(relief_note)) "on the transect's UPC points" else relief_note),
+    between = paste("Rate ratio: how many times as many individuals per +10 percentage points of the class",
+                    "in the site's mean", relief_note),
+    within  = paste("Rate ratio: how many times as many individuals per +10 percentage points of the class",
+                    "above the site's mean", relief_note))
+
+  ## one half on its own has room for larger type
   p <- ggplot(tm, aes(col, row, fill = l2)) +
     geom_tile(color = "white", linewidth = 0.6) +
-    geom_text(aes(label = lab, color = abs(l2) > 1.25), size = 3) +
+    geom_text(aes(label = lab, color = abs(l2) > 1.25), size = if (one) 3.6 else 3) +
     scale_color_manual(values = c("black", "white"), guide = "none") +
     scale_fill_gradient2(low = "#B2182B", mid = "white", high = "#2166AC", midpoint = 0,
                          limits = c(-2, 2), breaks = -2:2,
                          labels = c("\u00bc\u00d7", "\u00bd\u00d7", "1\u00d7", "2\u00d7", "4\u00d7"),
                          name = "Rate ratio") +
-    facet_grid(panel ~ .) +
+    (if (!one) facet_grid(panel ~ .)) +
     labs(x = NULL, y = NULL,
-         title = sprintf("Each understory alga against each %s",
-                         if (set == "individual") "UPC substrate class" else "substrate group"),
-         subtitle = paste("Rate ratio: how many times as many individuals per +10 percentage points of the class",
-                          if ("relief" %in% preds) "(relief: per +0.25 m of mean relief)" else "on the transect's UPC points"),
-         caption = caption) +
+         title = if (one) sprintf("%s: each understory alga against each %s",
+                                  if (panel == "between") "Between sites" else "Within sites", what)
+                 else sprintf("Each understory alga against each %s", what),
+         subtitle = subtitle, caption = caption) +
     theme_minimal(base_size = 11) +
     theme(panel.grid = element_blank(),
           strip.text.y = element_text(face = "bold", size = 10),
-          axis.text.x = element_text(size = 9.5, lineheight = 0.95),
-          axis.text.y = element_text(size = 10),
+          axis.text.x = element_text(size = if (one) 10.5 else 9.5, lineheight = 0.95),
+          axis.text.y = element_text(size = if (one) 11 else 10),
           plot.title = element_text(size = 15),
           plot.subtitle = element_text(size = 10.5, colour = "gray30"),
           plot.title.position = "plot",
@@ -1600,8 +1625,8 @@ draw_glmm_pair <- function(species, predictor) {
   list(ok = TRUE, plot = p)
 }
 
-## The GLMM figures Run writes: both rate-ratio grids, and every species
-## against every class
+## The GLMM figures Run writes: every rate-ratio grid (each set between sites,
+## within sites, and the two stacked), and every species against every class
 glmm_targets <- function(view) {
   if (is.null(glmm_terms)) return(list())
   if (!identical(view, "pair")) return(list(list(where = NULL, category = NULL)))
@@ -1624,6 +1649,7 @@ glmm_targets <- function(view) {
 ##   figs/nmds_algae/transect/basin/algae/Hood_Canal.png   (one basin picked out)
 ##   figs/dbrda_algae/transect/site/algae/Hood_Canal.png
 ##   figs/glmm_algae/transect/rates_individual/algae/all.png
+##   figs/glmm_algae/transect/rates_individual_between/algae/all.png
 ##   figs/glmm_algae/transect/pair/algae/sieve_kelp_vs_hard.png
 figure_file <- function(analysis, scale, view, grp, where = NULL, category = NULL,
                         substrate = FALSE) {

@@ -196,7 +196,7 @@ STEPS <- list(
        blurb = paste("Every combination of the boxes below is one set of figures,",
                      "written to figs/<analysis>/<scale>/<view>/<data type>/ when",
                      "this step runs -- independent of the preview above. This is",
-                     "the slowest step: the default selection is about 470 files",
+                     "the slowest step: the default selection is about 480 files",
                      "and takes 25-35 minutes."),
        ins = c("site", "basin", "puget"),
        outs = c("figs"))

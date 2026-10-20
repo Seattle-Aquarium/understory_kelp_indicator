@@ -52,13 +52,13 @@ From RStudio the app still runs the old way, on whatever R and packages are inst
       - **Show** switches the species arrows and the 95% ellipses. On the NMDS, **Substrate vectors** adds blue arrows for the substrate groups (hard, mixed, soft and mean relief) or for the eight individual UPC classes.
       - Alongside is the NMDS's stress, or, for the db-RDA, how much of the variation substrate explains, with its tests.
     - With **GLMM Algae ~ Substrate**, *Scale* is the transect and **View** picks the figure:
-      - *Rate ratios: individual UPC classes* or *Rate ratios: grouped classes*: every species against every class, between sites and within sites.
+      - *Rate ratios*, for the individual UPC classes or the grouped classes: every species against every class, *between sites*, *within sites*, or *between and within* stacked. One half on its own is easier to present.
       - *One species, one substrate class*: then pick the **Species** and the **Substrate class**.
     - The preview is drawn exactly as the saved file will be. "Save this figure" writes it to the path shown beside the button; "Save as..." lets the user choose.
     - **What to draw** picks whole sets for Run: any combination of analyses, scales, views and data types, plus float or lock. The box underneath counts the files and shows where they go: `figs/<analysis>/<scale>/<view>/<data type>/`. The site scale is unticked by default because it is about 1,500 files. The two ordinations and the GLMMs draw fixed sets, whatever scales, views and data types are ticked:
       - *NMDS Algae*: 23 figures — every coloring, each basin's sites, and the basin coloring with each set of substrate vectors and sized by each species.
       - *db-RDA Algae ~ Substrate*: 10 figures — every coloring and each basin's sites.
-      - *GLMM Algae ~ Substrate*: 122 figures — the two rate-ratio grids, and every species against every class.
+      - *GLMM Algae ~ Substrate*: 126 figures — the rate-ratio grids (each set between sites, within sites, and both stacked), and every species against every class.
 4. **Run Everything** — Executes all three steps in Data Interpreter from data cleaning through visualizations (with whatever is ticked on each tab). Step 1 takes seconds; step 2 about a quarter of an hour the first time and seconds after that; step 3, 25–35 minutes for the default selection.
 
 ## Reading the figures
