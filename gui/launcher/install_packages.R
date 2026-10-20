@@ -22,7 +22,8 @@ options(repos = c(CRAN = repo), timeout = 900,
 ## these depend on. Change this list and bump LIBRARY_REV in runtime.cfg.
 need <- c("shiny", "bslib", "processx",          # the app
           "dplyr", "tidyr", "tibble", "ggplot2",  # the step scripts
-          "vegan", "ggrepel")                     # the NMDS and its labels
+          "vegan", "ggrepel",                     # the NMDS and its labels
+          "glmmTMB", "patchwork")                 # the GLMMs and their two-panel figures
 
 installed <- function() rownames(installed.packages(lib.loc = lib))
 

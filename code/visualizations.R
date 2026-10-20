@@ -42,7 +42,11 @@ table_paths <- list(
   dbrda_species = from_env("UKELP_DBRDA_SPECIES_CSV", file.path(results, "dbrda_algae_species.csv")),
   dbrda_terms   = from_env("UKELP_DBRDA_TERMS_CSV",   file.path(results, "dbrda_algae_terms.csv")),
   dbrda_summary = from_env("UKELP_DBRDA_SUMMARY_CSV", file.path(results, "dbrda_algae_summary.csv")),
-  dbrda_varpart = from_env("UKELP_DBRDA_VARPART_CSV", file.path(results, "dbrda_algae_varpart.csv"))
+  dbrda_varpart = from_env("UKELP_DBRDA_VARPART_CSV", file.path(results, "dbrda_algae_varpart.csv")),
+  glmm_terms    = from_env("UKELP_GLMM_TERMS_CSV",    file.path(results, "glmm_algae_terms.csv")),
+  glmm_curves   = from_env("UKELP_GLMM_CURVES_CSV",   file.path(results, "glmm_algae_curves.csv")),
+  glmm_sites    = from_env("UKELP_GLMM_SITES_CSV",    file.path(results, "glmm_algae_sites.csv")),
+  glmm_summary  = from_env("UKELP_GLMM_SUMMARY_CSV",  file.path(results, "glmm_algae_summary.csv"))
 )
 figs <- from_env("UKELP_FIGS_DIR", figs)
 
@@ -106,7 +110,8 @@ show <- function(p) if (draw_to_screen) print(p) else invisible(p)
 ## ordinations of the algae community are sets of their own, whatever scales,
 ## views and data types are ticked: coloured by basin, by each basin's sites,
 ## by year and by depth zone -- and the NMDS coloured by basin also with its
-## substrate vectors, and sized by each species and by the total.
+## substrate vectors, and sized by each species and by the total. So are the
+## GLMMs: both rate-ratio grids, and every species against every class.
 ##
 ## Run on its own this draws every analysis, view and group at the basin and
 ## Puget Sound scales. The site scale is left out unless asked for: it is one
@@ -140,10 +145,10 @@ made <- 0L
 skipped <- character(0)
 
 ## figure_sets() turns the ticked scales and views into what each analysis
-## draws; the ordinations have a fixed set of their own (every colouring, at the
-## transect scale) and are the algae community whatever data types are ticked
+## draws; the ordinations and the GLMMs have fixed sets of their own (at the
+## transect scale) and are the algae whatever data types are ticked
 for (analysis in want_analyses) {
-  groups <- if (is_ordination(analysis)) list(group_by_folder("algae"))
+  groups <- if (is_transect_scale(analysis)) list(group_by_folder("algae"))
             else Filter(function(g) g$folder %in% want_groups, metric_groups)
   for (set in figure_sets(analysis, want_scales, want_views)) {
     for (grp in groups) {

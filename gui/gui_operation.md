@@ -14,6 +14,7 @@ Data Interpreter is a one stop shop for manipulating and visualizing Reef Check'
 
 * **The first time**, it downloads its own copy of R (the version pinned in `gui/launcher/runtime.cfg`, checked against a SHA-256 checksum) and the R packages the app needs, from one fixed day's CRAN snapshot. That takes a few minutes, needs the internet once (about 140 MB to download), and uses about 310 MB on disk. A console window shows the progress.
 * **Every time after that**, it starts in a few seconds and opens the app in your browser.
+* **When an update needs new packages** (the GLMMs added glmmTMB and patchwork), the next start installs a fresh package set once, in a few minutes. The previous set is kept, so switching back to an older branch needs no reinstall.
 * **To quit**, close the browser tab. The console window closes itself a few seconds later.
 
 The environment lives in `%LOCALAPPDATA%\CCR\understory_kelp_indicator`, outside Dropbox on purpose — an R installation and its packages are over 8,000 files that the sync client would otherwise push to everyone who shares the folder. The app runs only on that environment: any other R installations, package libraries, `.Renviron` or `.Rprofile` files on the computer are never read, so they cannot break it, and it does not change them. (A `.Renviron` pointing R 4.1 at an R 4.5 package library is exactly what produced the old *"procedure entry point … could not be located … digest.dll"* crash.) The private R appears in *Apps & Features* as "R for Windows 4.6.1"; if exactly that version is already installed, it is reused instead of installed twice.
@@ -31,14 +32,15 @@ From RStudio the app still runs the old way, on whatever R and packages are inst
     - The default save location for outputs is `understory_kelp_indicator\results`; however, users may again select "Browse..." to change save location.
     - Select "Run this step" to execute with your selections.
     - "Reset all locations" restores all file and save paths to default.
-2. **Build metrics** — Runs `metrics_across_scale.R`, `temporal_trend.R`, `nmds_algae.R` and `substrate_algae.R`:
+2. **Build metrics** — Runs `metrics_across_scale.R`, `temporal_trend.R`, `nmds_algae.R`, `substrate_algae.R` and `glmm_substrate.R`:
     - Transect, site, basin and Puget Sound-wide tables (`metrics_*_scale.csv`) for algae, UPC, invertebrates and fish: each category's average, standard deviation and variance at each scale. Algae, invertebrate and fish values are individuals per m² (count ÷ 60 m²); UPC values are proportions of transect points.
     - The temporal trend metric (`trend_*_scale.csv`, issue #2) at the site, basin and Puget Sound scales: each year's density as a percentage of the mean over up to five preceding years. See the header of `code/temporal_trend.R` for how zeros, new appearances (would-be Inf) and absences (would-be NaN) are handled.
     - An NMDS of the understory algae community (`nmds_algae_*.csv`), one point per transect: Bray–Curtis on Wisconsin-standardized square-root densities, 2-D (stress 0.160), with the 3-D scores and the stress for 1–4 dimensions stored too. It takes a few minutes and is only re-run when the transect table changes; see the header of `code/nmds_algae.R`.
     - How substrate relates to that community. The UPC substrate is collapsed into hard (rock, boulder, reef), mixed (pebble, cobble) and soft (sand, clay, shell hash) shares of each transect's points, plus mean relief. These are fitted onto the NMDS as vectors (`nmds_algae_envfit.csv`) and constrain a db-RDA of the same community (`dbrda_algae_*.csv`). The permutation tests run between sites and within sites, and a variation partitioning separates substrate from basin and year. About two minutes the first time, then reused until its inputs change; see the header of `code/substrate_algae.R`.
+    - A GLMM of each understory alga's count against each substrate class (`glmm_algae_*.csv`): the hard, mixed and soft groups and mean relief, and the eight individual UPC classes, one class at a time. These are negative binomial models, as in the ROV–diver report, with depth zone and year as fixed effects and site as a random intercept. Each class is split into the site's mean share (between sites) and each transect's departure from it (within sites). 240 models, about two minutes the first time, then reused; see the header of `code/glmm_substrate.R`.
 3. **Figures** — Explore any figure, and write whole figure sets to `figs/` (longest run time).
     - **Explore data** builds a figure from four choices, the same four that name the folders Run writes into:
-      - **Analysis** — *Temporal trend*, *Average density*, *Average density with standard deviation*, *NMDS Algae*, or *db-RDA Algae ~ Substrate*.
+      - **Analysis** — *Temporal trend*, *Average density*, *Average density with standard deviation*, *NMDS Algae*, *db-RDA Algae ~ Substrate*, or *GLMM Algae ~ Substrate*.
       - **Scale** — *Site* (transects → site), *Basin* (sites → basin) or *Puget Sound* (basins → Puget Sound; *Washington-wide* is offered too when the withheld basins were kept).
       - **View** — *Species within geography* (one place, a panel per species), *Species across geography* (one species, a panel per basin — or, at the site scale, per site in a chosen basin), or *Species composite within geography* (one place, every species on one set of axes). Combinations that make no figure are not offered: Puget Sound is a single geography, so it has no "across" view, and standard-deviation bands are not drawn on a composite.
       - **Data** — Algae, or one of the four UPC groups.
@@ -48,10 +50,14 @@ From RStudio the app still runs the old way, on whatever R and packages are inst
       - **Size by** sizes each point by one species' density on that transect, or by all understory algae.
       - **Show** switches the species arrows and the 95% ellipses. On the NMDS it also switches the **substrate vectors**.
       - Alongside is the NMDS's stress, or, for the db-RDA, how much of the variation substrate explains, with its tests.
+    - With **GLMM Algae ~ Substrate**, *Scale* is the transect and **View** picks the figure:
+      - *Rate ratios: individual UPC classes* or *Rate ratios: grouped classes*: every species against every class, between sites and within sites.
+      - *One species, one substrate class*: then pick the **Species** and the **Substrate class**.
     - The preview is drawn exactly as the saved file will be. "Save this figure" writes it to the path shown beside the button; "Save as..." lets the user choose.
-    - **What to draw** picks whole sets for Run: any combination of analyses, scales, views and data types, plus float or lock. The box underneath counts the files and shows where they go: `figs/<analysis>/<scale>/<view>/<data type>/`. The site scale is unticked by default because it is about 1,500 files. The two ordinations draw fixed sets, whatever scales, views and data types are ticked:
+    - **What to draw** picks whole sets for Run: any combination of analyses, scales, views and data types, plus float or lock. The box underneath counts the files and shows where they go: `figs/<analysis>/<scale>/<view>/<data type>/`. The site scale is unticked by default because it is about 1,500 files. The two ordinations and the GLMMs draw fixed sets, whatever scales, views and data types are ticked:
       - *NMDS Algae*: 22 figures — every coloring, each basin's sites, and the basin coloring with the substrate vectors and sized by each species.
       - *db-RDA Algae ~ Substrate*: 10 figures — every coloring and each basin's sites.
+      - *GLMM Algae ~ Substrate*: 122 figures — the two rate-ratio grids, and every species against every class.
 4. **Run Everything** — Executes all three steps in Data Interpreter from data cleaning through visualizations (with whatever is ticked on each tab).
 
 ## Reading the figures
@@ -71,3 +77,10 @@ Every figure carries a caption saying what the blue line, gray lines and band ar
   - In the current data, axis 1 holds almost everything substrate explains (17.7% of the variation, against 1% on axis 2), so the figure reads left to right. Soft bottoms with sugar kelp and acid weed sit on the left; hard, high-relief reef with sieve kelp sits on the right.
   - Substrate explains about 19% of the community's variation. Between sites, it explains 26% of the differences between site means. Within a site, it explains only about 1% (both p = 0.001).
   - Much of what substrate explains (13.6% of the variation) is shared with basin. Basins differ in their substrate, so the two cannot be fully told apart.
+* **GLMM** figures show rate ratios: how many times as many individuals of a species per +10 percentage points of a substrate class on the transect's UPC points (relief: per +0.25 m). 1× means no change; blue is more, red is fewer.
+  - **Between sites** compares sites by their average share of the class. **Within sites** compares a transect with its own site's average, so everything else about the site is held constant.
+  - A single coefficient would be almost entirely the within-site answer, which is why the two are split. `figs/supplementary/between_within.png` shows the two slopes for sugar kelp and sieve kelp.
+  - Between-site ratios run much larger than within-site ones. Site differences in substrate travel with everything else about a site, its basin, currents and exposure, and with long-term recruitment. Within a site, spores spread across substrate patches.
+  - Stars mark q < 0.05 after a Benjamini–Hochberg correction across all 240 between- and within-site terms. † marks a fit that warned.
+  - For the boulder classes, few sites reach +10 points of mean share, so read their large between-site ratios as direction, not size. The same goes for the rarest species: torn kelp is on 3% of transects.
+  - The classes are shares that sum to one, so each is modelled on its own: more of one class always means less of another.

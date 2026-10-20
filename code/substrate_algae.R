@@ -17,7 +17,8 @@
 ## The ten UPC substrate classes are shares of the transect's points and sum to
 ## one, so they are collapsed into three gradients, and one of the three is
 ## left out of every model as the reference (with all three in, the variance
-## inflation factors run to 160-230; with two, under 3):
+## inflation factors run to 160-230; with two, under 3). The groups are
+## defined once, in substrate_classes.R, which the GLMMs use too:
 ##   hard   rock, small and large boulder, reef        (and legacy "boulder")
 ##   mixed  pebble, cobble                             (and legacy "cobble") -- the reference
 ##   soft   sand, clay, shell hash
@@ -53,6 +54,9 @@ results <- "results"
 
 ## set working directory to home folder
 setwd("../")
+
+## the substrate groups and relief, shared with glmm_substrate.R
+source(file.path("code", "substrate_classes.R"))
 
 ## ---- FILE LOCATIONS AND SETTINGS --------------------------------------------
 ## Run on its own it reads and writes the repository's results folder. The
@@ -98,33 +102,19 @@ pts   <- read.csv(nmds_csv, check.names = FALSE)
 ## Substrate gradients, per transect
 ## ============================================================
 
-substrate_classes <- list(
-  hard  = c("sb_rock", "sb_s_boulder-wa", "sb_l_boulder-wa", "sb_reef", "sb_boulder"),
-  mixed = c("sb_cobble-wa", "sb_pebble-wa", "sb_cobble"),
-  soft  = c("sb_sand", "sb_clay-wa", "sb_shell_hash-wa"))
-relief_midpoints_m <- c("rf_0-10cm" = 0.05, "rf_10cm-1m" = 0.55, "rf_1m-2m" = 1.5,
-                        "rf_over_2m" = 2.5)
 predictor_labels <- c(hard = "hard substrate", mixed = "mixed substrate",
                       soft = "soft substrate", relief = "mean relief")
 
 ## the NMDS's transects, in its order, with their UPC
 upc <- df_tr[match(pts$key, df_tr$key), , drop = FALSE]
 
-## a class's share of points: NA only when none of its columns were recorded
-class_share <- function(cols) {
-  m <- as.matrix(upc[intersect(cols, names(upc))])
-  out <- rowSums(m, na.rm = TRUE)
-  out[rowSums(!is.na(m)) == 0] <- NA
-  out
-}
-
 env <- data.frame(
   key = pts$key, basin = pts$basin, site = pts$site,
   year = factor(pts$year), depth_zone = pts$depth_zone,
-  hard   = class_share(substrate_classes$hard),
-  mixed  = class_share(substrate_classes$mixed),
-  soft   = class_share(substrate_classes$soft),
-  relief = as.vector(as.matrix(upc[names(relief_midpoints_m)]) %*% relief_midpoints_m))
+  hard   = substrate_share(upc, substrate_groups$hard),
+  mixed  = substrate_share(upc, substrate_groups$mixed),
+  soft   = substrate_share(upc, substrate_groups$soft),
+  relief = mean_relief(upc))
 
 ## ============================================================
 ## The community -- the NMDS's transects and transformation

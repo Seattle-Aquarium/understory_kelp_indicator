@@ -19,6 +19,8 @@
 ##             nmds_algae, dbrda_algae
 ##                         the two ordinations of the algae community, one
 ##                         point per transect -- see ORDINATIONS below
+##             glmm_algae  each alga's count against each substrate class --
+##                         see GLMMs below
 ##   scale     site        transects -> one site
 ##             basin       sites -> one basin
 ##             puget       basins -> Puget Sound (or Washington-wide)
@@ -229,7 +231,8 @@ ANALYSES <- c("Temporal trend"                       = "trend",
               "Average density"                      = "density",
               "Average density with standard deviation" = "density_sd",
               "NMDS Algae"                           = "nmds_algae",
-              "db-RDA Algae ~ Substrate"             = "dbrda_algae")
+              "db-RDA Algae ~ Substrate"             = "dbrda_algae",
+              "GLMM Algae ~ Substrate"               = "glmm_algae")
 
 SCALES <- c("Site"        = "site",
             "Basin"       = "basin",
@@ -249,14 +252,28 @@ ORDINATION_COLOR_BY <- c("Basin"      = "basin",
                          "Year"       = "year",
                          "Depth zone" = "depth_zone")
 
+## The GLMMs model individual transects too; their third choice is which figure
+GLMM_VIEWS <- c("Rate ratios: individual UPC classes" = "rates_individual",
+                "Rate ratios: grouped classes"        = "rates_grouped",
+                "One species, one substrate class"    = "pair")
+
 is_nmds       <- function(analysis) identical(analysis, "nmds_algae")
 is_dbrda      <- function(analysis) identical(analysis, "dbrda_algae")
 is_ordination <- function(analysis) is_nmds(analysis) || is_dbrda(analysis)
+is_glmm       <- function(analysis) identical(analysis, "glmm_algae")
+## the analyses drawn transect by transect, with the algae alone
+is_transect_scale <- function(analysis) is_ordination(analysis) || is_glmm(analysis)
+
+## what the third choice offers for an analysis, and what it is called
+views_for <- function(analysis) {
+  if (is_ordination(analysis)) ORDINATION_COLOR_BY else if (is_glmm(analysis)) GLMM_VIEWS else VIEWS
+}
+view_heading <- function(analysis) if (is_ordination(analysis)) "Color by" else "View"
 
 ## The folder each choice writes into under figs/
 ANALYSIS_FOLDER <- c(trend = "temporal_trend", density = "density",
                      density_sd = "density_sd", nmds_algae = "nmds_algae",
-                     dbrda_algae = "dbrda_algae")
+                     dbrda_algae = "dbrda_algae", glmm_algae = "glmm_algae")
 SCALE_FOLDER <- c(site = "site", basin = "basin", puget = "puget_sound",
                   transect = "transect")
 
@@ -269,12 +286,19 @@ view_problem <- function(analysis, scale, view) {
       return("the ordinations color their points by basin, site, year or depth zone")
     return(NULL)
   }
+  if (is_glmm(analysis)) {
+    if (!identical(scale, "transect"))
+      return("the GLMMs model individual transects, so their scale is the transect")
+    if (!view %in% GLMM_VIEWS)
+      return("the GLMMs draw rate ratios, or one species against one substrate class")
+    return(NULL)
+  }
   if (identical(scale, "transect"))
-    return("only the ordinations are drawn transect by transect")
-  ## a colouring left over from an ordination, for the moment the app takes to
-  ## swap its controls back, is not a view
-  if (!view %in% VIEWS) return("that view belongs to the ordinations")
-  if (!scale %in% SCALES) return("that scale belongs to the ordinations")
+    return("only the ordinations and the GLMMs are drawn transect by transect")
+  ## a choice left over from a transect-scale analysis, for the moment the app
+  ## takes to swap its controls back, is not a view
+  if (!view %in% VIEWS) return("that view belongs to another analysis")
+  if (!scale %in% SCALES) return("that scale belongs to another analysis")
   if (identical(view, "across") && identical(scale, "puget"))
     return(paste("Puget Sound is a single geography, so there is nothing to lay",
                  "a species out across -- the basin scale shows one species",
@@ -304,12 +328,17 @@ dbrda_species <- NULL
 dbrda_terms   <- NULL
 dbrda_summary <- NULL
 dbrda_varpart <- NULL
+glmm_terms    <- NULL
+glmm_curves   <- NULL
+glmm_sites    <- NULL
+glmm_summary  <- NULL
 
 ## Reads every table the builders use and puts them where the builders look.
 ## `paths` is a list with any of: transect, site, basin, puget, trend_site,
 ## trend_basin, trend_puget, nmds_points, nmds_species, nmds_stress,
 ## nmds_envfit, dbrda_points, dbrda_species, dbrda_terms, dbrda_summary,
-## dbrda_varpart. A missing file leaves its table NULL -- the builders
+## dbrda_varpart, glmm_terms, glmm_curves, glmm_sites, glmm_summary. A missing
+## file leaves its table NULL -- the builders
 ## then say what is missing -- so the density figures still draw before a trend
 ## table exists. `exclude` names basins to leave out (the EXCLUDED BASINS).
 load_figure_tables <- function(paths, exclude = character(0)) {
@@ -344,6 +373,10 @@ load_figure_tables <- function(paths, exclude = character(0)) {
   dbrda_terms   <<- rd("dbrda_terms")
   dbrda_summary <<- rd("dbrda_summary")
   dbrda_varpart <<- rd("dbrda_varpart")
+  glmm_terms    <<- rd("glmm_terms")
+  glmm_curves   <<- rd("glmm_curves")
+  glmm_sites    <<- rd("glmm_sites")
+  glmm_summary  <<- rd("glmm_summary")
   invisible(TRUE)
 }
 
@@ -679,6 +712,11 @@ make_figure <- function(analysis, scale, view, grp, where = NULL, category = NUL
   if (is_dbrda(analysis)) {
     return(draw_dbrda(view, basin = where, size_by = category, arrows = arrows,
                       ellipses = ellipses))
+  }
+  ## the GLMMs: `category` is the species and `where` the substrate class
+  if (is_glmm(analysis)) {
+    if (identical(view, "pair")) return(draw_glmm_pair(species = category, predictor = where))
+    return(draw_glmm_rates(sub("^rates_", "", view)))
   }
   if (is.null(df_basin)) return(fail("the basin-scale table is missing -- run step 2"))
 
@@ -1315,6 +1353,216 @@ ordination_targets <- function(analysis, view) {
   list(plain)
 }
 
+## ---- GLMMs ---------------------------------------------------------------------------
+## Each understory alga's count against each substrate class, one class at a
+## time, split into a between-site and a within-site rate ratio -- see the
+## header of glmm_substrate.R for the model and why it is split.
+
+## how a class reads on a figure: the Washington UPC size ranges, so the
+## individual classes read as the size gradient they are
+glmm_class_label <- c(
+  "hard"          = "hard substrate",
+  "mixed"         = "mixed substrate",
+  "soft"          = "soft substrate",
+  "relief"        = "mean relief",
+  "reef"          = "reef",
+  "large boulder" = "large boulder (50 cm\u20131 m)",
+  "small boulder" = "small boulder (25\u201350 cm)",
+  "cobble"        = "cobble (5\u201315 cm)",
+  "rock"          = "rock (15\u201325 cm)",
+  "pebble"        = "pebble (0.5\u20135 cm)",
+  "sand"          = "sand",
+  "shell hash"    = "shell hash")
+glmm_class_members <- c(
+  "hard"  = "reef, boulders and rock",
+  "mixed" = "cobble and pebble",
+  "soft"  = "sand, clay and shell hash")
+
+glmm_label <- function(p) {
+  l <- unname(glmm_class_label[p]); ifelse(is.na(l), p, l)
+}
+
+## the classes in the order glmm_substrate.R wrote them (substrate_classes.R's
+## order), as label -> value, grouped for the app's menu
+glmm_predictor_choices <- function() {
+  if (is.null(glmm_terms)) return(list())
+  sets <- split(as.character(glmm_terms$predictor), glmm_terms$set)
+  out <- lapply(sets, function(p) { p <- unique(p); setNames(p, glmm_label(p)) })
+  setNames(out[c("grouped", "individual")], c("Grouped", "Individual UPC classes"))
+}
+
+glmm_species_choices <- function() {
+  if (is.null(glmm_summary)) return(character(0))
+  s <- as.character(glmm_summary$species)
+  setNames(s, vapply(s, species_label, character(1)))
+}
+
+## the species from hard-substrate (top) to soft-bottom (bottom) along the
+## db-RDA's substrate axis when that table is there; else by how common they are
+glmm_species_order <- function() {
+  s <- as.character(glmm_summary$species)
+  if (!is.null(dbrda_species) && all(s %in% dbrda_species$category)) {
+    return(as.character(dbrda_species$category[order(dbrda_species$dbRDA1)]))
+  }
+  s[order(glmm_summary$prevalence)]
+}
+
+glmm_stars <- function(q) {
+  ifelse(is.na(q), "", ifelse(q < 0.001, "***", ifelse(q < 0.01, "**", ifelse(q < 0.05, "*", ""))))
+}
+
+## Every species against every class of one set, between sites (top) and
+## within sites (bottom): the rate ratio in each cell, coloured on a doubling
+## scale
+draw_glmm_rates <- function(set = c("individual", "grouped")) {
+  set <- match.arg(set)
+  fail <- function(...) list(ok = FALSE, reason = paste0(...))
+  if (is.null(glmm_terms) || is.null(glmm_summary))
+    return(fail("the GLMM tables are missing -- run step 2"))
+  tm <- glmm_terms[glmm_terms$form == "split" & glmm_terms$set == set & !is.na(glmm_terms$term), ]
+  if (!nrow(tm)) return(fail("no GLMM results for the ", set, " classes"))
+
+  preds <- unique(as.character(tm$predictor))
+  prev <- setNames(glmm_summary$prevalence, glmm_summary$species)
+  row_label <- function(s) sprintf("%s  (%s%%)", vapply(s, species_label, character(1)),
+                                   formatC(100 * prev[s], format = "f", digits = 0))
+  col_label <- function(p) sub(" \\(", "\n(", glmm_label(p))
+  order_sp <- glmm_species_order()
+  tm$row <- factor(row_label(as.character(tm$species)), levels = row_label(order_sp))
+  tm$col <- factor(col_label(as.character(tm$predictor)), levels = col_label(preds))
+  tm$panel <- factor(ifelse(tm$term == "between", "Between sites: site means",
+                            "Within sites: transect vs its site's mean"),
+                     levels = c("Between sites: site means", "Within sites: transect vs its site's mean"))
+  tm$l2 <- pmax(-2, pmin(2, log2(tm$rate_ratio)))
+  tm$lab <- paste0(ifelse(tm$rate_ratio >= 9.95, sprintf("%.0f", tm$rate_ratio), sprintf("%.2f", tm$rate_ratio)),
+                   glmm_stars(tm$q), ifelse(tm$ok, "", "\u2020"))
+
+  n_tr <- max(glmm_summary$n_transects); n_si <- glmm_summary$n_sites[1]
+  caption <- caption_text(
+    sprintf("Negative binomial GLMMs of each species' count per 30 x 2 m transect, one class at a time: count ~ between + within + depth zone + year + (1 | site); %s transects at %d sites.",
+            format(n_tr, big.mark = ","), n_si),
+    "Between: the site's mean share over all its transects and years. Within: the transect's share minus its site's mean.",
+    "Species run from hard-substrate (top) to soft-bottom (bottom) along the db-RDA's substrate axis; in brackets, the share of transects with any.",
+    "* q < 0.05, ** q < 0.01, *** q < 0.001 (Benjamini-Hochberg across all between and within terms); \u2020 the fit warned, too few transects with the species to trust.",
+    if (set == "individual") c(
+      "Between-site ratios for the boulder classes are per +10 points of a site's mean share, which few sites reach (most site means are under 10%): read those large values as direction, not size.",
+      "Clay (first recorded in 2023, on 2% of transects since) and 'other' are too scarce to model."),
+    if (set == "grouped") sprintf("Hard = %s; mixed = %s; soft = %s.", glmm_class_members[["hard"]],
+                                  glmm_class_members[["mixed"]], glmm_class_members[["soft"]]))
+
+  p <- ggplot(tm, aes(col, row, fill = l2)) +
+    geom_tile(color = "white", linewidth = 0.6) +
+    geom_text(aes(label = lab, color = abs(l2) > 1.25), size = 3) +
+    scale_color_manual(values = c("black", "white"), guide = "none") +
+    scale_fill_gradient2(low = "#B2182B", mid = "white", high = "#2166AC", midpoint = 0,
+                         limits = c(-2, 2), breaks = -2:2,
+                         labels = c("\u00bc\u00d7", "\u00bd\u00d7", "1\u00d7", "2\u00d7", "4\u00d7"),
+                         name = "Rate ratio") +
+    facet_grid(panel ~ .) +
+    labs(x = NULL, y = NULL,
+         title = sprintf("Each understory alga against each %s",
+                         if (set == "individual") "UPC substrate class" else "substrate group"),
+         subtitle = paste("Rate ratio: how many times as many individuals per +10 percentage points of the class",
+                          if ("relief" %in% preds) "(relief: per +0.25 m of mean relief)" else "on the transect's UPC points"),
+         caption = caption) +
+    theme_minimal(base_size = 11) +
+    theme(panel.grid = element_blank(),
+          strip.text.y = element_text(face = "bold", size = 10),
+          axis.text.x = element_text(size = 9.5, lineheight = 0.95),
+          axis.text.y = element_text(size = 10),
+          plot.title = element_text(size = 15),
+          plot.subtitle = element_text(size = 10.5, colour = "gray30"),
+          plot.title.position = "plot",
+          plot.caption = element_text(hjust = 0, size = 8.5, colour = "gray35", lineheight = 1.05),
+          plot.caption.position = "plot")
+  list(ok = TRUE, plot = p)
+}
+
+## One species against one class: between sites (the site means, and the
+## expected density at a typical site) beside within sites (how a transect's
+## count changes with more of the class than its site's average)
+draw_glmm_pair <- function(species, predictor) {
+  fail <- function(...) list(ok = FALSE, reason = paste0(...))
+  if (is.null(glmm_terms) || is.null(glmm_curves) || is.null(glmm_sites))
+    return(fail("the GLMM tables are missing -- run step 2"))
+  if (is.null(species) || is.null(predictor)) return(fail("choose a species and a substrate class"))
+  tm <- glmm_terms[glmm_terms$species == species & glmm_terms$predictor == predictor &
+                     glmm_terms$form == "split", ]
+  if (!nrow(tm)) return(fail("no GLMM for ", species_label(species), " and ", predictor))
+  cv <- glmm_curves[glmm_curves$species == species & glmm_curves$predictor == predictor, ]
+  st <- glmm_sites[glmm_sites$species == species & glmm_sites$predictor == predictor, ]
+
+  relief <- identical(predictor, "relief")
+  sp <- species_label(species)
+  cls <- glmm_label(predictor)
+  col <- "#1F5FA8"
+  est <- function(term) {
+    r <- tm[tm$term == term, ]
+    if (!nrow(r) || is.na(r$estimate)) return("not estimated")
+    sprintf("%.2f\u00d7 (95%% CI %.2f\u2013%.2f), p = %s%s", r$rate_ratio, r$lo, r$hi,
+            format.pval(r$p, digits = 2, eps = 1e-4), if (!is.na(r$q) && r$q < 0.05) paste0(", q = ", signif(r$q, 2)) else "")
+  }
+  per <- if (relief) "per +0.25 m" else "per +10 points"
+  flagged <- !all(tm$ok)
+
+  cb <- cv[cv$panel == "between", ]
+  pb <- ggplot() +
+    { if (nrow(cb)) geom_ribbon(data = cb, aes(x, ymin = lo, ymax = hi), fill = col, alpha = 0.18) } +
+    { if (nrow(cb)) geom_line(data = cb, aes(x, fit), color = col, linewidth = 1) } +
+    geom_point(data = st, aes(x, density, size = n), shape = 21, fill = col, color = "white", alpha = 0.85) +
+    scale_y_continuous(trans = scales::pseudo_log_trans(sigma = 0.02, base = 10),
+                       breaks = c(0, 0.03, 0.1, 0.3, 1, 3, 10, 30)) +
+    scale_size_area(max_size = 5, name = "transects\nat the site") +
+    labs(title = "Between sites", subtitle = paste0(per, " of the site's mean:\n", est("between")),
+         x = if (relief) "site's mean relief (m)" else paste0("site's mean share of ", cls, " (%)"),
+         y = paste(sp, "per m\u00b2 at the site")) +
+    theme_bw(base_size = 11) + theme(panel.grid.minor = element_blank())
+
+  cw <- cv[cv$panel == "within", ]
+  pw <- ggplot() +
+    geom_hline(yintercept = 1, color = "gray50", linetype = 2) +
+    { if (nrow(cw)) geom_ribbon(data = cw, aes(x, ymin = pmin(lo, hi), ymax = pmax(lo, hi)), fill = col, alpha = 0.18) } +
+    { if (nrow(cw)) geom_line(data = cw, aes(x, fit), color = col, linewidth = 1) } +
+    scale_y_continuous(trans = "log2", breaks = c(0.25, 0.5, 1, 2, 4)) +
+    coord_cartesian(ylim = c(0.25, 4)) +
+    labs(title = "Within sites", subtitle = paste0(per, " above the site's own mean:\n", est("within")),
+         x = if (relief) "transect's mean relief minus its site's mean (m)"
+             else "transect's share minus its site's mean (percentage points)",
+         y = "count relative to the site's typical transect") +
+    theme_bw(base_size = 11) + theme(panel.grid.minor = element_blank())
+
+  n_tr <- tm$n[1]; n_si <- tm$n_sites[1]
+  caption <- caption_text(
+    sprintf("Negative binomial GLMM: count ~ between + within + depth zone + year + (1 | site), %s transects at %d sites (%d with %s).",
+            format(n_tr, big.mark = ","), n_si, tm$n_present[1], sp),
+    "Between sites: points are the sites (mean over all their transects and years); the line is the expected density at a typical site, over the range of site means, averaged over depth zones and the years the species was recorded.",
+    "Within sites: the change in a transect's count with more of the class than its site's average, over the middle 95% of transects.",
+    if (!is.na(tm$q[1])) "q: Benjamini-Hochberg across all between and within terms.",
+    if (flagged) paste0("This fit warned (", tm$note[!is.na(tm$note)][1], "), so no curve is drawn: too few transects with the species to trust it.")
+    else if (tm$n_present[1] / tm$n[1] < 0.05)
+      sprintf("With %s on only %d transects, the curves rest on a handful of sites: read them as direction at most.",
+              sp, tm$n_present[1]))
+
+  p <- patchwork::wrap_plots(pb, pw) + patchwork::plot_annotation(
+    title = sprintf("%s and %s", paste0(toupper(substr(sp, 1, 1)), substring(sp, 2)), cls),
+    caption = caption,
+    theme = theme(plot.title = element_text(size = 15),
+                  plot.caption = element_text(hjust = 0, size = 8.5, colour = "gray35", lineheight = 1.05)))
+  list(ok = TRUE, plot = p)
+}
+
+## The GLMM figures Run writes: both rate-ratio grids, and every species
+## against every class
+glmm_targets <- function(view) {
+  if (is.null(glmm_terms)) return(list())
+  if (!identical(view, "pair")) return(list(list(where = NULL, category = NULL)))
+  out <- list()
+  for (s in unname(glmm_species_choices())) for (p in unname(unlist(glmm_predictor_choices()))) {
+    out[[length(out) + 1]] <- list(where = p, category = s)
+  }
+  out
+}
+
 ## ---- WHERE A FIGURE BELONGS ------------------------------------------------------
 ## figs/<analysis>/<scale>/<view>/<group>/<name>.png, e.g.
 ##   figs/density/basin/within/algae/Hood_Canal.png
@@ -1324,8 +1572,17 @@ ordination_targets <- function(analysis, view) {
 ##   figs/nmds_algae/transect/basin/algae/all_sized_by_sugar_kelp.png
 ##   figs/nmds_algae/transect/basin/algae/all_with_substrate.png
 ##   figs/dbrda_algae/transect/site/algae/Hood_Canal.png
+##   figs/glmm_algae/transect/rates_individual/algae/all.png
+##   figs/glmm_algae/transect/pair/algae/sieve_kelp_vs_hard.png
 figure_file <- function(analysis, scale, view, grp, where = NULL, category = NULL,
                         substrate = FALSE) {
+  if (is_glmm(analysis)) {
+    stem <- if (identical(view, "pair")) {
+      paste0(safe_file_name(species_label(category)), "_vs_", safe_file_name(where))
+    } else "all"
+    return(file.path(ANALYSIS_FOLDER[[analysis]], SCALE_FOLDER[[scale]], view,
+                     grp$folder, paste0(stem, ".png")))
+  }
   if (is_ordination(analysis)) {
     stem <- if (identical(view, "site")) safe_file_name(where) else "all"
     if (isTRUE(substrate) && is_nmds(analysis)) stem <- paste0(stem, "_with_substrate")
@@ -1354,6 +1611,9 @@ figure_targets <- function(analysis, scale, view, grp) {
   if (is_ordination(analysis)) {
     return(if (identical(grp$folder, "algae")) ordination_targets(analysis, view) else list())
   }
+  if (is_glmm(analysis)) {
+    return(if (identical(grp$folder, "algae")) glmm_targets(view) else list())
+  }
   if (is.null(df_basin)) return(list())
   places <- switch(scale,
     site  = if (is.null(df_site)) character(0) else sort(unique(as.character(df_site$site))),
@@ -1373,12 +1633,12 @@ figure_targets <- function(analysis, scale, view, grp) {
 }
 
 ## The (scale, view) pairs Run draws for an analysis, given the scale and view
-## boxes ticked. The ordinations have a fixed set of their own -- the transect
-## scale and every colouring -- whatever those boxes say, since neither applies
-## to them.
+## boxes ticked. The ordinations and the GLMMs have fixed sets of their own --
+## the transect scale and every colouring or figure -- whatever those boxes say,
+## since neither applies to them.
 figure_sets <- function(analysis, scales, views) {
-  if (is_ordination(analysis)) {
-    return(lapply(unname(ORDINATION_COLOR_BY), function(v) list(scale = "transect", view = v)))
+  if (is_transect_scale(analysis)) {
+    return(lapply(unname(views_for(analysis)), function(v) list(scale = "transect", view = v)))
   }
   out <- list()
   for (s in scales) for (v in views) {
