@@ -24,7 +24,7 @@ Photo credit: Tim McClure
 
 ## Running the Data Interpreter
 
-Double-click **`run_data_interpreter.bat`**. Nothing needs to be installed first: the first run sets up the app's own copy of R and its packages (a few minutes, internet needed once), and every run after that opens the app in your browser straight away. `Create Desktop Shortcut.bat` puts it on the desktop. See [`gui/gui_operation.md`](gui/gui_operation.md) for the details.
+Double-click **`run_data_interpreter.bat`**. Nothing needs to be installed first: the first run sets up the app's own copy of R and its packages (a few minutes, internet needed once), and every run after that opens the app in your browser straight away. Its tabs run steps 1–3 below, and *Explore data* on the **3. Data** tab previews any figure before you save it. `Create Desktop Shortcut.bat` puts it on the desktop. See [`gui/gui_operation.md`](gui/gui_operation.md) for the details.
 
 ## What is where
 
