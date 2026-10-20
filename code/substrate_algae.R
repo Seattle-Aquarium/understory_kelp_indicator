@@ -1,7 +1,8 @@
 ## Substrate and the understory algae community
 ## Reads:  results/metrics_transect_scale.csv   (metrics_across_scale.R)
 ##         results/nmds_algae_points.csv        (nmds_algae.R)
-## Writes: results/nmds_algae_envfit.csv     substrate vectors fitted onto the NMDS
+## Writes: results/nmds_algae_envfit.csv     substrate vectors fitted onto the NMDS:
+##                                           the groups, and the eight classes one by one
 ##         results/dbrda_algae_points.csv    each transect's db-RDA scores
 ##         results/dbrda_algae_species.csv   species scores on the db-RDA axes
 ##         results/dbrda_algae_terms.csv     each substrate term: arrow and tests
@@ -116,6 +117,13 @@ env <- data.frame(
   soft   = substrate_share(upc, substrate_groups$soft),
   relief = mean_relief(upc))
 
+## the individual UPC classes too, for the NMDS's class-by-class vectors.
+## envfit fits each one on its own, so their shares summing to one does not
+## get in the way, as it would in the db-RDA.
+classes <- names(substrate_individual)
+for (k in classes) env[[k]] <- upc[[substrate_individual[[k]]]]
+class_labels <- c(setNames(classes, classes), relief = "mean relief")
+
 ## ============================================================
 ## The community -- the NMDS's transects and transformation
 ## ============================================================
@@ -142,9 +150,10 @@ cat(sprintf("Substrate and algae: %d transects at %d sites (%d NMDS transects wi
 fingerprint <- local({
   f <- tempfile(fileext = ".txt")
   on.exit(unlink(f))
-  writeLines(c("v1", n_perm, seed, scaling, paste(env$key, collapse = ","),
+  writeLines(c("v2", n_perm, seed, scaling, paste(env$key, collapse = ","),
                format(as.vector(community), digits = 15),
                format(unlist(env[c("hard", "mixed", "soft", "relief")]), digits = 15),
+               format(unlist(env[classes]), digits = 15),
                format(as.vector(as.matrix(pts[use, c("NMDS1", "NMDS2")])), digits = 15)), f)
   unname(tools::md5sum(f))
 })
@@ -190,16 +199,29 @@ ef <- envfit(as.matrix(pts[use, c("NMDS1", "NMDS2")]), env[c("hard", "mixed", "s
              permutations = within_sites(env$site))
 set.seed(seed)
 ef_sites <- envfit(site_nmds, site_env, permutations = freely)
-vectors <- scores(ef, "vectors")
-envfit_out <- data.frame(
-  variable = rownames(vectors),
-  label = unname(predictor_labels[rownames(vectors)]),
-  NMDS1 = vectors[, 1], NMDS2 = vectors[, 2],
-  r2 = unname(ef$vectors$r),
-  p_within_sites = unname(ef$vectors$pvals),
-  r2_between_sites = unname(ef_sites$vectors$r[rownames(vectors)]),
-  p_between_sites = unname(ef_sites$vectors$pvals[rownames(vectors)]),
-  permutations = n_perm)
+
+## the eight individual classes and mean relief, tested the same two ways
+class_vars <- c(classes, "relief")
+set.seed(seed)
+ef_cls <- envfit(as.matrix(pts[use, c("NMDS1", "NMDS2")]), env[class_vars],
+                 permutations = within_sites(env$site), na.rm = TRUE)
+site_cls <- as.data.frame(site_mean(env[class_vars]))
+names(site_cls) <- class_vars
+set.seed(seed)
+ef_cls_sites <- envfit(site_nmds, site_cls, permutations = freely, na.rm = TRUE)
+
+vector_table <- function(fit, fit_sites, set, labels) {
+  v <- scores(fit, "vectors")
+  data.frame(set = set, variable = rownames(v), label = unname(labels[rownames(v)]),
+             NMDS1 = v[, 1], NMDS2 = v[, 2],
+             r2 = unname(fit$vectors$r),
+             p_within_sites = unname(fit$vectors$pvals),
+             r2_between_sites = unname(fit_sites$vectors$r[rownames(v)]),
+             p_between_sites = unname(fit_sites$vectors$pvals[rownames(v)]),
+             permutations = n_perm, row.names = NULL)
+}
+envfit_out <- rbind(vector_table(ef, ef_sites, "grouped", predictor_labels),
+                    vector_table(ef_cls, ef_cls_sites, "individual", class_labels))
 
 ## ============================================================
 ## The db-RDA drawn: transects, year partialled out

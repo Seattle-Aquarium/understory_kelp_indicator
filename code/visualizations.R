@@ -153,7 +153,7 @@ for (analysis in want_analyses) {
   for (set in figure_sets(analysis, want_scales, want_views)) {
     for (grp in groups) {
       for (target in figure_targets(analysis, set$scale, set$view, grp)) {
-        substrate <- isTRUE(target$substrate)
+        substrate <- if (is.null(target$substrate)) FALSE else target$substrate
         res <- make_figure(analysis, set$scale, set$view, grp, where = target$where,
                            category = target$category, y_lock = y_lock,
                            substrate = substrate)

@@ -189,12 +189,15 @@ STEPS <- list(
                 "dbrda_points", "dbrda_species", "dbrda_terms", "dbrda_summary",
                 "dbrda_varpart", "glmm_terms", "glmm_curves", "glmm_sites",
                 "glmm_summary")),
-  list(id = "figures", n = 3, title = "Figures",
+  ## The tab opens on Explore data rather than an introduction, so this
+  ## blurb heads the "What to draw" card instead.
+  list(id = "figures", n = 3, title = "Data",
        scripts = "visualizations.R",
-       blurb = paste("Draws every figure set ticked below into the figures folder,",
-                     "by analysis, scale, view and data type. This is the slowest",
-                     "step: the default selection is about 470 files and takes",
-                     "25-35 minutes."),
+       blurb = paste("Every combination of the boxes below is one set of figures,",
+                     "written to figs/<analysis>/<scale>/<view>/<data type>/ when",
+                     "this step runs -- independent of the preview above. This is",
+                     "the slowest step: the default selection is about 470 files",
+                     "and takes 25-35 minutes."),
        ins = c("site", "basin", "puget"),
        outs = c("figs"))
 )
@@ -546,30 +549,28 @@ runs_line <- function(step) {
 }
 
 step_panel <- function(step) {
+  data_tab <- identical(step$id, "figures")
   nav_panel(
     title = sprintf("%d.  %s", step$n, step$title),
     value = step$id,
-    div(
+    ## The Data tab opens straight on Explore data: looking at one figure is
+    ## how a person works out which sets are worth generating, so it belongs
+    ## above the checkboxes that decide what Run writes rather than below them.
+    if (data_tab) preview_card(step) else div(
       class = "rc-card",
       h2(sprintf("%d.  %s", step$n, step$title)),
       p(class = "blurb", step$blurb),
       tags$div(style = "font-size:12px;color:#5F6B7A;margin:0 0 6px 0;", runs_line(step))
     ),
-    ## The preview comes first on the Figures tab: looking at one figure is how
-    ## a person works out which sets are worth generating, so it belongs above
-    ## the checkboxes that decide what Run writes rather than below them.
-    if (identical(step$id, "figures")) preview_card() else NULL,
-    if (identical(step$id, "figures")) {
+    if (data_tab) {
       ## The tables this step reads are step 2's outputs and are set on that
       ## tab, so repeating the pickers here would be two places to change one
       ## path. This tab chooses what to draw instead.
       div(
         class = "rc-card",
         h2("What to draw"),
-        p(class = "blurb",
-          paste("Every combination of the boxes below is one set of figures,",
-                "written to figs/<analysis>/<scale>/<view>/<data type>/. These",
-                "are independent of the preview above.")),
+        p(class = "blurb", step$blurb),
+        tags$div(style = "font-size:12px;color:#5F6B7A;margin:0 0 6px 0;", runs_line(step)),
         div(
           class = "rc-choices",
           div(tags$h3("Analysis"),
@@ -660,10 +661,10 @@ include_box <- function(scope) {
 ## y-axis switch (for the ordinations, which arrows and ellipses to show).
 ## The slots relabel themselves with the analysis, so no control changes
 ## meaning without saying so.
-preview_card <- function() {
+preview_card <- function(step) {
   div(
     class = "rc-card",
-    h2("Explore data"),
+    h2(sprintf("%d.  Explore data", step$n)),
     p(class = "blurb",
       paste("Build one figure and look at it. These choices are independent of",
             "the checkboxes below -- they decide what you are looking at, not",
@@ -731,10 +732,12 @@ ui <- page_fluid(
           div(style = "margin-top:14px;",
               actionButton("run_all", "Run all three steps", class = "btn-all")),
           div(class = "rc-foot",
-              paste("File locations come from the three step tabs, and the",
-                    "figures step draws whatever is ticked there. Steps 1 and 2",
-                    "take seconds; the figures step takes the longest -- 20-30",
-                    "minutes for the default selection."))
+              paste("File locations come from the three step tabs, and step 3",
+                    "draws whatever is ticked on the Data tab. Step 1 takes",
+                    "seconds; step 2 about a quarter of an hour the first time",
+                    "(the NMDS, permutation tests and GLMMs) and seconds after",
+                    "that; step 3 takes the longest -- 25-35 minutes for the",
+                    "default selection."))
         )
       )
     ),
@@ -1186,8 +1189,19 @@ server <- function(input, output, session) {
       return(pick("Substrate class", FIG_ENV$glmm_predictor_choices()))
     }
     if (pv_ord()) {
-      if (!identical(v, "site")) return(NULL)
-      return(pick("Basin", ord_basins(), "its sites in color, the rest in gray"))
+      if (identical(v, "site"))
+        return(pick("Basin", ord_basins(), "its sites in color, the rest in gray"))
+      ## its own input, not pv_where: otherwise the basin last picked for
+      ## another figure would arrive highlighted
+      if (identical(v, "basin")) {
+        keep_h <- isolate(input$pv_highlight)
+        ch <- c("All basins" = "all", ord_basins())
+        return(tagList(tags$h3("Highlight"),
+                       selectInput("pv_highlight", NULL, width = "100%", choices = ch,
+                                   selected = if (!is.null(keep_h) && keep_h %in% ch) keep_h else "all"),
+                       div(class = "rc-hint", "one basin in color, the rest in gray")))
+      }
+      return(NULL)
     }
     if (identical(v, "across")) {
       if (identical(s, "site")) return(pick("Basin", basins(), "its sites become the panels"))
@@ -1270,21 +1284,26 @@ server <- function(input, output, session) {
   ## panel on one shared range, so panels can be compared by eye -- at the cost
   ## of flattening the small ones. A single-panel composite has nothing to lock.
   ## The ordinations' switches go here instead: species arrows and group
-  ## ellipses, and on the NMDS the substrate vectors (the db-RDA always has its
-  ## substrate arrows -- they are what it is constrained by). Separate
-  ## checkboxes rather than one group, so that unticking all of them is not the
-  ## same as "not drawn yet".
+  ## ellipses, and on the NMDS which substrate vectors -- none, the groups, or
+  ## the individual classes (the db-RDA always has its substrate arrows: they
+  ## are what it is constrained by). Separate checkboxes rather than one group,
+  ## so that unticking all of them is not the same as "not drawn yet".
   output$pv_ylock_ui <- renderUI({
     if (pv_glmm()) return(NULL)
     if (pv_ord()) {
+      vector_sets <- c("None" = "none", "Groups: hard, mixed, soft, relief" = "grouped",
+                       "Individual classes" = "individual")
+      keep <- isolate(input$pv_substrate)
       return(tagList(tags$h3("Show"),
                      checkboxInput("pv_arrows", "Species arrows",
                                    value = isTRUE(isolate(input$pv_arrows %||% TRUE))),
-                     if (pv_nmds())
-                       checkboxInput("pv_substrate", "Substrate vectors",
-                                     value = isTRUE(isolate(input$pv_substrate))),
                      checkboxInput("pv_ellipses", "95% ellipses",
-                                   value = isTRUE(isolate(input$pv_ellipses %||% TRUE)))))
+                                   value = isTRUE(isolate(input$pv_ellipses %||% TRUE))),
+                     if (pv_nmds())
+                       selectInput("pv_substrate", "Substrate vectors", width = "100%",
+                                   choices = vector_sets,
+                                   selected = if (!is.null(keep) && keep %in% vector_sets) keep
+                                              else "none")))
     }
     if (identical(input$pv_view, "composite")) return(NULL)
     tagList(tags$h3("Y-axis"),
@@ -1305,13 +1324,17 @@ server <- function(input, output, session) {
     }
     if (pv_ord()) {
       size <- input$pv_cat
+      h <- input$pv_highlight
+      ## colouring by basin, a picked basin stands out; "all" picks none
+      where <- if (identical(v, "site")) input$pv_where
+               else if (identical(v, "basin") && !is.null(h) && h %in% ord_basins()) h
+               else NULL
       return(c(list(analysis = input$pv_analysis, scale = "transect", view = v,
-                    grp = FIG_ENV$group_by_folder("algae"),
-                    where = if (identical(v, "site")) input$pv_where else NULL,
+                    grp = FIG_ENV$group_by_folder("algae"), where = where,
                     category = if (is.null(size) || identical(size, "none")) NULL else size,
                     arrows = !isFALSE(input$pv_arrows),
                     ellipses = !isFALSE(input$pv_ellipses)),
-               if (pv_nmds()) list(substrate = isTRUE(input$pv_substrate))))
+               if (pv_nmds()) list(substrate = input$pv_substrate %||% "none")))
     }
     list(analysis = input$pv_analysis, scale = s, view = v, grp = pv_group_def(),
          where = if (identical(v, "across") && !identical(s, "site")) NULL else input$pv_where,
@@ -1401,7 +1424,7 @@ server <- function(input, output, session) {
     r <- pv_request()
     file.path(current_path("figs"),
               FIG_ENV$figure_file(r$analysis, r$scale, r$view, r$grp, r$where, r$category,
-                                  substrate = isTRUE(r$substrate)))
+                                  substrate = r$substrate %||% FALSE))
   })
 
   output$pv_target <- renderUI({

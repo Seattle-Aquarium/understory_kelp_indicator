@@ -1049,12 +1049,18 @@ size_scale <- function(name) {
 
 ## Which transects are in colour, the group each belongs to, and the colours
 ## and legend title for the groups. NULL when colouring by site without a
-## basin to take the sites from.
+## basin to take the sites from. Colouring by basin, `basin` picks one to
+## show in colour against the rest in gray; it keeps the colour it has when
+## every basin is shown, so the two views read alike.
 ordination_groups <- function(pts, color_by, basin = NULL) {
   focus <- rep(TRUE, nrow(pts))
   if (identical(color_by, "basin")) {
     group <- place_label(pts$basin)
     title <- "Basin"
+    if (!is.null(basin) && nzchar(basin)) {
+      if (!basin %in% pts$basin) return(NULL)
+      focus <- as.character(pts$basin) == basin
+    }
   } else if (identical(color_by, "site")) {
     if (is.null(basin) || !basin %in% pts$basin) return(NULL)
     focus <- as.character(pts$basin) == basin
@@ -1069,13 +1075,34 @@ ordination_groups <- function(pts, color_by, basin = NULL) {
   }
   groups <- sort(unique(group[focus & !is.na(group)]))
   if (identical(color_by, "depth_zone")) groups <- intersect(unname(depth_zone_labels), groups)
+  ## a basin's colour comes from the palette over every basin
+  palette_over <- if (identical(color_by, "basin")) sort(unique(group)) else groups
   colours <- switch(color_by,
     year = setNames(scales::viridis_pal(end = 0.88)(length(groups)), groups),
     ## blue deeper, orange shallower -- the ROV-diver report's convention
     depth_zone = setNames(c("#3182BD", "#E6550D")[seq_along(groups)], groups),
-    setNames(qualitative(length(groups)), groups))
+    setNames(qualitative(length(palette_over)), palette_over)[groups])
   list(focus = focus, group = unname(group), groups = groups, colours = colours,
        title = title)
+}
+
+## The subtitle's note when only some points are in colour: "sites of Hood
+## Canal in color, the rest in gray" for a basin's sites, or "Hood Canal in
+## color, ..." for one basin picked out; nothing when every point is.
+highlight_note <- function(color_by, basin, focus) {
+  if (all(focus)) return(NULL)
+  paste0(" \u00b7 ", if (identical(color_by, "site")) "sites of " else "",
+         place_label(basin), " in color, the rest in gray")
+}
+
+## Which substrate vectors an NMDS draws: none, the groups (hard, mixed,
+## soft, relief) or the individual classes. TRUE, from before there was a
+## choice, means the groups.
+substrate_mode <- function(substrate) {
+  if (isTRUE(substrate)) return("grouped")
+  if (is.character(substrate) && length(substrate) == 1 &&
+      substrate %in% c("grouped", "individual")) return(substrate)
+  "none"
 }
 
 ## Everything an ordination figure has before its arrows: the transects as
@@ -1172,6 +1199,17 @@ p_text <- function(p) sprintf("p = %.3f", p)
 substrate_definitions <- paste(
   "Hard = rock, boulder and reef; soft = sand, clay and shell hash; mixed = pebble and cobble --",
   "each a share of the transect's UPC points; mean relief of those points in m.")
+class_definitions <- paste(
+  "Each class is a share of the transect's UPC points: reef (bedrock), large boulder (50 cm\u20131 m),",
+  "small boulder (25\u201350 cm), rock (15\u201325 cm), cobble (5\u201315 cm), pebble (0.5\u20135 cm), sand and",
+  "shell hash; mean relief of those points in m.")
+
+## "hard 0.37 (0.001 / 0.059); ..." -- each vector's r^2 across transects,
+## then its permutation p between sites / within sites
+vector_stats <- function(ef) {
+  paste(sprintf("%s %.2f (%.3f / %.3f)", sub(" substrate$", "", ef$label), ef$r2,
+                ef$p_between_sites, ef$p_within_sites), collapse = "; ")
+}
 
 ## "hard p = 0.001, soft p = 0.265, ..." for a column of p-values
 term_p_list <- function(labels, p) {
@@ -1210,7 +1248,8 @@ draw_nmds <- function(color_by, basin = NULL, size_by = NULL, arrows = TRUE,
   fail <- function(...) list(ok = FALSE, reason = paste0(...))
   if (is.null(nmds_points) || is.null(nmds_species) || is.null(nmds_stress))
     return(fail("the NMDS tables are missing -- run step 2"))
-  if (isTRUE(substrate) && is.null(nmds_envfit))
+  vectors <- substrate_mode(substrate)
+  if (vectors != "none" && is.null(nmds_envfit))
     return(fail("the substrate vectors are missing -- run step 2"))
 
   info <- nmds_stress[nmds_stress$k == 2, , drop = FALSE]
@@ -1225,8 +1264,12 @@ draw_nmds <- function(color_by, basin = NULL, size_by = NULL, arrows = TRUE,
     sets$species <- arrow_set(nmds_species$NMDS1, nmds_species$NMDS2,
                               species_names(nmds_species$category), "black")
   }
-  ef <- nmds_envfit
-  if (isTRUE(substrate)) {
+  ef <- NULL
+  if (vectors != "none") {
+    ## a table from before the individual classes holds the groups alone
+    ef <- if ("set" %in% names(nmds_envfit)) nmds_envfit[nmds_envfit$set == vectors, , drop = FALSE]
+          else if (vectors == "grouped") nmds_envfit else nmds_envfit[0, ]
+    if (!nrow(ef)) return(fail("no vectors for the individual classes yet -- run step 2"))
     m <- arrow_mul(ef$NMDS1, ef$NMDS2, base$pts$.x, base$pts$.y)
     sets$substrate <- arrow_set(ef$NMDS1 * m, ef$NMDS2 * m, as.character(ef$label),
                                 substrate_colour)
@@ -1238,19 +1281,18 @@ draw_nmds <- function(color_by, basin = NULL, size_by = NULL, arrows = TRUE,
   subtitle <- paste0("Bray-Curtis on Wisconsin-standardized square-root densities \u00b7 ",
                      sprintf("2-D stress %.3f", info$stress), " \u00b7 ",
                      format(info$n_transects, big.mark = ","), " transects",
-                     if (!all(base$focus)) paste0(" \u00b7 sites of ", place_label(basin),
-                                                  " in color, the rest in gray"))
+                     highlight_note(color_by, basin, base$focus))
   caption <- caption_text(
     sprintf("Each point is one 30 x 2 m transect; %d with no understory algae and %d without an algae survey cannot be placed and are left out.",
             info$n_no_understory_algae, info$n_no_algae_survey),
     if (isTRUE(arrows)) "Black arrows point to each species' score: the weighted average of the transects it occurs on.",
-    if (isTRUE(substrate)) c(
-      sprintf("Blue arrows: substrate fitted onto the ordination (envfit), each pointing the way it increases, its length in proportion to its correlation with the ordination (r\u00b2 across transects: %s).",
-              paste(sprintf("%s %.2f", sub(" substrate$", "", ef$label), ef$r2), collapse = ", ")),
-      substrate_definitions,
-      sprintf("Permutation tests (%d) between sites, site means against site centroids: %s; within sites, transects shuffled only among their own site's: %s.",
-              ef$permutations[1], term_p_list(ef$label, ef$p_between_sites),
-              term_p_list(ef$label, ef$p_within_sites))),
+    if (vectors != "none") c(
+      sprintf("Blue arrows: %s fitted onto the ordination (envfit), each pointing the way it increases, its length in proportion to its correlation with the ordination.",
+              if (vectors == "grouped") "the substrate groups and mean relief"
+              else "each UPC substrate class, one at a time, and mean relief"),
+      if (vectors == "grouped") substrate_definitions else class_definitions,
+      sprintf("r\u00b2 across transects, then permutation p (%d) between sites (site means against site centroids) / within sites (transects shuffled only among their own site's): %s.",
+              ef$permutations[1], vector_stats(ef))),
     if (isTRUE(ellipses)) "Ellipses: 95% normal-theory ellipses for each group of 5 or more transects.",
     if (!is.null(base$size_col)) sprintf("Point size: %s density on the transect.", point_size_label(size_by)),
     "Stress under 0.2 gives a usable two-dimensional picture (Clarke 1993); fine detail should not be over-read.")
@@ -1304,7 +1346,7 @@ draw_dbrda <- function(color_by, basin = NULL, size_by = NULL, arrows = TRUE,
             100 * s$r2, 100 * s$adj_r2), "\n",
     "Bray-Curtis on Wisconsin-standardized square-root densities \u00b7 year partialled out \u00b7 ",
     format(s$n_transects, big.mark = ","), " transects",
-    if (!all(base$focus)) paste0(" \u00b7 sites of ", place_label(basin), " in color, the rest in gray"))
+    highlight_note(color_by, basin, base$focus))
   caption <- caption_text(
     sprintf("Each point is one 30 x 2 m transect, placed by its algae (weighted-average scores, scaling 1: distances between transects are kept). The second axis holds %.1f%% of the variation to the first's %.1f%%: read the figure left to right.",
             100 * s$axis2_share, 100 * s$axis1_share),
@@ -1335,8 +1377,10 @@ draw_dbrda <- function(color_by, basin = NULL, size_by = NULL, arrows = TRUE,
 }
 
 ## The figures Run writes for an ordination: every colouring, plain, and each
-## basin's sites. The NMDS coloured by basin is also drawn with the substrate
-## vectors, and sized by each species and by the total.
+## basin's sites. The NMDS coloured by basin is also drawn with each set of
+## substrate vectors, and sized by each species and by the total. (One basin
+## picked out against the rest is for Explore data, not written by Run: each
+## basin's sites already show it.)
 ordination_targets <- function(analysis, view) {
   pts <- ordination_points(analysis)
   if (is.null(pts)) return(list())
@@ -1346,8 +1390,11 @@ ordination_targets <- function(analysis, view) {
                   function(b) list(where = b, category = NULL)))
   }
   if (identical(view, "basin") && is_nmds(analysis)) {
+    has_classes <- !is.null(nmds_envfit) && "set" %in% names(nmds_envfit) &&
+      any(nmds_envfit$set == "individual")
     return(c(list(plain),
-             if (!is.null(nmds_envfit)) list(list(where = NULL, category = NULL, substrate = TRUE)),
+             if (!is.null(nmds_envfit)) list(list(where = NULL, category = NULL, substrate = "grouped")),
+             if (has_classes) list(list(where = NULL, category = NULL, substrate = "individual")),
              lapply(unname(point_size_choices()), function(s) list(where = NULL, category = s))))
   }
   list(plain)
@@ -1500,8 +1547,9 @@ draw_glmm_pair <- function(species, predictor) {
   est <- function(term) {
     r <- tm[tm$term == term, ]
     if (!nrow(r) || is.na(r$estimate)) return("not estimated")
-    sprintf("%.2f\u00d7 (95%% CI %.2f\u2013%.2f), p = %s%s", r$rate_ratio, r$lo, r$hi,
-            format.pval(r$p, digits = 2, eps = 1e-4), if (!is.na(r$q) && r$q < 0.05) paste0(", q = ", signif(r$q, 2)) else "")
+    p <- if (!is.na(r$p) && r$p < 1e-4) "p < 0.0001" else paste("p =", format.pval(r$p, digits = 2))
+    sprintf("%.2f\u00d7 (95%% CI %.2f\u2013%.2f), %s%s", r$rate_ratio, r$lo, r$hi, p,
+            if (!is.na(r$q) && r$q < 0.05) paste0(", q = ", signif(r$q, 2)) else "")
   }
   per <- if (relief) "per +0.25 m" else "per +10 points"
   flagged <- !all(tm$ok)
@@ -1513,7 +1561,7 @@ draw_glmm_pair <- function(species, predictor) {
     geom_point(data = st, aes(x, density, size = n), shape = 21, fill = col, color = "white", alpha = 0.85) +
     scale_y_continuous(trans = scales::pseudo_log_trans(sigma = 0.02, base = 10),
                        breaks = c(0, 0.03, 0.1, 0.3, 1, 3, 10, 30)) +
-    scale_size_area(max_size = 5, name = "transects\nat the site") +
+    scale_size_area(max_size = 5, name = "transects behind\nthe site's mean") +
     labs(title = "Between sites", subtitle = paste0(per, " of the site's mean:\n", est("between")),
          x = if (relief) "site's mean relief (m)" else paste0("site's mean share of ", cls, " (%)"),
          y = paste(sp, "per m\u00b2 at the site")) +
@@ -1536,7 +1584,7 @@ draw_glmm_pair <- function(species, predictor) {
   caption <- caption_text(
     sprintf("Negative binomial GLMM: count ~ between + within + depth zone + year + (1 | site), %s transects at %d sites (%d with %s).",
             format(n_tr, big.mark = ","), n_si, tm$n_present[1], sp),
-    "Between sites: points are the sites (mean over all their transects and years); the line is the expected density at a typical site, over the range of site means, averaged over depth zones and the years the species was recorded.",
+    "Between sites: each point is one site, at its mean over all its transects and years, sized by how many transects that mean averages; the line is the expected density at a typical site, over the range of site means, averaged over depth zones and the years the species was recorded.",
     "Within sites: the change in a transect's count with more of the class than its site's average, over the middle 95% of transects.",
     if (!is.na(tm$q[1])) "q: Benjamini-Hochberg across all between and within terms.",
     if (flagged) paste0("This fit warned (", tm$note[!is.na(tm$note)][1], "), so no curve is drawn: too few transects with the species to trust it.")
@@ -1572,6 +1620,8 @@ glmm_targets <- function(view) {
 ##   figs/density/site/across/algae/Hood_Canal_sugar_kelp.png
 ##   figs/nmds_algae/transect/basin/algae/all_sized_by_sugar_kelp.png
 ##   figs/nmds_algae/transect/basin/algae/all_with_substrate.png
+##   figs/nmds_algae/transect/basin/algae/all_with_substrate_classes.png
+##   figs/nmds_algae/transect/basin/algae/Hood_Canal.png   (one basin picked out)
 ##   figs/dbrda_algae/transect/site/algae/Hood_Canal.png
 ##   figs/glmm_algae/transect/rates_individual/algae/all.png
 ##   figs/glmm_algae/transect/pair/algae/sieve_kelp_vs_hard.png
@@ -1585,8 +1635,12 @@ figure_file <- function(analysis, scale, view, grp, where = NULL, category = NUL
                      grp$folder, paste0(stem, ".png")))
   }
   if (is_ordination(analysis)) {
-    stem <- if (identical(view, "site")) safe_file_name(where) else "all"
-    if (isTRUE(substrate) && is_nmds(analysis)) stem <- paste0(stem, "_with_substrate")
+    ## a basin: whose sites are coloured, or the one basin picked out
+    stem <- if (!is.null(where) && nzchar(where)) safe_file_name(where) else "all"
+    if (is_nmds(analysis)) {
+      stem <- paste0(stem, switch(substrate_mode(substrate), grouped = "_with_substrate",
+                                  individual = "_with_substrate_classes", ""))
+    }
     if (!is.null(category) && nzchar(category)) {
       stem <- paste0(stem, "_sized_by_", safe_file_name(point_size_label(category)))
     }

@@ -35,7 +35,7 @@ Double-click **`run_data_interpreter.bat`**. Nothing needs to be installed first
 | `code/metrics_across_scale.R` | step 2: transect, site, basin and Puget Sound tables (mean, SD, variance) → `results/metrics_*_scale.csv` |
 | `code/temporal_trend.R` | step 2: the temporal trend metric ([issue #2](https://github.com/Seattle-Aquarium/understory_kelp_indicator/issues/2)) → `results/trend_*_scale.csv` |
 | `code/nmds_algae.R` | step 2: NMDS of the understory algae community, one point per transect → `results/nmds_algae_*.csv` |
-| `code/substrate_algae.R` | step 2: substrate and that community — substrate vectors on the NMDS, and a db-RDA constrained by substrate, with permutation tests → `results/nmds_algae_envfit.csv`, `results/dbrda_algae_*.csv` |
+| `code/substrate_algae.R` | step 2: substrate and that community — substrate vectors on the NMDS (the hard, mixed and soft groups, and the eight individual classes, each with mean relief), and a db-RDA constrained by the groups, with permutation tests → `results/nmds_algae_envfit.csv`, `results/dbrda_algae_*.csv` |
 | `code/glmm_substrate.R` | step 2: a negative binomial GLMM of each understory alga's count against each substrate class, between and within sites → `results/glmm_algae_*.csv` |
 | `code/substrate_classes.R` | the UPC substrate classes and how the grouped analyses combine them, shared by the db-RDA and the GLMMs |
 | `code/supplementary/` | checks behind the methods, run by hand rather than from the app: transformations, predictor sets, between vs within sites, GLMM checks and sensitivity analyses → `results/supplementary/`, `figs/supplementary/` |
