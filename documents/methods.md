@@ -1,7 +1,5 @@
 # Methods: understory kelp indicator analyses
 
-Zach Randell · October 2026 · also kept as a Claude Doc; this copy is the one in the repository
-
 ## Purpose and scope
 
 This document explains, in plain language, how the Understory Kelp Indicator turns Reef Check dive surveys into metrics, analyses and figures. It follows the order the Data Interpreter app runs them, and names the script behind each step so any number can be traced to its code.
@@ -9,8 +7,6 @@ This document explains, in plain language, how the Understory Kelp Indicator tur
 1. **Clean data** (`rc_full_data_clean.R`): the four raw Reef Check exports become one table with one row per transect.
 2. **Build metrics**: average density and its spread at four spatial scales (`metrics_across_scale.R`); the temporal trend (`temporal_trend.R`); an ordination of the algae community (`nmds_algae.R`); how substrate relates to that community (`substrate_algae.R`); and a model of each alga against each substrate class (`glmm_substrate.R`).
 3. **Data** (`figure_functions.R`, `visualizations.R`): every figure, previewed in the app or written to the `figs/` folder.
-
-The reader is assumed to have taken an introductory statistics course; anything beyond that is explained where it first appears. The exact rules each step must follow, written for checking rather than reading, are in `INVARIANTS.md` at the repository root.
 
 ## The data
 
