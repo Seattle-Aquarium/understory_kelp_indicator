@@ -1501,7 +1501,7 @@ draw_glmm_rates <- function(set = c("individual", "grouped"), panel = c("both", 
 
   n_tr <- max(glmm_summary$n_transects); n_si <- glmm_summary$n_sites[1]
   caption <- caption_text(
-    sprintf("Negative binomial GLMMs of each species' count per 30 x 2 m transect, one class at a time: count ~ between + within + depth zone + year + (1 | site); %s transects at %d sites.",
+    sprintf("Negative binomial GLMMs of each species' count per 30 x 2 m transect, one class at a time: count ~ between + within + depth (ft) + year + (1 | site); %s transects at %d sites.",
             format(n_tr, big.mark = ","), n_si),
     switch(panel,
       both    = "Between: the site's mean share over all its transects and years. Within: the transect's share minus its site's mean.",
@@ -1642,9 +1642,9 @@ draw_glmm_pair <- function(species, predictor) {
 
   n_tr <- tm$n[1]; n_si <- tm$n_sites[1]
   caption <- caption_text(
-    sprintf("Negative binomial GLMM: count ~ between + within + depth zone + year + (1 | site), %s transects at %d sites (%d with %s).",
+    sprintf("Negative binomial GLMM: count ~ between + within + depth (ft) + year + (1 | site), %s transects at %d sites (%d with %s).",
             format(n_tr, big.mark = ","), n_si, tm$n_present[1], sp),
-    "Between sites: each point is one site, at its mean over all its transects and years, sized by how many transects that mean averages; the line is the expected density at a typical site, over the range of site means, averaged over depth zones and the years the species was recorded.",
+    "Between sites: each point is one site, at its mean over all its transects and years, sized by how many transects that mean averages; the line is the expected density at a typical site, over the range of site means, averaged over the depths and years of the transects in the years the species was recorded.",
     "Within sites: the line is the change in a transect's count with more of the class than its site's average, over the middle 95% of transects.",
     if (has_bins) "Each point pools the transects in one of ten equal steps of that departure: their total count over the total the model expects for their sites' typical transects, sized by how many transects, with a 95% interval from resampling sites.",
     if (has_bins && (nrow(below) || nrow(above)))

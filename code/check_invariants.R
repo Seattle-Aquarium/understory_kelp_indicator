@@ -140,6 +140,9 @@ q_split <- p.adjust(gt$p[gt$form == "split"], "BH")
 check("G-5", "q = Benjamini-Hochberg across the 240 split terms", near(q_split, gt$q[gt$form == "split"]))
 check("G-8", "bins: at least 10 transects and 3 sites, at most 10 per fit",
       all(gb$n >= 10 & gb$n_sites >= 3) && all(table(paste(gb$species, gb$predictor)) <= 10))
+check("G-3", "GLMMs use continuous depth, never depth zone",
+      all(grepl("depth + year", gs$model, fixed = TRUE)) && !any(grepl("depth_zone", gs$model)) &&
+        all(c("depth_rate_ratio", "depth_p") %in% names(gt)))
 check("G-10", "GLMM settings recorded", all(grepl("nbinom2", gs$model)))
 
 cat(if (length(failed)) sprintf("\n%d check(s) failed: %s\n", length(failed), paste(unique(failed), collapse = ", "))

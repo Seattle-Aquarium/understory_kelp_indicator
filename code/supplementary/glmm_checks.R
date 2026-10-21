@@ -12,8 +12,7 @@
 ##     the data on the share of zero counts and on the overall spread
 ##     (randomized quantile residuals tested against uniform);
 ##   * a zero-inflated version (an extra share of transects with none at all);
-##   * sensitivity: transect depth in feet added; basin added as a second
-##     random intercept.
+##   * sensitivity: depth left out; basin added as a second random intercept.
 ##
 ## Run from code/supplementary. About a minute.
 
@@ -33,16 +32,14 @@ held_out <- c("Northern Coast", "Western Strait of Juan de Fuca", "Eastern Strai
 tr <- tr[!gsub("_", " ", tr$basin) %in% held_out, ]
 canopy  <- c("ak_bull_kelp", "ak_giant_kelp_n", "ak_feather_boa_n")
 species <- setdiff(grep("^ak_", names(tr), value = TRUE), canopy)
-d <- data.frame(key = tr$key, basin = tr$basin, site = tr$site, year = tr$year, depth_zone = tr$depth_zone)
+d <- data.frame(key = tr$key, basin = tr$basin, site = tr$site, year = tr$year, depth_ft = tr$depth_ft)
 for (g in names(substrate_groups)) d[[g]] <- substrate_share(tr, substrate_groups[[g]])
 d$relief <- mean_relief(tr)
 d <- cbind(d, cl[match(d$key, cl$key), species])
-d <- d[rowSums(!is.na(d[species])) > 0 & !is.na(d$hard) & !is.na(d$relief), ]
+d <- d[rowSums(!is.na(d[species])) > 0 & !is.na(d$hard) & !is.na(d$relief) & !is.na(d$depth_ft), ]
 d$site <- factor(d$site); d$year <- factor(d$year); d$basin <- factor(d$basin)
-d$depth_zone <- factor(d$depth_zone, levels = c("offshore", "inshore"))
-## transect depth per 10 ft from 15 ft; one missing value takes the median
-d$depth10 <- (cl$depth_ft[match(d$key, cl$key)] - 15) / 10
-d$depth10[is.na(d$depth10)] <- median(d$depth10, na.rm = TRUE)
+## transect depth per 10 ft from 15 ft, as in glmm_substrate.R
+d$depth <- (d$depth_ft - 15) / 10
 for (p in c("soft", "hard")) {
   m <- ave(d[[p]], d$site, FUN = mean)
   d[[paste0(p, "_x")]] <- d[[p]] / 0.1
@@ -74,14 +71,14 @@ rows <- list()
 for (pp in list(c("ak_sugar_kelp", "soft"), c("ak_sieve_kelp", "hard"))) {
   sp <- pp[1]; x <- pp[2]
   nb <- paste0(x, "_between"); nw <- paste0(x, "_within")
-  base_rhs <- paste(nb, "+", nw, "+ depth_zone + year + (1 | site)")
+  base_rhs <- paste(nb, "+", nw, "+ depth + year + (1 | site)")
   split  <- fit(sp, base_rhs)
-  single <- fit(sp, paste0(x, "_x + depth_zone + year + (1 | site)"))
+  single <- fit(sp, paste0(x, "_x + depth + year + (1 | site)"))
   V <- vcov(split)$cond; b <- fixef(split)$cond
   w_within <- (1 / V[nw, nw]) / (1 / V[nw, nw] + 1 / V[nb, nb])
   z_diff <- (b[nb] - b[nw]) / sqrt(V[nb, nb] + V[nw, nw] - 2 * V[nb, nw])
   zinb  <- fit(sp, base_rhs, zi = ~1)
-  depth <- fit(sp, paste(base_rhs, "+ depth10"))
+  nodepth <- fit(sp, paste(nb, "+", nw, "+ year + (1 | site)"))
   basin <- fit(sp, paste(base_rhs, "+ (1 | basin)"))
   rows[[sp]] <- data.frame(
     species = sp, predictor = x,
@@ -97,8 +94,8 @@ for (pp in list(c("ak_sugar_kelp", "soft"), c("ak_sieve_kelp", "hard"))) {
     zinb_aic_change = AIC(zinb) - AIC(split),
     zinb_between = rr(zinb, nb)[["rate_ratio"]], zinb_between_p = rr(zinb, nb)[["p"]],
     zinb_within = rr(zinb, nw)[["rate_ratio"]], zinb_within_p = rr(zinb, nw)[["p"]],
-    depth_between = rr(depth, nb)[["rate_ratio"]], depth_within = rr(depth, nw)[["rate_ratio"]],
-    depth_per_10ft = rr(depth, "depth10")[["rate_ratio"]],
+    depth_per_10ft = rr(split, "depth")[["rate_ratio"]], depth_p = rr(split, "depth")[["p"]],
+    nodepth_between = rr(nodepth, nb)[["rate_ratio"]], nodepth_within = rr(nodepth, nw)[["rate_ratio"]],
     basin_between = rr(basin, nb)[["rate_ratio"]], basin_within = rr(basin, nw)[["rate_ratio"]],
     row.names = NULL)
 }

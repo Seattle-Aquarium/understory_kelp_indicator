@@ -223,7 +223,7 @@ Each point is one transect, placed where its algae put it: the weighted average 
 
 For each understory alga and each substrate class, a negative binomial mixed model (GLMM) estimates how the species' count changes with more of that class, separately between sites and within sites (`glmm_substrate.R`). Where the ordinations describe the whole community, these models answer for one species at a time, for example how many more sieve kelp are found where there is more hard substrate.
 
-The models use 895 transects at 42 sites: every transect with both an algae count and a UPC survey. Offshore transects (1–3) have a median depth of 19.5 ft and inshore ones (4–6) 12.5 ft.
+The models use 894 transects at 42 sites: every transect with an algae count, a UPC survey and a recorded depth (three transects lack one). Recorded depths run from 0 to 62 ft, with a median of 14.5 ft.
 
 ### Why a negative binomial mixed model
 
@@ -231,7 +231,7 @@ The models use 895 transects at 42 sites: every transect with both an algae coun
 - **Effects that multiply.** The model works on a log scale, so more substrate multiplies the expected count (doubling it, say) rather than adding a fixed number. This keeps every prediction above zero and suits species whose numbers range over orders of magnitude.
 - **Clumped counts.** The simplest count model, the Poisson, assumes counts vary about as much as their average. Kelp grow in patches, so counts vary far more; the negative binomial allows for this and estimates how much from the data, as the ROV–diver comparison report did.
 - **Transects that are not independent.** Transects at one site share water, exposure and history, and most sites were surveyed in several years. A random intercept for site gives every site its own baseline level, which is what makes the model “mixed”.
-- **Year and depth zone.** Each year and each depth zone gets its own adjustment, so differences between years (including which sites were surveyed) and between inshore and offshore transects are not mistaken for substrate effects.
+- **Year and depth.** Each year gets its own adjustment, and depth enters as a straight-line effect on the log scale, per 10 ft, so differences between years (including which sites were surveyed) and between shallower and deeper transects are not mistaken for substrate effects. Depth is used in feet rather than as the inshore/offshore depth zone, because at many sites the two sets of transects run on into each other rather than forming distinct groups.
 
 ### One substrate class at a time
 
@@ -259,14 +259,14 @@ The response does not change: it is still each transect's own count. The six 202
 | 2 | 100 | 46.7 | +53.3 | 9 |
 | 3 | 100 | 46.7 | +53.3 | 20 |
 
-The split mattered: for sugar kelp and soft substrate, and for sieve kelp and hard substrate, the two answers differed significantly (p = 0.011 and p < 0.001). A single-term version of every model was fitted too, for comparison.
+The split mattered: for sugar kelp and soft substrate, and for sieve kelp and hard substrate, the two answers differed significantly (p = 0.013 and p < 0.001). A single-term version of every model was fitted too, for comparison.
 
 ### The model
 
-For each species and class, the expected count on transect *i* at site *j* is a baseline multiplied by five factors: the site's average share, the transect's departure from it, depth zone, year and the site's own level. On the log scale these add up:
+For each species and class, the expected count on transect *i* at site *j* is a baseline multiplied by five factors: the site's average share, the transect's departure from it, its depth, the year and the site's own level. On the log scale these add up:
 
 $$
-\log(\mu_{ij}) = \beta_0 + \beta_B \, \bar{x}_j + \beta_W \, (x_{ij} - \bar{x}_j) + \beta_D \, \mathrm{inshore}_i + \gamma_{\mathrm{year}(i)} + u_j
+\log(\mu_{ij}) = \beta_0 + \beta_B \, \bar{x}_j + \beta_W \, (x_{ij} - \bar{x}_j) + \beta_D \, \mathrm{depth}_i + \gamma_{\mathrm{year}(i)} + u_j
 $$
 
 | Term | What it is | In plain words |
@@ -275,25 +275,25 @@ $$
 | β0 | intercept | the baseline count |
 | βB × site average | between-site term | how counts change with the site's average share |
 | βW × departure | within-site term | how counts change when a transect has more or less than its site's average |
-| βD × inshore | depth zone | the difference between inshore and offshore transects |
+| βD × depth | depth | how counts change per 10 ft deeper (depth in feet, minus 15, divided by 10) |
 | γ year | year | one adjustment per survey year, 2021–2025 |
 | u*j* | site random intercept | the site's own level, above or below a typical site |
 
-The observed count varies around μ following a negative binomial distribution whose extra-variation parameter is estimated from the data. The site levels are assumed to scatter around zero like a bell curve, with the model estimating how widely. In R: `count ~ x_between + x_within + depth_zone + year + (1 | site)`, fitted with glmmTMB, family `nbinom2`.
+The observed count varies around μ following a negative binomial distribution whose extra-variation parameter is estimated from the data. The site levels are assumed to scatter around zero like a bell curve, with the model estimating how widely. In R: `count ~ x_between + x_within + depth + year + (1 | site)`, fitted with glmmTMB, family `nbinom2`.
 
 ### Reporting
 
-**Rate ratios.** Each coefficient is reported as a rate ratio: the factor by which the expected count changes for +10 percentage points of the class (+0.25 m for relief). A rate ratio of 1 means no change, 2 twice as many and 0.5 half as many. At sites whose transects average 10 points more hard substrate, sieve kelp counts were 2.5 times higher (95% confidence interval 1.9–3.2); within a site, a transect with 10 points more hard substrate than its site's average carried 1.11 times as many (1.04–1.17).
+**Rate ratios.** Each coefficient is reported as a rate ratio: the factor by which the expected count changes for +10 percentage points of the class (+0.25 m for relief). A rate ratio of 1 means no change, 2 twice as many and 0.5 half as many. At sites whose transects average 10 points more hard substrate, sieve kelp counts were 2.5 times higher (95% confidence interval 1.9–3.2); within a site, a transect with 10 points more hard substrate than its site's average carried 1.10 times as many (1.04–1.17).
 
 **Many tests at once.** Ten species, twelve classes and two terms make 240 estimates, so a few would look significant by chance. The p-values are adjusted with the Benjamini–Hochberg procedure, which holds the expected share of false positives among results called significant at 5%; a result counts as significant when its adjusted p-value, q, is below 0.05.
 
 ### The GLMM figures
 
 - **Heatmaps:** every rate ratio for one set of classes, coloured on a doubling scale (blue more, red fewer), with stars for q below 0.05, 0.01 and 0.001. Between sites and within sites can be drawn on their own or stacked; both halves share the colour scale, so they compare directly.
-- **Between sites, one species and one class:** one point per site at its average share and average density over all its transects and years, sized by how many transects that average spans (12–30). The line is the expected density at a typical (median) site, averaged over depth zones and the years the species was recorded.
+- **Between sites, one species and one class:** one point per site at its average share and average density over all its transects and years, sized by how many transects that average spans (12–30). The line is the expected density at a typical (median) site, averaged over the depths and years of the transects in the years the species was recorded.
 - **Within sites, one species and one class:** the line is the model's change in a transect's count relative to its site's typical transect, over the middle 95% of departures, with its 95% confidence band.
 
-**The binned points behind the within-site line.** Single transects cannot be drawn on that axis: a transect with none of the species has no place on a log scale, and transects at one site vary 10- to 100-fold, which would bury the line. Instead, each transect's count is set against what the model expects for its site's typical transect in that year and depth zone — everything in the model except the within-site term.
+**The binned points behind the within-site line.** Single transects cannot be drawn on that axis: a transect with none of the species has no place on a log scale, and transects at one site vary 10- to 100-fold, which would bury the line. Instead, each transect's count is set against what the model expects for its site's typical transect at that year and depth — everything in the model except the within-site term.
 
 1. Transects across the line's range (the middle 95% of departures) are cut into ten steps of equal width.
 2. Each point is one step's total count divided by its total expected count, placed at the step's mean departure and sized by how many transects it holds. Zeros count as they are.
@@ -306,18 +306,18 @@ If the model describes the data well, the points scatter around the line. For si
 
 The two highlighted models, sugar kelp with soft substrate and sieve kelp with hard substrate, were checked by simulating 500 data sets from each fitted model and comparing them with the real data; the other 118 were not checked one by one.
 
-- **Sieve kelp** matched well: 55% of transects had none, against 49% in the simulations (p = 0.14), and the spread of counts was consistent with the model (p = 0.22).
-- **Sugar kelp** had more zeros than expected (14% of transects against 6%), and the spread of counts did not fit (p < 0.001); most of the extra zeros came from Hood Canal, where 69% of transects had none. A zero-inflated version, which lets an extra share of transects have none at all, fitted better (AIC 37 lower). It gave the same between-site result (1.23×, p = 0.03) and turned the within-site trend into a small decline (0.95×, p = 0.004).
+- **Sieve kelp** matched well: 55% of transects had none, against 49% in the simulations (p = 0.12), and the spread of counts was consistent with the model (p = 0.35).
+- **Sugar kelp** had more zeros than expected (14% of transects against 6%), and the spread of counts did not fit (p < 0.001); most of the extra zeros came from Hood Canal, where 69% of transects had none. A zero-inflated version, which lets an extra share of transects have none at all, fitted better (AIC 45 lower). It gave the same between-site result (1.20×, p = 0.02) and turned the within-site trend into a small decline (0.96×, p = 0.01).
 
-Both models were refitted twice, once adding transect depth in feet and once adding basin as a second random intercept. The rate ratios barely moved:
+Both models were refitted twice, once leaving depth out and once adding basin as a second random intercept. The rate ratios barely moved:
 
 | Model | Sieve kelp × hard: between | Sieve kelp × hard: within | Sugar kelp × soft: between | Sugar kelp × soft: within |
 | --- | --- | --- | --- | --- |
-| As reported | 2.50 | 1.11 | 1.24 | 0.96 |
-| + transect depth (ft) | 2.50 | 1.10 | 1.22 | 0.97 |
-| + basin as a random intercept | 2.37 | 1.10 | 1.25 | 0.96 |
+| As reported | 2.47 | 1.10 | 1.20 | 0.97 |
+| without depth | 2.50 | 1.09 | 1.22 | 0.95 |
+| + basin as a random intercept | 2.36 | 1.10 | 1.21 | 0.97 |
 
-Sugar kelp itself fell steeply with depth (0.59× per 10 ft), which is worth its own look. Of the 240 fits, 237 finished without warnings; the three that warned involve torn kelp and woody kelp, which few transects carry, and are marked † in the figures.
+Depth itself matters for several species: for every 10 ft deeper, sugar kelp fell to 0.50×, wire weed to 0.08×, and winged, woody and three-ribbed kelp to roughly 0.25–0.47×. Of the 240 fits, 238 finished without warnings. Of the two that warned, three-ribbed kelp with shell hash is marked † in the figures; the other is broad-ribbed kelp's single-term model with shell hash, which no figure draws.
 
 ### Caveats
 
@@ -326,7 +326,7 @@ Sugar kelp itself fell steeply with depth (0.59× per 10 ft), which is worth its
 - **Large ratios for scarce classes.** Few sites average more than 10% large or small boulder, so +10 points of a site's average is a big step for those classes; their large between-site ratios (up to 28×) show direction, not a reliable size.
 - **Rare species.** Torn kelp (3% of transects), three-ribbed kelp (7%) and winged kelp (9%) rest on few sites, and their estimates are uncertain even when significant.
 - **Sampling noise.** With about 30 points per transect, each share is itself an estimate. That noise flattens within-site slopes by roughly 10–20%, too little to explain the gap between the two.
-- **Data notes.** In 2021 the 30 transects recorded almost no reef or shell hash and much more cobble than later years, probably a datasheet or training change that the year term absorbs. No 2021 transect had sieve kelp, so that year's adjustment cannot be estimated for it; the substrate terms are unaffected.
+- **Data notes.** In 2021 the 30 transects recorded almost no reef or shell hash and much more cobble than later years, probably a datasheet or training change that the year term absorbs. No 2021 transect had sieve kelp, so that year's adjustment cannot be estimated for it; the substrate terms are unaffected. Fourteen transects are recorded at under 3 ft (two at 0 ft); they are used as recorded.
 
 ## Software, code and reproducibility
 

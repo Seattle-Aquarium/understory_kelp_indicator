@@ -130,24 +130,24 @@ Each script runs as its own R process from `code/` (`setwd("../")`), reads only 
 
 ## G: GLMMs (`glmm_substrate.R`)
 
-- **G-1 Data.** One row per transect with any non-blank understory count and non-blank hard share and relief. `site` and `year` are factors; `depth_zone` is a factor with levels (`offshore`, `inshore`), so offshore is the reference.
+- **G-1 Data.** One row per transect with any non-blank understory count and non-blank hard share, relief and `depth_ft`. `site` and `year` are factors. Depth enters as the continuous `depth` = (`depth_ft` − 15) / 10 (per 10 ft, centred on 15 ft), never as `depth_zone`: at many sites the inshore and offshore transects run on into each other, so the two are not distinct categories. Recorded depths are used as they are, including the 14 under 3 ft.
 - **G-2 Predictors.** ✓ 12 classes (hard, mixed, soft, relief; the eight individual classes) × 10 species. Unit *u* = 0.10 for a share, 0.25 m for relief. For each class *x*, with *x̄*<sub>i</sub> its mean over all of site *i*'s rows in the data (all years):
   - `_between` = *x̄*<sub>i</sub> / *u*;
   - `_within` = (*x* − *x̄*<sub>i</sub>) / *u*;
   - `_x` = *x* / *u* (pooled form).
-- **G-3 Model.** For each (species, class), on the rows where both are non-blank, `glmmTMB(y ~ between + within + depth_zone + year + (1 | site), family = nbinom2)` (split form) and `y ~ x + depth_zone + year + (1 | site)` (pooled form). *y* is the transect's count (D-11), never a density or a ratio.
+- **G-3 Model.** For each (species, class), on the rows where both are non-blank, `glmmTMB(y ~ between + within + depth + year + (1 | site), family = nbinom2)` (split form) and `y ~ x + depth + year + (1 | site)` (pooled form). No GLMM uses `depth_zone`. The depth rate ratio per 10 ft and its p are written beside every term (`depth_rate_ratio`, `depth_p`). *y* is the transect's count (D-11), never a density or a ratio.
 - **G-4 Fit status.** Warnings are captured, never stop the loop; `ok` = no warning and finite standard errors. A fit that is not ok draws no curve and no bins.
 - **G-5 Reporting.** ✓ `rate_ratio` = exp(estimate); `lo`, `hi` = exp(estimate ± 1.96 SE); `p` = Wald; `q` = Benjamini–Hochberg within each form, across all its non-blank p (240 split terms, 120 pooled).
-- **G-6 Curves.** Between: 60 points over the observed range of site means; the expected density (÷ 60) at site effect 0 (the median site), exp of the linear predictor averaged over the depth-zone × year combinations in the years the species was recorded, weighted by their frequency; 95% band by the delta method. Within: exp(*β*<sub>W</sub> · departure / *u*) over 40 points spanning the 2.5–97.5% quantiles of the departures, band from *β*<sub>W</sub> ± 1.96 SE.
+- **G-6 Curves.** Between: 60 points over the observed range of site means; the expected density (÷ 60) at site effect 0 (the median site), exp of the linear predictor averaged over the depths and years of the transects in the years the species was recorded, each transect counting once; 95% band by the delta method. Within: exp(*β*<sub>W</sub> · departure / *u*) over 40 points spanning the 2.5–97.5% quantiles of the departures, band from *β*<sub>W</sub> ± 1.96 SE.
 - **G-7 Site means** (`glmm_algae_sites.csv`): per (species, class, site), mean share (×100, or metres for relief), mean density (count ÷ 60) and *n* transects.
 - **G-8 Bins** (`glmm_algae_bins.csv`). ✓ For each ok split fit:
-  1. expected<sub>j</sub> = exp(*η*<sub>j</sub> − *β*<sub>W</sub> · within<sub>j</sub>), where *η* is the fitted linear predictor including the site effect;
+  1. expected<sub>j</sub> = exp(*η*<sub>j</sub> − *β*<sub>W</sub> · within<sub>j</sub>), where *η* is the fitted linear predictor including depth, year and the site effect;
   2. edges = 11 equally spaced points from the 2.5% to the 97.5% quantile of the departures; transects outside are not binned;
   3. ratio = Σ *y* ÷ Σ expected over the bin's transects, plotted at their mean departure;
   4. interval = 2.5% and 97.5% quantiles of 999 resamples of the bin's sites with replacement (site sums), `set.seed(20261020 + task index)`;
   5. a bin with fewer than 10 transects or 3 sites is dropped.
 - **G-9 Display rules.** Bins are not drawn for a species on fewer than 5% of transects (torn kelp), whose few transects with large expected counts decide every bin; the caption says so.
-- **G-10 Settings.** ✓ `version = "glmm-v2"`; `cores = detectCores() − 2`; the summary records the model, units, glmmTMB version and fingerprint.
+- **G-10 Settings.** ✓ `version = "glmm-v3"`; `cores = detectCores() − 2`; the summary records the model, units, glmmTMB version and fingerprint.
 
 ## F: figures (`figure_functions.R`, `visualizations.R`, `gui/app.R`)
 
@@ -172,4 +172,5 @@ Each script runs as its own R process from `code/` (`setwd("../")`), reads only 
 
 | Date | IDs | Change |
 |---|---|---|
+| 2026-10-21 | G-1, G-3, G-6, G-8, G-10 | Depth enters the GLMMs as continuous depth in feet instead of the inshore/offshore depth zone, which is not a true category at many sites. 894 transects (three lack a depth). Rate ratios moved by a median of 0.2%; 35 terms are significant before and after (32 in both); no significant term changed direction. |
 | 2026-10-20 | all | First version, written from the code at commit 959bd1a plus the within-site bins (G-8, G-9). |

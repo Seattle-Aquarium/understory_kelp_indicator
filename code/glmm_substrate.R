@@ -20,11 +20,15 @@
 ## individual UPC classes -- one class at a time, since the shares sum to one
 ## and cannot all go in one model:
 ##
-##   count ~ x_between + x_within + depth_zone + year + (1 | site)
+##   count ~ x_between + x_within + depth + year + (1 | site)
 ##
 ##   count      individuals on the 30 x 2 m transect (standardized to 30 m)
 ##   x_between  the site's mean share over all its transects and years
 ##   x_within   the transect's share minus its site's mean
+##   depth      the transect's recorded depth, (depth_ft - 15) / 10: per 10 ft,
+##              centred on 15 ft. Continuous rather than the inshore/offshore
+##              depth zone, since at many sites the two sets of transects run
+##              on into each other; the 3 transects with no depth are left out.
 ##
 ## Why x is split: with a site random intercept, a single coefficient for x is
 ## close to a precision-weighted average of the within-site slope (some 850
@@ -41,15 +45,15 @@
 ##
 ## ---- Curves -------------------------------------------------------------------
 ## between: expected density at a typical site (site effect 0, the median site)
-##          over the observed range of site means, averaged over depth zones and
-##          over the years the species was recorded (no 2021 transect had sieve
-##          kelp, which leaves that year's coefficient unbounded), weighted as in
-##          the data. The mean over sites runs higher, by exp(site variance / 2).
+##          over the observed range of site means, averaged over the depths and
+##          years of the transects in the years the species was recorded (no
+##          2021 transect had sieve kelp, which leaves that year's coefficient
+##          unbounded). The mean over sites runs higher, by exp(site variance / 2).
 ## within:  the count relative to the site's typical transect, over the middle
 ##          95% of the transects' departures.
 ## bins:    the data behind the within curve. Each transect's expected count
 ##          with the within-site term left out is its site's typical transect
-##          in its year and depth zone (site effect included). The middle 95% of
+##          at its year and depth (site effect included). The middle 95% of
 ##          departures is cut into ten equal steps; each bin is its transects'
 ##          total count over that total expected, plotted at their mean
 ##          departure. Zeros count as they are, which a per-transect ratio on a
@@ -91,7 +95,7 @@ bins_csv     <- from_env("UKELP_GLMM_BINS_CSV",    file.path(results, "glmm_alga
 summary_csv  <- from_env("UKELP_GLMM_SUMMARY_CSV", file.path(results, "glmm_algae_summary.csv"))
 
 cores <- max(1, parallel::detectCores() - 2)
-version <- "glmm-v2"   # v2: the within-site bins
+version <- "glmm-v3"   # v2: the within-site bins; v3: depth in feet, not depth zone
 seed <- 20261020       # the bins' bootstrap; each fit adds its row number
 
 if (!requireNamespace("glmmTMB", quietly = TRUE)) {
@@ -125,17 +129,17 @@ canopy  <- c("ak_bull_kelp", "ak_giant_kelp_n", "ak_feather_boa_n")
 species <- setdiff(grep("^ak_", names(df_tr), value = TRUE), canopy)
 
 d <- data.frame(key = df_tr$key, basin = df_tr$basin, site = df_tr$site,
-                year = df_tr$year, depth_zone = df_tr$depth_zone)
+                year = df_tr$year, depth_ft = df_tr$depth_ft)
 for (g in names(substrate_groups)) d[[g]] <- substrate_share(df_tr, substrate_groups[[g]])
 d$relief <- mean_relief(df_tr)
 for (nm in names(substrate_individual)) d[[nm]] <- df_tr[[substrate_individual[[nm]]]]
 missing_counts <- setdiff(species, names(cl))
 if (length(missing_counts)) stop("No counts in ", cleaned_csv, " for ", paste(missing_counts, collapse = ", "))
 d <- cbind(d, cl[match(d$key, cl$key), species])
-d <- d[rowSums(!is.na(d[species])) > 0 & !is.na(d$hard) & !is.na(d$relief), ]
+d <- d[rowSums(!is.na(d[species])) > 0 & !is.na(d$hard) & !is.na(d$relief) & !is.na(d$depth_ft), ]
 d$site <- factor(d$site)
 d$year <- factor(d$year)
-d$depth_zone <- factor(d$depth_zone, levels = c("offshore", "inshore"))
+d$depth <- (d$depth_ft - 15) / 10
 
 ## predictors: display name -> a syntactic id for the formulas
 grouped    <- c("hard", "mixed", "soft", "relief")
@@ -162,7 +166,7 @@ fingerprint <- local({
   writeLines(c(version, paste(d$key, collapse = ","),
                format(as.vector(as.matrix(d[species])), digits = 15),
                format(as.vector(as.matrix(d[predictors])), digits = 15),
-               as.character(d$depth_zone)), f)
+               format(d$depth_ft, digits = 15)), f)
   unname(tools::md5sum(f))
 })
 previous <- if (file.exists(summary_csv)) tryCatch(read.csv(summary_csv), error = function(e) NULL)
@@ -187,7 +191,7 @@ fit_one <- function(i) {
   dd <- droplevels(d[!is.na(d[[t$species]]) & !is.na(d[[t$predictor]]), ])
   dd$y <- dd[[t$species]]
   rhs <- if (t$form == "pooled") paste0(id, "_x") else paste0(id, "_between + ", id, "_within")
-  f <- as.formula(paste("y ~", rhs, "+ depth_zone + year + (1 | site)"))
+  f <- as.formula(paste("y ~", rhs, "+ depth + year + (1 | site)"))
   warn <- character(0)
   fit <- withCallingHandlers(
     tryCatch(glmmTMB::glmmTMB(f, data = dd, family = glmmTMB::nbinom2()), error = function(e) e),
@@ -210,29 +214,26 @@ fit_one <- function(i) {
                  z = co[rows, "z value"], p = co[rows, "Pr(>|z|)"], ok = ok,
                  note = if (length(warn)) paste(unique(warn), collapse = "; ") else NA_character_,
                  site_sd = sqrt(as.numeric(sm$varcor$cond$site)), theta = stats::sigma(fit),
+                 depth_rate_ratio = exp(co["depth", "Estimate"]), depth_p = co["depth", "Pr(>|z|)"],
                  row.names = NULL)
   curves <- NULL
   bins <- NULL
   if (t$form == "split" && ok) {
     scale_x <- if (t$predictor == "relief") 1 else 100       # m, or percent
     beta <- glmmTMB::fixef(fit)$cond; V <- stats::vcov(fit)$cond
-    ## depth zones and the years the species was recorded, as in the data
+    ## the depths and years of the transects in the years the species was
+    ## recorded, each transect counting once
     yrs <- names(which(tapply(dd$y, dd$year, sum) > 0))
-    combos <- as.data.frame(table(depth_zone = dd$depth_zone[dd$year %in% yrs],
-                                  year = dd$year[dd$year %in% yrs]))
-    combos <- combos[combos$Freq > 0, ]
-    combos$w <- combos$Freq / sum(combos$Freq)
+    typical <- dd[dd$year %in% yrs, c("depth", "year")]
     tt <- stats::delete.response(stats::terms(stats::formula(fit, fixed.only = TRUE)))
     site_means <- tapply(dd[[paste0(id, "_between")]], dd$site, `[`, 1) * u
     grid <- seq(min(site_means), max(site_means), length.out = 60)
     between <- lapply(grid, function(g) {
-      nd <- combos
-      nd$depth_zone <- factor(nd$depth_zone, levels = levels(dd$depth_zone))
-      nd$year <- factor(nd$year, levels = levels(dd$year))
+      nd <- typical
       nd[[paste0(id, "_between")]] <- g / u
       nd[[paste0(id, "_within")]] <- 0
       X <- stats::model.matrix(tt, nd)
-      xb <- colSums(X * nd$w)
+      xb <- colMeans(X)
       b <- beta[colnames(X)]; VV <- V[colnames(X), colnames(X)]
       eta <- sum(xb * b); se <- sqrt(drop(t(xb) %*% VV %*% xb))
       data.frame(panel = "between", x = g * scale_x, fit = exp(eta) / 60,
@@ -306,7 +307,7 @@ summary_out <- data.frame(
   n_transects = sapply(species, function(s) sum(!is.na(d[[s]]))),
   n_present = sapply(species, function(s) sum(d[[s]] > 0, na.rm = TRUE)),
   n_sites = nlevels(d$site),
-  model = "count ~ x_between + x_within + depth_zone + year + (1 | site), negative binomial (glmmTMB nbinom2)",
+  model = "count ~ x_between + x_within + depth + year + (1 | site), depth = (depth_ft - 15) / 10, negative binomial (glmmTMB nbinom2)",
   units = "+10 percentage points of UPC points; relief +0.25 m",
   n_models = nrow(tasks), n_models_flagged = nrow(flagged),
   glmmTMB = as.character(utils::packageVersion("glmmTMB")),

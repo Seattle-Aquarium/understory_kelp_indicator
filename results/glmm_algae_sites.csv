@@ -40,7 +40,7 @@
 "ak_acid_weed","hard","Sund_Rock","Hood_Canal",47.9166604166667,0.0256944444444444,24
 "ak_acid_weed","hard","Titlow_Beach","South_Puget_Sound",2.03703611111111,0.440740740740741,18
 "ak_acid_weed","hard","Watmough_Bay","San_Juan_Islands",63.1481316666667,0.012037037037037,18
-"ak_acid_weed","hard","Wing_Point","Central_Puget_Sound",2.11110966666667,0.212222222222222,30
+"ak_acid_weed","hard","Wing_Point","Central_Puget_Sound",2.18390655172414,0.217241379310345,29
 "ak_broad-ribbed_kelp","hard","Blake_Island_South","Central_Puget_Sound",11.3888858333333,0.00138888888888889,24
 "ak_broad-ribbed_kelp","hard","Burrows_Lighthouse","North_Puget_Sound",73.1944416666667,0.0881944444444445,24
 "ak_broad-ribbed_kelp","hard","Cattle_Point","San_Juan_Islands",29.583331875,0.0625,16
@@ -82,7 +82,7 @@
 "ak_broad-ribbed_kelp","hard","Sund_Rock","Hood_Canal",47.9166604166667,0.00138888888888889,24
 "ak_broad-ribbed_kelp","hard","Titlow_Beach","South_Puget_Sound",2.03703611111111,0.0916666666666667,18
 "ak_broad-ribbed_kelp","hard","Watmough_Bay","San_Juan_Islands",63.1481316666667,0.0546296296296296,18
-"ak_broad-ribbed_kelp","hard","Wing_Point","Central_Puget_Sound",2.11110966666667,0,30
+"ak_broad-ribbed_kelp","hard","Wing_Point","Central_Puget_Sound",2.18390655172414,0,29
 "ak_five-ribbed_kelp","hard","Blake_Island_South","Central_Puget_Sound",11.3888858333333,0.60625,24
 "ak_five-ribbed_kelp","hard","Burrows_Lighthouse","North_Puget_Sound",73.1944416666667,1.14097222222222,24
 "ak_five-ribbed_kelp","hard","Cattle_Point","San_Juan_Islands",29.583331875,0.136458333333333,16
@@ -124,7 +124,7 @@
 "ak_five-ribbed_kelp","hard","Sund_Rock","Hood_Canal",47.9166604166667,0,24
 "ak_five-ribbed_kelp","hard","Titlow_Beach","South_Puget_Sound",2.03703611111111,0.55,18
 "ak_five-ribbed_kelp","hard","Watmough_Bay","San_Juan_Islands",63.1481316666667,0.315740740740741,18
-"ak_five-ribbed_kelp","hard","Wing_Point","Central_Puget_Sound",2.11110966666667,0.0783333333333333,30
+"ak_five-ribbed_kelp","hard","Wing_Point","Central_Puget_Sound",2.18390655172414,0.0775862068965517,29
 "ak_sieve_kelp","hard","Blake_Island_South","Central_Puget_Sound",11.3888858333333,0.00138888888888889,24
 "ak_sieve_kelp","hard","Burrows_Lighthouse","North_Puget_Sound",73.1944416666667,1.56597222222222,24
 "ak_sieve_kelp","hard","Cattle_Point","San_Juan_Islands",29.583331875,0,16
@@ -166,7 +166,7 @@
 "ak_sieve_kelp","hard","Sund_Rock","Hood_Canal",47.9166604166667,0.827777777777778,24
 "ak_sieve_kelp","hard","Titlow_Beach","South_Puget_Sound",2.03703611111111,0.25462962962963,18
 "ak_sieve_kelp","hard","Watmough_Bay","San_Juan_Islands",63.1481316666667,1.08981481481481,18
-"ak_sieve_kelp","hard","Wing_Point","Central_Puget_Sound",2.11110966666667,0.00166666666666667,30
+"ak_sieve_kelp","hard","Wing_Point","Central_Puget_Sound",2.18390655172414,0.00172413793103448,29
 "ak_sugar_kelp","hard","Blake_Island_South","Central_Puget_Sound",11.3888858333333,1.03472222222222,24
 "ak_sugar_kelp","hard","Burrows_Lighthouse","North_Puget_Sound",73.1944416666667,0.135416666666667,24
 "ak_sugar_kelp","hard","Cattle_Point","San_Juan_Islands",29.583331875,1.51666666666667,16
@@ -208,7 +208,7 @@
 "ak_sugar_kelp","hard","Sund_Rock","Hood_Canal",47.9166604166667,0.226388888888889,24
 "ak_sugar_kelp","hard","Titlow_Beach","South_Puget_Sound",2.03703611111111,2.63611111111111,18
 "ak_sugar_kelp","hard","Watmough_Bay","San_Juan_Islands",63.1481316666667,1.23518518518519,18
-"ak_sugar_kelp","hard","Wing_Point","Central_Puget_Sound",2.11110966666667,5.09722222222222,30
+"ak_sugar_kelp","hard","Wing_Point","Central_Puget_Sound",2.18390655172414,5.17471264367816,29
 "ak_three-ribbed_kelp","hard","Blake_Island_South","Central_Puget_Sound",11.3888858333333,0,24
 "ak_three-ribbed_kelp","hard","Burrows_Lighthouse","North_Puget_Sound",73.1944416666667,0.550694444444444,24
 "ak_three-ribbed_kelp","hard","Cattle_Point","San_Juan_Islands",29.583331875,0.991666666666667,16
@@ -250,7 +250,7 @@
 "ak_three-ribbed_kelp","hard","Sund_Rock","Hood_Canal",47.9166604166667,0,24
 "ak_three-ribbed_kelp","hard","Titlow_Beach","South_Puget_Sound",2.03703611111111,0.000925925925925926,18
 "ak_three-ribbed_kelp","hard","Watmough_Bay","San_Juan_Islands",63.1481316666667,0.0222222222222222,18
-"ak_three-ribbed_kelp","hard","Wing_Point","Central_Puget_Sound",2.11110966666667,0,30
+"ak_three-ribbed_kelp","hard","Wing_Point","Central_Puget_Sound",2.18390655172414,0,29
 "ak_torn_kelp","hard","Blake_Island_South","Central_Puget_Sound",11.3888858333333,0,24
 "ak_torn_kelp","hard","Burrows_Lighthouse","North_Puget_Sound",73.1944416666667,0.0159722222222222,24
 "ak_torn_kelp","hard","Cattle_Point","San_Juan_Islands",29.583331875,0.065625,16
@@ -292,7 +292,7 @@
 "ak_torn_kelp","hard","Sund_Rock","Hood_Canal",47.9166604166667,0,24
 "ak_torn_kelp","hard","Titlow_Beach","South_Puget_Sound",2.03703611111111,0,18
 "ak_torn_kelp","hard","Watmough_Bay","San_Juan_Islands",63.1481316666667,0.0324074074074074,18
-"ak_torn_kelp","hard","Wing_Point","Central_Puget_Sound",2.11110966666667,0,30
+"ak_torn_kelp","hard","Wing_Point","Central_Puget_Sound",2.18390655172414,0,29
 "ak_winged_kelp","hard","Blake_Island_South","Central_Puget_Sound",11.3888858333333,0,24
 "ak_winged_kelp","hard","Burrows_Lighthouse","North_Puget_Sound",73.1944416666667,0.00763888888888889,24
 "ak_winged_kelp","hard","Cattle_Point","San_Juan_Islands",29.583331875,0.236458333333333,16
@@ -334,7 +334,7 @@
 "ak_winged_kelp","hard","Sund_Rock","Hood_Canal",47.9166604166667,0.00208333333333333,24
 "ak_winged_kelp","hard","Titlow_Beach","South_Puget_Sound",2.03703611111111,0.000925925925925926,18
 "ak_winged_kelp","hard","Watmough_Bay","San_Juan_Islands",63.1481316666667,0.0185185185185185,18
-"ak_winged_kelp","hard","Wing_Point","Central_Puget_Sound",2.11110966666667,0,30
+"ak_winged_kelp","hard","Wing_Point","Central_Puget_Sound",2.18390655172414,0,29
 "ak_wire_weed","hard","Blake_Island_South","Central_Puget_Sound",11.3888858333333,0.0326388888888889,24
 "ak_wire_weed","hard","Burrows_Lighthouse","North_Puget_Sound",73.1944416666667,0,24
 "ak_wire_weed","hard","Cattle_Point","San_Juan_Islands",29.583331875,0,16
@@ -376,7 +376,7 @@
 "ak_wire_weed","hard","Sund_Rock","Hood_Canal",47.9166604166667,0.0513888888888889,24
 "ak_wire_weed","hard","Titlow_Beach","South_Puget_Sound",2.03703611111111,0.0898148148148148,18
 "ak_wire_weed","hard","Watmough_Bay","San_Juan_Islands",63.1481316666667,0.00185185185185185,18
-"ak_wire_weed","hard","Wing_Point","Central_Puget_Sound",2.11110966666667,0.0905555555555556,30
+"ak_wire_weed","hard","Wing_Point","Central_Puget_Sound",2.18390655172414,0.0925287356321839,29
 "ak_woody_kelp","hard","Blake_Island_South","Central_Puget_Sound",11.3888858333333,0.6125,24
 "ak_woody_kelp","hard","Burrows_Lighthouse","North_Puget_Sound",73.1944416666667,0.895833333333333,24
 "ak_woody_kelp","hard","Cattle_Point","San_Juan_Islands",29.583331875,1.14166666666667,16
@@ -418,7 +418,7 @@
 "ak_woody_kelp","hard","Sund_Rock","Hood_Canal",47.9166604166667,0,24
 "ak_woody_kelp","hard","Titlow_Beach","South_Puget_Sound",2.03703611111111,0.0157407407407407,18
 "ak_woody_kelp","hard","Watmough_Bay","San_Juan_Islands",63.1481316666667,2.01666666666667,18
-"ak_woody_kelp","hard","Wing_Point","Central_Puget_Sound",2.11110966666667,0,30
+"ak_woody_kelp","hard","Wing_Point","Central_Puget_Sound",2.18390655172414,0,29
 "ak_acid_weed","mixed","Blake_Island_South","Central_Puget_Sound",63.8888845833333,0.223611111111111,24
 "ak_acid_weed","mixed","Burrows_Lighthouse","North_Puget_Sound",21.5277775,0.125,24
 "ak_acid_weed","mixed","Cattle_Point","San_Juan_Islands",30.4166575,0.523958333333333,16
@@ -460,7 +460,7 @@
 "ak_acid_weed","mixed","Sund_Rock","Hood_Canal",29.1666691666667,0.0256944444444444,24
 "ak_acid_weed","mixed","Titlow_Beach","South_Puget_Sound",23.7036983333333,0.440740740740741,18
 "ak_acid_weed","mixed","Watmough_Bay","San_Juan_Islands",20.74074,0.012037037037037,18
-"ak_acid_weed","mixed","Wing_Point","Central_Puget_Sound",64.3333263333333,0.212222222222222,30
+"ak_acid_weed","mixed","Wing_Point","Central_Puget_Sound",63.4482696551724,0.217241379310345,29
 "ak_broad-ribbed_kelp","mixed","Blake_Island_South","Central_Puget_Sound",63.8888845833333,0.00138888888888889,24
 "ak_broad-ribbed_kelp","mixed","Burrows_Lighthouse","North_Puget_Sound",21.5277775,0.0881944444444445,24
 "ak_broad-ribbed_kelp","mixed","Cattle_Point","San_Juan_Islands",30.4166575,0.0625,16
@@ -502,7 +502,7 @@
 "ak_broad-ribbed_kelp","mixed","Sund_Rock","Hood_Canal",29.1666691666667,0.00138888888888889,24
 "ak_broad-ribbed_kelp","mixed","Titlow_Beach","South_Puget_Sound",23.7036983333333,0.0916666666666667,18
 "ak_broad-ribbed_kelp","mixed","Watmough_Bay","San_Juan_Islands",20.74074,0.0546296296296296,18
-"ak_broad-ribbed_kelp","mixed","Wing_Point","Central_Puget_Sound",64.3333263333333,0,30
+"ak_broad-ribbed_kelp","mixed","Wing_Point","Central_Puget_Sound",63.4482696551724,0,29
 "ak_five-ribbed_kelp","mixed","Blake_Island_South","Central_Puget_Sound",63.8888845833333,0.60625,24
 "ak_five-ribbed_kelp","mixed","Burrows_Lighthouse","North_Puget_Sound",21.5277775,1.14097222222222,24
 "ak_five-ribbed_kelp","mixed","Cattle_Point","San_Juan_Islands",30.4166575,0.136458333333333,16
@@ -544,7 +544,7 @@
 "ak_five-ribbed_kelp","mixed","Sund_Rock","Hood_Canal",29.1666691666667,0,24
 "ak_five-ribbed_kelp","mixed","Titlow_Beach","South_Puget_Sound",23.7036983333333,0.55,18
 "ak_five-ribbed_kelp","mixed","Watmough_Bay","San_Juan_Islands",20.74074,0.315740740740741,18
-"ak_five-ribbed_kelp","mixed","Wing_Point","Central_Puget_Sound",64.3333263333333,0.0783333333333333,30
+"ak_five-ribbed_kelp","mixed","Wing_Point","Central_Puget_Sound",63.4482696551724,0.0775862068965517,29
 "ak_sieve_kelp","mixed","Blake_Island_South","Central_Puget_Sound",63.8888845833333,0.00138888888888889,24
 "ak_sieve_kelp","mixed","Burrows_Lighthouse","North_Puget_Sound",21.5277775,1.56597222222222,24
 "ak_sieve_kelp","mixed","Cattle_Point","San_Juan_Islands",30.4166575,0,16
@@ -586,7 +586,7 @@
 "ak_sieve_kelp","mixed","Sund_Rock","Hood_Canal",29.1666691666667,0.827777777777778,24
 "ak_sieve_kelp","mixed","Titlow_Beach","South_Puget_Sound",23.7036983333333,0.25462962962963,18
 "ak_sieve_kelp","mixed","Watmough_Bay","San_Juan_Islands",20.74074,1.08981481481481,18
-"ak_sieve_kelp","mixed","Wing_Point","Central_Puget_Sound",64.3333263333333,0.00166666666666667,30
+"ak_sieve_kelp","mixed","Wing_Point","Central_Puget_Sound",63.4482696551724,0.00172413793103448,29
 "ak_sugar_kelp","mixed","Blake_Island_South","Central_Puget_Sound",63.8888845833333,1.03472222222222,24
 "ak_sugar_kelp","mixed","Burrows_Lighthouse","North_Puget_Sound",21.5277775,0.135416666666667,24
 "ak_sugar_kelp","mixed","Cattle_Point","San_Juan_Islands",30.4166575,1.51666666666667,16
@@ -628,7 +628,7 @@
 "ak_sugar_kelp","mixed","Sund_Rock","Hood_Canal",29.1666691666667,0.226388888888889,24
 "ak_sugar_kelp","mixed","Titlow_Beach","South_Puget_Sound",23.7036983333333,2.63611111111111,18
 "ak_sugar_kelp","mixed","Watmough_Bay","San_Juan_Islands",20.74074,1.23518518518519,18
-"ak_sugar_kelp","mixed","Wing_Point","Central_Puget_Sound",64.3333263333333,5.09722222222222,30
+"ak_sugar_kelp","mixed","Wing_Point","Central_Puget_Sound",63.4482696551724,5.17471264367816,29
 "ak_three-ribbed_kelp","mixed","Blake_Island_South","Central_Puget_Sound",63.8888845833333,0,24
 "ak_three-ribbed_kelp","mixed","Burrows_Lighthouse","North_Puget_Sound",21.5277775,0.550694444444444,24
 "ak_three-ribbed_kelp","mixed","Cattle_Point","San_Juan_Islands",30.4166575,0.991666666666667,16
@@ -670,7 +670,7 @@
 "ak_three-ribbed_kelp","mixed","Sund_Rock","Hood_Canal",29.1666691666667,0,24
 "ak_three-ribbed_kelp","mixed","Titlow_Beach","South_Puget_Sound",23.7036983333333,0.000925925925925926,18
 "ak_three-ribbed_kelp","mixed","Watmough_Bay","San_Juan_Islands",20.74074,0.0222222222222222,18
-"ak_three-ribbed_kelp","mixed","Wing_Point","Central_Puget_Sound",64.3333263333333,0,30
+"ak_three-ribbed_kelp","mixed","Wing_Point","Central_Puget_Sound",63.4482696551724,0,29
 "ak_torn_kelp","mixed","Blake_Island_South","Central_Puget_Sound",63.8888845833333,0,24
 "ak_torn_kelp","mixed","Burrows_Lighthouse","North_Puget_Sound",21.5277775,0.0159722222222222,24
 "ak_torn_kelp","mixed","Cattle_Point","San_Juan_Islands",30.4166575,0.065625,16
@@ -712,7 +712,7 @@
 "ak_torn_kelp","mixed","Sund_Rock","Hood_Canal",29.1666691666667,0,24
 "ak_torn_kelp","mixed","Titlow_Beach","South_Puget_Sound",23.7036983333333,0,18
 "ak_torn_kelp","mixed","Watmough_Bay","San_Juan_Islands",20.74074,0.0324074074074074,18
-"ak_torn_kelp","mixed","Wing_Point","Central_Puget_Sound",64.3333263333333,0,30
+"ak_torn_kelp","mixed","Wing_Point","Central_Puget_Sound",63.4482696551724,0,29
 "ak_winged_kelp","mixed","Blake_Island_South","Central_Puget_Sound",63.8888845833333,0,24
 "ak_winged_kelp","mixed","Burrows_Lighthouse","North_Puget_Sound",21.5277775,0.00763888888888889,24
 "ak_winged_kelp","mixed","Cattle_Point","San_Juan_Islands",30.4166575,0.236458333333333,16
@@ -754,7 +754,7 @@
 "ak_winged_kelp","mixed","Sund_Rock","Hood_Canal",29.1666691666667,0.00208333333333333,24
 "ak_winged_kelp","mixed","Titlow_Beach","South_Puget_Sound",23.7036983333333,0.000925925925925926,18
 "ak_winged_kelp","mixed","Watmough_Bay","San_Juan_Islands",20.74074,0.0185185185185185,18
-"ak_winged_kelp","mixed","Wing_Point","Central_Puget_Sound",64.3333263333333,0,30
+"ak_winged_kelp","mixed","Wing_Point","Central_Puget_Sound",63.4482696551724,0,29
 "ak_wire_weed","mixed","Blake_Island_South","Central_Puget_Sound",63.8888845833333,0.0326388888888889,24
 "ak_wire_weed","mixed","Burrows_Lighthouse","North_Puget_Sound",21.5277775,0,24
 "ak_wire_weed","mixed","Cattle_Point","San_Juan_Islands",30.4166575,0,16
@@ -796,7 +796,7 @@
 "ak_wire_weed","mixed","Sund_Rock","Hood_Canal",29.1666691666667,0.0513888888888889,24
 "ak_wire_weed","mixed","Titlow_Beach","South_Puget_Sound",23.7036983333333,0.0898148148148148,18
 "ak_wire_weed","mixed","Watmough_Bay","San_Juan_Islands",20.74074,0.00185185185185185,18
-"ak_wire_weed","mixed","Wing_Point","Central_Puget_Sound",64.3333263333333,0.0905555555555556,30
+"ak_wire_weed","mixed","Wing_Point","Central_Puget_Sound",63.4482696551724,0.0925287356321839,29
 "ak_woody_kelp","mixed","Blake_Island_South","Central_Puget_Sound",63.8888845833333,0.6125,24
 "ak_woody_kelp","mixed","Burrows_Lighthouse","North_Puget_Sound",21.5277775,0.895833333333333,24
 "ak_woody_kelp","mixed","Cattle_Point","San_Juan_Islands",30.4166575,1.14166666666667,16
@@ -838,7 +838,7 @@
 "ak_woody_kelp","mixed","Sund_Rock","Hood_Canal",29.1666691666667,0,24
 "ak_woody_kelp","mixed","Titlow_Beach","South_Puget_Sound",23.7036983333333,0.0157407407407407,18
 "ak_woody_kelp","mixed","Watmough_Bay","San_Juan_Islands",20.74074,2.01666666666667,18
-"ak_woody_kelp","mixed","Wing_Point","Central_Puget_Sound",64.3333263333333,0,30
+"ak_woody_kelp","mixed","Wing_Point","Central_Puget_Sound",63.4482696551724,0,29
 "ak_acid_weed","soft","Blake_Island_South","Central_Puget_Sound",24.7222175,0.223611111111111,24
 "ak_acid_weed","soft","Burrows_Lighthouse","North_Puget_Sound",5.27777958333333,0.125,24
 "ak_acid_weed","soft","Cattle_Point","San_Juan_Islands",39.999995625,0.523958333333333,16
@@ -880,7 +880,7 @@
 "ak_acid_weed","soft","Sund_Rock","Hood_Canal",22.9166725,0.0256944444444444,24
 "ak_acid_weed","soft","Titlow_Beach","South_Puget_Sound",71.2962966666667,0.440740740740741,18
 "ak_acid_weed","soft","Watmough_Bay","San_Juan_Islands",15.9259255555556,0.012037037037037,18
-"ak_acid_weed","soft","Wing_Point","Central_Puget_Sound",33.5555503333333,0.212222222222222,30
+"ak_acid_weed","soft","Wing_Point","Central_Puget_Sound",34.3678106896552,0.217241379310345,29
 "ak_broad-ribbed_kelp","soft","Blake_Island_South","Central_Puget_Sound",24.7222175,0.00138888888888889,24
 "ak_broad-ribbed_kelp","soft","Burrows_Lighthouse","North_Puget_Sound",5.27777958333333,0.0881944444444445,24
 "ak_broad-ribbed_kelp","soft","Cattle_Point","San_Juan_Islands",39.999995625,0.0625,16
@@ -922,7 +922,7 @@
 "ak_broad-ribbed_kelp","soft","Sund_Rock","Hood_Canal",22.9166725,0.00138888888888889,24
 "ak_broad-ribbed_kelp","soft","Titlow_Beach","South_Puget_Sound",71.2962966666667,0.0916666666666667,18
 "ak_broad-ribbed_kelp","soft","Watmough_Bay","San_Juan_Islands",15.9259255555556,0.0546296296296296,18
-"ak_broad-ribbed_kelp","soft","Wing_Point","Central_Puget_Sound",33.5555503333333,0,30
+"ak_broad-ribbed_kelp","soft","Wing_Point","Central_Puget_Sound",34.3678106896552,0,29
 "ak_five-ribbed_kelp","soft","Blake_Island_South","Central_Puget_Sound",24.7222175,0.60625,24
 "ak_five-ribbed_kelp","soft","Burrows_Lighthouse","North_Puget_Sound",5.27777958333333,1.14097222222222,24
 "ak_five-ribbed_kelp","soft","Cattle_Point","San_Juan_Islands",39.999995625,0.136458333333333,16
@@ -964,7 +964,7 @@
 "ak_five-ribbed_kelp","soft","Sund_Rock","Hood_Canal",22.9166725,0,24
 "ak_five-ribbed_kelp","soft","Titlow_Beach","South_Puget_Sound",71.2962966666667,0.55,18
 "ak_five-ribbed_kelp","soft","Watmough_Bay","San_Juan_Islands",15.9259255555556,0.315740740740741,18
-"ak_five-ribbed_kelp","soft","Wing_Point","Central_Puget_Sound",33.5555503333333,0.0783333333333333,30
+"ak_five-ribbed_kelp","soft","Wing_Point","Central_Puget_Sound",34.3678106896552,0.0775862068965517,29
 "ak_sieve_kelp","soft","Blake_Island_South","Central_Puget_Sound",24.7222175,0.00138888888888889,24
 "ak_sieve_kelp","soft","Burrows_Lighthouse","North_Puget_Sound",5.27777958333333,1.56597222222222,24
 "ak_sieve_kelp","soft","Cattle_Point","San_Juan_Islands",39.999995625,0,16
@@ -1006,7 +1006,7 @@
 "ak_sieve_kelp","soft","Sund_Rock","Hood_Canal",22.9166725,0.827777777777778,24
 "ak_sieve_kelp","soft","Titlow_Beach","South_Puget_Sound",71.2962966666667,0.25462962962963,18
 "ak_sieve_kelp","soft","Watmough_Bay","San_Juan_Islands",15.9259255555556,1.08981481481481,18
-"ak_sieve_kelp","soft","Wing_Point","Central_Puget_Sound",33.5555503333333,0.00166666666666667,30
+"ak_sieve_kelp","soft","Wing_Point","Central_Puget_Sound",34.3678106896552,0.00172413793103448,29
 "ak_sugar_kelp","soft","Blake_Island_South","Central_Puget_Sound",24.7222175,1.03472222222222,24
 "ak_sugar_kelp","soft","Burrows_Lighthouse","North_Puget_Sound",5.27777958333333,0.135416666666667,24
 "ak_sugar_kelp","soft","Cattle_Point","San_Juan_Islands",39.999995625,1.51666666666667,16
@@ -1048,7 +1048,7 @@
 "ak_sugar_kelp","soft","Sund_Rock","Hood_Canal",22.9166725,0.226388888888889,24
 "ak_sugar_kelp","soft","Titlow_Beach","South_Puget_Sound",71.2962966666667,2.63611111111111,18
 "ak_sugar_kelp","soft","Watmough_Bay","San_Juan_Islands",15.9259255555556,1.23518518518519,18
-"ak_sugar_kelp","soft","Wing_Point","Central_Puget_Sound",33.5555503333333,5.09722222222222,30
+"ak_sugar_kelp","soft","Wing_Point","Central_Puget_Sound",34.3678106896552,5.17471264367816,29
 "ak_three-ribbed_kelp","soft","Blake_Island_South","Central_Puget_Sound",24.7222175,0,24
 "ak_three-ribbed_kelp","soft","Burrows_Lighthouse","North_Puget_Sound",5.27777958333333,0.550694444444444,24
 "ak_three-ribbed_kelp","soft","Cattle_Point","San_Juan_Islands",39.999995625,0.991666666666667,16
@@ -1090,7 +1090,7 @@
 "ak_three-ribbed_kelp","soft","Sund_Rock","Hood_Canal",22.9166725,0,24
 "ak_three-ribbed_kelp","soft","Titlow_Beach","South_Puget_Sound",71.2962966666667,0.000925925925925926,18
 "ak_three-ribbed_kelp","soft","Watmough_Bay","San_Juan_Islands",15.9259255555556,0.0222222222222222,18
-"ak_three-ribbed_kelp","soft","Wing_Point","Central_Puget_Sound",33.5555503333333,0,30
+"ak_three-ribbed_kelp","soft","Wing_Point","Central_Puget_Sound",34.3678106896552,0,29
 "ak_torn_kelp","soft","Blake_Island_South","Central_Puget_Sound",24.7222175,0,24
 "ak_torn_kelp","soft","Burrows_Lighthouse","North_Puget_Sound",5.27777958333333,0.0159722222222222,24
 "ak_torn_kelp","soft","Cattle_Point","San_Juan_Islands",39.999995625,0.065625,16
@@ -1132,7 +1132,7 @@
 "ak_torn_kelp","soft","Sund_Rock","Hood_Canal",22.9166725,0,24
 "ak_torn_kelp","soft","Titlow_Beach","South_Puget_Sound",71.2962966666667,0,18
 "ak_torn_kelp","soft","Watmough_Bay","San_Juan_Islands",15.9259255555556,0.0324074074074074,18
-"ak_torn_kelp","soft","Wing_Point","Central_Puget_Sound",33.5555503333333,0,30
+"ak_torn_kelp","soft","Wing_Point","Central_Puget_Sound",34.3678106896552,0,29
 "ak_winged_kelp","soft","Blake_Island_South","Central_Puget_Sound",24.7222175,0,24
 "ak_winged_kelp","soft","Burrows_Lighthouse","North_Puget_Sound",5.27777958333333,0.00763888888888889,24
 "ak_winged_kelp","soft","Cattle_Point","San_Juan_Islands",39.999995625,0.236458333333333,16
@@ -1174,7 +1174,7 @@
 "ak_winged_kelp","soft","Sund_Rock","Hood_Canal",22.9166725,0.00208333333333333,24
 "ak_winged_kelp","soft","Titlow_Beach","South_Puget_Sound",71.2962966666667,0.000925925925925926,18
 "ak_winged_kelp","soft","Watmough_Bay","San_Juan_Islands",15.9259255555556,0.0185185185185185,18
-"ak_winged_kelp","soft","Wing_Point","Central_Puget_Sound",33.5555503333333,0,30
+"ak_winged_kelp","soft","Wing_Point","Central_Puget_Sound",34.3678106896552,0,29
 "ak_wire_weed","soft","Blake_Island_South","Central_Puget_Sound",24.7222175,0.0326388888888889,24
 "ak_wire_weed","soft","Burrows_Lighthouse","North_Puget_Sound",5.27777958333333,0,24
 "ak_wire_weed","soft","Cattle_Point","San_Juan_Islands",39.999995625,0,16
@@ -1216,7 +1216,7 @@
 "ak_wire_weed","soft","Sund_Rock","Hood_Canal",22.9166725,0.0513888888888889,24
 "ak_wire_weed","soft","Titlow_Beach","South_Puget_Sound",71.2962966666667,0.0898148148148148,18
 "ak_wire_weed","soft","Watmough_Bay","San_Juan_Islands",15.9259255555556,0.00185185185185185,18
-"ak_wire_weed","soft","Wing_Point","Central_Puget_Sound",33.5555503333333,0.0905555555555556,30
+"ak_wire_weed","soft","Wing_Point","Central_Puget_Sound",34.3678106896552,0.0925287356321839,29
 "ak_woody_kelp","soft","Blake_Island_South","Central_Puget_Sound",24.7222175,0.6125,24
 "ak_woody_kelp","soft","Burrows_Lighthouse","North_Puget_Sound",5.27777958333333,0.895833333333333,24
 "ak_woody_kelp","soft","Cattle_Point","San_Juan_Islands",39.999995625,1.14166666666667,16
@@ -1258,7 +1258,7 @@
 "ak_woody_kelp","soft","Sund_Rock","Hood_Canal",22.9166725,0,24
 "ak_woody_kelp","soft","Titlow_Beach","South_Puget_Sound",71.2962966666667,0.0157407407407407,18
 "ak_woody_kelp","soft","Watmough_Bay","San_Juan_Islands",15.9259255555556,2.01666666666667,18
-"ak_woody_kelp","soft","Wing_Point","Central_Puget_Sound",33.5555503333333,0,30
+"ak_woody_kelp","soft","Wing_Point","Central_Puget_Sound",34.3678106896552,0,29
 "ak_acid_weed","relief","Blake_Island_South","Central_Puget_Sound",0.326388895833333,0.223611111111111,24
 "ak_acid_weed","relief","Burrows_Lighthouse","North_Puget_Sound",0.569375062291667,0.125,24
 "ak_acid_weed","relief","Cattle_Point","San_Juan_Islands",0.276875025625,0.523958333333333,16
@@ -1300,7 +1300,7 @@
 "ak_acid_weed","relief","Sund_Rock","Hood_Canal",0.766805555625,0.0256944444444444,24
 "ak_acid_weed","relief","Titlow_Beach","South_Puget_Sound",0.265648103055556,0.440740740740741,18
 "ak_acid_weed","relief","Watmough_Bay","San_Juan_Islands",0.449444463055556,0.012037037037037,18
-"ak_acid_weed","relief","Wing_Point","Central_Puget_Sound",0.165944445166667,0.212222222222222,30
+"ak_acid_weed","relief","Wing_Point","Central_Puget_Sound",0.169942529482759,0.217241379310345,29
 "ak_broad-ribbed_kelp","relief","Blake_Island_South","Central_Puget_Sound",0.326388895833333,0.00138888888888889,24
 "ak_broad-ribbed_kelp","relief","Burrows_Lighthouse","North_Puget_Sound",0.569375062291667,0.0881944444444445,24
 "ak_broad-ribbed_kelp","relief","Cattle_Point","San_Juan_Islands",0.276875025625,0.0625,16
@@ -1342,7 +1342,7 @@
 "ak_broad-ribbed_kelp","relief","Sund_Rock","Hood_Canal",0.766805555625,0.00138888888888889,24
 "ak_broad-ribbed_kelp","relief","Titlow_Beach","South_Puget_Sound",0.265648103055556,0.0916666666666667,18
 "ak_broad-ribbed_kelp","relief","Watmough_Bay","San_Juan_Islands",0.449444463055556,0.0546296296296296,18
-"ak_broad-ribbed_kelp","relief","Wing_Point","Central_Puget_Sound",0.165944445166667,0,30
+"ak_broad-ribbed_kelp","relief","Wing_Point","Central_Puget_Sound",0.169942529482759,0,29
 "ak_five-ribbed_kelp","relief","Blake_Island_South","Central_Puget_Sound",0.326388895833333,0.60625,24
 "ak_five-ribbed_kelp","relief","Burrows_Lighthouse","North_Puget_Sound",0.569375062291667,1.14097222222222,24
 "ak_five-ribbed_kelp","relief","Cattle_Point","San_Juan_Islands",0.276875025625,0.136458333333333,16
@@ -1384,7 +1384,7 @@
 "ak_five-ribbed_kelp","relief","Sund_Rock","Hood_Canal",0.766805555625,0,24
 "ak_five-ribbed_kelp","relief","Titlow_Beach","South_Puget_Sound",0.265648103055556,0.55,18
 "ak_five-ribbed_kelp","relief","Watmough_Bay","San_Juan_Islands",0.449444463055556,0.315740740740741,18
-"ak_five-ribbed_kelp","relief","Wing_Point","Central_Puget_Sound",0.165944445166667,0.0783333333333333,30
+"ak_five-ribbed_kelp","relief","Wing_Point","Central_Puget_Sound",0.169942529482759,0.0775862068965517,29
 "ak_sieve_kelp","relief","Blake_Island_South","Central_Puget_Sound",0.326388895833333,0.00138888888888889,24
 "ak_sieve_kelp","relief","Burrows_Lighthouse","North_Puget_Sound",0.569375062291667,1.56597222222222,24
 "ak_sieve_kelp","relief","Cattle_Point","San_Juan_Islands",0.276875025625,0,16
@@ -1426,7 +1426,7 @@
 "ak_sieve_kelp","relief","Sund_Rock","Hood_Canal",0.766805555625,0.827777777777778,24
 "ak_sieve_kelp","relief","Titlow_Beach","South_Puget_Sound",0.265648103055556,0.25462962962963,18
 "ak_sieve_kelp","relief","Watmough_Bay","San_Juan_Islands",0.449444463055556,1.08981481481481,18
-"ak_sieve_kelp","relief","Wing_Point","Central_Puget_Sound",0.165944445166667,0.00166666666666667,30
+"ak_sieve_kelp","relief","Wing_Point","Central_Puget_Sound",0.169942529482759,0.00172413793103448,29
 "ak_sugar_kelp","relief","Blake_Island_South","Central_Puget_Sound",0.326388895833333,1.03472222222222,24
 "ak_sugar_kelp","relief","Burrows_Lighthouse","North_Puget_Sound",0.569375062291667,0.135416666666667,24
 "ak_sugar_kelp","relief","Cattle_Point","San_Juan_Islands",0.276875025625,1.51666666666667,16
@@ -1468,7 +1468,7 @@
 "ak_sugar_kelp","relief","Sund_Rock","Hood_Canal",0.766805555625,0.226388888888889,24
 "ak_sugar_kelp","relief","Titlow_Beach","South_Puget_Sound",0.265648103055556,2.63611111111111,18
 "ak_sugar_kelp","relief","Watmough_Bay","San_Juan_Islands",0.449444463055556,1.23518518518519,18
-"ak_sugar_kelp","relief","Wing_Point","Central_Puget_Sound",0.165944445166667,5.09722222222222,30
+"ak_sugar_kelp","relief","Wing_Point","Central_Puget_Sound",0.169942529482759,5.17471264367816,29
 "ak_three-ribbed_kelp","relief","Blake_Island_South","Central_Puget_Sound",0.326388895833333,0,24
 "ak_three-ribbed_kelp","relief","Burrows_Lighthouse","North_Puget_Sound",0.569375062291667,0.550694444444444,24
 "ak_three-ribbed_kelp","relief","Cattle_Point","San_Juan_Islands",0.276875025625,0.991666666666667,16
@@ -1510,7 +1510,7 @@
 "ak_three-ribbed_kelp","relief","Sund_Rock","Hood_Canal",0.766805555625,0,24
 "ak_three-ribbed_kelp","relief","Titlow_Beach","South_Puget_Sound",0.265648103055556,0.000925925925925926,18
 "ak_three-ribbed_kelp","relief","Watmough_Bay","San_Juan_Islands",0.449444463055556,0.0222222222222222,18
-"ak_three-ribbed_kelp","relief","Wing_Point","Central_Puget_Sound",0.165944445166667,0,30
+"ak_three-ribbed_kelp","relief","Wing_Point","Central_Puget_Sound",0.169942529482759,0,29
 "ak_torn_kelp","relief","Blake_Island_South","Central_Puget_Sound",0.326388895833333,0,24
 "ak_torn_kelp","relief","Burrows_Lighthouse","North_Puget_Sound",0.569375062291667,0.0159722222222222,24
 "ak_torn_kelp","relief","Cattle_Point","San_Juan_Islands",0.276875025625,0.065625,16
@@ -1552,7 +1552,7 @@
 "ak_torn_kelp","relief","Sund_Rock","Hood_Canal",0.766805555625,0,24
 "ak_torn_kelp","relief","Titlow_Beach","South_Puget_Sound",0.265648103055556,0,18
 "ak_torn_kelp","relief","Watmough_Bay","San_Juan_Islands",0.449444463055556,0.0324074074074074,18
-"ak_torn_kelp","relief","Wing_Point","Central_Puget_Sound",0.165944445166667,0,30
+"ak_torn_kelp","relief","Wing_Point","Central_Puget_Sound",0.169942529482759,0,29
 "ak_winged_kelp","relief","Blake_Island_South","Central_Puget_Sound",0.326388895833333,0,24
 "ak_winged_kelp","relief","Burrows_Lighthouse","North_Puget_Sound",0.569375062291667,0.00763888888888889,24
 "ak_winged_kelp","relief","Cattle_Point","San_Juan_Islands",0.276875025625,0.236458333333333,16
@@ -1594,7 +1594,7 @@
 "ak_winged_kelp","relief","Sund_Rock","Hood_Canal",0.766805555625,0.00208333333333333,24
 "ak_winged_kelp","relief","Titlow_Beach","South_Puget_Sound",0.265648103055556,0.000925925925925926,18
 "ak_winged_kelp","relief","Watmough_Bay","San_Juan_Islands",0.449444463055556,0.0185185185185185,18
-"ak_winged_kelp","relief","Wing_Point","Central_Puget_Sound",0.165944445166667,0,30
+"ak_winged_kelp","relief","Wing_Point","Central_Puget_Sound",0.169942529482759,0,29
 "ak_wire_weed","relief","Blake_Island_South","Central_Puget_Sound",0.326388895833333,0.0326388888888889,24
 "ak_wire_weed","relief","Burrows_Lighthouse","North_Puget_Sound",0.569375062291667,0,24
 "ak_wire_weed","relief","Cattle_Point","San_Juan_Islands",0.276875025625,0,16
@@ -1636,7 +1636,7 @@
 "ak_wire_weed","relief","Sund_Rock","Hood_Canal",0.766805555625,0.0513888888888889,24
 "ak_wire_weed","relief","Titlow_Beach","South_Puget_Sound",0.265648103055556,0.0898148148148148,18
 "ak_wire_weed","relief","Watmough_Bay","San_Juan_Islands",0.449444463055556,0.00185185185185185,18
-"ak_wire_weed","relief","Wing_Point","Central_Puget_Sound",0.165944445166667,0.0905555555555556,30
+"ak_wire_weed","relief","Wing_Point","Central_Puget_Sound",0.169942529482759,0.0925287356321839,29
 "ak_woody_kelp","relief","Blake_Island_South","Central_Puget_Sound",0.326388895833333,0.6125,24
 "ak_woody_kelp","relief","Burrows_Lighthouse","North_Puget_Sound",0.569375062291667,0.895833333333333,24
 "ak_woody_kelp","relief","Cattle_Point","San_Juan_Islands",0.276875025625,1.14166666666667,16
@@ -1678,7 +1678,7 @@
 "ak_woody_kelp","relief","Sund_Rock","Hood_Canal",0.766805555625,0,24
 "ak_woody_kelp","relief","Titlow_Beach","South_Puget_Sound",0.265648103055556,0.0157407407407407,18
 "ak_woody_kelp","relief","Watmough_Bay","San_Juan_Islands",0.449444463055556,2.01666666666667,18
-"ak_woody_kelp","relief","Wing_Point","Central_Puget_Sound",0.165944445166667,0,30
+"ak_woody_kelp","relief","Wing_Point","Central_Puget_Sound",0.169942529482759,0,29
 "ak_acid_weed","reef","Blake_Island_South","Central_Puget_Sound",7.08333458333333,0.223611111111111,24
 "ak_acid_weed","reef","Burrows_Lighthouse","North_Puget_Sound",45.8333345833333,0.125,24
 "ak_acid_weed","reef","Cattle_Point","San_Juan_Islands",23.749999375,0.523958333333333,16
@@ -1720,7 +1720,7 @@
 "ak_acid_weed","reef","Sund_Rock","Hood_Canal",40.55555125,0.0256944444444444,24
 "ak_acid_weed","reef","Titlow_Beach","South_Puget_Sound",0,0.440740740740741,18
 "ak_acid_weed","reef","Watmough_Bay","San_Juan_Islands",23.1481355555556,0.012037037037037,18
-"ak_acid_weed","reef","Wing_Point","Central_Puget_Sound",0,0.212222222222222,30
+"ak_acid_weed","reef","Wing_Point","Central_Puget_Sound",0,0.217241379310345,29
 "ak_broad-ribbed_kelp","reef","Blake_Island_South","Central_Puget_Sound",7.08333458333333,0.00138888888888889,24
 "ak_broad-ribbed_kelp","reef","Burrows_Lighthouse","North_Puget_Sound",45.8333345833333,0.0881944444444445,24
 "ak_broad-ribbed_kelp","reef","Cattle_Point","San_Juan_Islands",23.749999375,0.0625,16
@@ -1762,7 +1762,7 @@
 "ak_broad-ribbed_kelp","reef","Sund_Rock","Hood_Canal",40.55555125,0.00138888888888889,24
 "ak_broad-ribbed_kelp","reef","Titlow_Beach","South_Puget_Sound",0,0.0916666666666667,18
 "ak_broad-ribbed_kelp","reef","Watmough_Bay","San_Juan_Islands",23.1481355555556,0.0546296296296296,18
-"ak_broad-ribbed_kelp","reef","Wing_Point","Central_Puget_Sound",0,0,30
+"ak_broad-ribbed_kelp","reef","Wing_Point","Central_Puget_Sound",0,0,29
 "ak_five-ribbed_kelp","reef","Blake_Island_South","Central_Puget_Sound",7.08333458333333,0.60625,24
 "ak_five-ribbed_kelp","reef","Burrows_Lighthouse","North_Puget_Sound",45.8333345833333,1.14097222222222,24
 "ak_five-ribbed_kelp","reef","Cattle_Point","San_Juan_Islands",23.749999375,0.136458333333333,16
@@ -1804,7 +1804,7 @@
 "ak_five-ribbed_kelp","reef","Sund_Rock","Hood_Canal",40.55555125,0,24
 "ak_five-ribbed_kelp","reef","Titlow_Beach","South_Puget_Sound",0,0.55,18
 "ak_five-ribbed_kelp","reef","Watmough_Bay","San_Juan_Islands",23.1481355555556,0.315740740740741,18
-"ak_five-ribbed_kelp","reef","Wing_Point","Central_Puget_Sound",0,0.0783333333333333,30
+"ak_five-ribbed_kelp","reef","Wing_Point","Central_Puget_Sound",0,0.0775862068965517,29
 "ak_sieve_kelp","reef","Blake_Island_South","Central_Puget_Sound",7.08333458333333,0.00138888888888889,24
 "ak_sieve_kelp","reef","Burrows_Lighthouse","North_Puget_Sound",45.8333345833333,1.56597222222222,24
 "ak_sieve_kelp","reef","Cattle_Point","San_Juan_Islands",23.749999375,0,16
@@ -1846,7 +1846,7 @@
 "ak_sieve_kelp","reef","Sund_Rock","Hood_Canal",40.55555125,0.827777777777778,24
 "ak_sieve_kelp","reef","Titlow_Beach","South_Puget_Sound",0,0.25462962962963,18
 "ak_sieve_kelp","reef","Watmough_Bay","San_Juan_Islands",23.1481355555556,1.08981481481481,18
-"ak_sieve_kelp","reef","Wing_Point","Central_Puget_Sound",0,0.00166666666666667,30
+"ak_sieve_kelp","reef","Wing_Point","Central_Puget_Sound",0,0.00172413793103448,29
 "ak_sugar_kelp","reef","Blake_Island_South","Central_Puget_Sound",7.08333458333333,1.03472222222222,24
 "ak_sugar_kelp","reef","Burrows_Lighthouse","North_Puget_Sound",45.8333345833333,0.135416666666667,24
 "ak_sugar_kelp","reef","Cattle_Point","San_Juan_Islands",23.749999375,1.51666666666667,16
@@ -1888,7 +1888,7 @@
 "ak_sugar_kelp","reef","Sund_Rock","Hood_Canal",40.55555125,0.226388888888889,24
 "ak_sugar_kelp","reef","Titlow_Beach","South_Puget_Sound",0,2.63611111111111,18
 "ak_sugar_kelp","reef","Watmough_Bay","San_Juan_Islands",23.1481355555556,1.23518518518519,18
-"ak_sugar_kelp","reef","Wing_Point","Central_Puget_Sound",0,5.09722222222222,30
+"ak_sugar_kelp","reef","Wing_Point","Central_Puget_Sound",0,5.17471264367816,29
 "ak_three-ribbed_kelp","reef","Blake_Island_South","Central_Puget_Sound",7.08333458333333,0,24
 "ak_three-ribbed_kelp","reef","Burrows_Lighthouse","North_Puget_Sound",45.8333345833333,0.550694444444444,24
 "ak_three-ribbed_kelp","reef","Cattle_Point","San_Juan_Islands",23.749999375,0.991666666666667,16
@@ -1930,7 +1930,7 @@
 "ak_three-ribbed_kelp","reef","Sund_Rock","Hood_Canal",40.55555125,0,24
 "ak_three-ribbed_kelp","reef","Titlow_Beach","South_Puget_Sound",0,0.000925925925925926,18
 "ak_three-ribbed_kelp","reef","Watmough_Bay","San_Juan_Islands",23.1481355555556,0.0222222222222222,18
-"ak_three-ribbed_kelp","reef","Wing_Point","Central_Puget_Sound",0,0,30
+"ak_three-ribbed_kelp","reef","Wing_Point","Central_Puget_Sound",0,0,29
 "ak_torn_kelp","reef","Blake_Island_South","Central_Puget_Sound",7.08333458333333,0,24
 "ak_torn_kelp","reef","Burrows_Lighthouse","North_Puget_Sound",45.8333345833333,0.0159722222222222,24
 "ak_torn_kelp","reef","Cattle_Point","San_Juan_Islands",23.749999375,0.065625,16
@@ -1972,7 +1972,7 @@
 "ak_torn_kelp","reef","Sund_Rock","Hood_Canal",40.55555125,0,24
 "ak_torn_kelp","reef","Titlow_Beach","South_Puget_Sound",0,0,18
 "ak_torn_kelp","reef","Watmough_Bay","San_Juan_Islands",23.1481355555556,0.0324074074074074,18
-"ak_torn_kelp","reef","Wing_Point","Central_Puget_Sound",0,0,30
+"ak_torn_kelp","reef","Wing_Point","Central_Puget_Sound",0,0,29
 "ak_winged_kelp","reef","Blake_Island_South","Central_Puget_Sound",7.08333458333333,0,24
 "ak_winged_kelp","reef","Burrows_Lighthouse","North_Puget_Sound",45.8333345833333,0.00763888888888889,24
 "ak_winged_kelp","reef","Cattle_Point","San_Juan_Islands",23.749999375,0.236458333333333,16
@@ -2014,7 +2014,7 @@
 "ak_winged_kelp","reef","Sund_Rock","Hood_Canal",40.55555125,0.00208333333333333,24
 "ak_winged_kelp","reef","Titlow_Beach","South_Puget_Sound",0,0.000925925925925926,18
 "ak_winged_kelp","reef","Watmough_Bay","San_Juan_Islands",23.1481355555556,0.0185185185185185,18
-"ak_winged_kelp","reef","Wing_Point","Central_Puget_Sound",0,0,30
+"ak_winged_kelp","reef","Wing_Point","Central_Puget_Sound",0,0,29
 "ak_wire_weed","reef","Blake_Island_South","Central_Puget_Sound",7.08333458333333,0.0326388888888889,24
 "ak_wire_weed","reef","Burrows_Lighthouse","North_Puget_Sound",45.8333345833333,0,24
 "ak_wire_weed","reef","Cattle_Point","San_Juan_Islands",23.749999375,0,16
@@ -2056,7 +2056,7 @@
 "ak_wire_weed","reef","Sund_Rock","Hood_Canal",40.55555125,0.0513888888888889,24
 "ak_wire_weed","reef","Titlow_Beach","South_Puget_Sound",0,0.0898148148148148,18
 "ak_wire_weed","reef","Watmough_Bay","San_Juan_Islands",23.1481355555556,0.00185185185185185,18
-"ak_wire_weed","reef","Wing_Point","Central_Puget_Sound",0,0.0905555555555556,30
+"ak_wire_weed","reef","Wing_Point","Central_Puget_Sound",0,0.0925287356321839,29
 "ak_woody_kelp","reef","Blake_Island_South","Central_Puget_Sound",7.08333458333333,0.6125,24
 "ak_woody_kelp","reef","Burrows_Lighthouse","North_Puget_Sound",45.8333345833333,0.895833333333333,24
 "ak_woody_kelp","reef","Cattle_Point","San_Juan_Islands",23.749999375,1.14166666666667,16
@@ -2098,7 +2098,7 @@
 "ak_woody_kelp","reef","Sund_Rock","Hood_Canal",40.55555125,0,24
 "ak_woody_kelp","reef","Titlow_Beach","South_Puget_Sound",0,0.0157407407407407,18
 "ak_woody_kelp","reef","Watmough_Bay","San_Juan_Islands",23.1481355555556,2.01666666666667,18
-"ak_woody_kelp","reef","Wing_Point","Central_Puget_Sound",0,0,30
+"ak_woody_kelp","reef","Wing_Point","Central_Puget_Sound",0,0,29
 "ak_acid_weed","large boulder","Blake_Island_South","Central_Puget_Sound",0.416666666666667,0.223611111111111,24
 "ak_acid_weed","large boulder","Burrows_Lighthouse","North_Puget_Sound",12.6388854166667,0.125,24
 "ak_acid_weed","large boulder","Cattle_Point","San_Juan_Islands",2.29166625,0.523958333333333,16
@@ -2140,7 +2140,7 @@
 "ak_acid_weed","large boulder","Sund_Rock","Hood_Canal",2.08333208333333,0.0256944444444444,24
 "ak_acid_weed","large boulder","Titlow_Beach","South_Puget_Sound",0,0.440740740740741,18
 "ak_acid_weed","large boulder","Watmough_Bay","San_Juan_Islands",14.6296277777778,0.012037037037037,18
-"ak_acid_weed","large boulder","Wing_Point","Central_Puget_Sound",0.222222333333333,0.212222222222222,30
+"ak_acid_weed","large boulder","Wing_Point","Central_Puget_Sound",0.229885172413793,0.217241379310345,29
 "ak_broad-ribbed_kelp","large boulder","Blake_Island_South","Central_Puget_Sound",0.416666666666667,0.00138888888888889,24
 "ak_broad-ribbed_kelp","large boulder","Burrows_Lighthouse","North_Puget_Sound",12.6388854166667,0.0881944444444445,24
 "ak_broad-ribbed_kelp","large boulder","Cattle_Point","San_Juan_Islands",2.29166625,0.0625,16
@@ -2182,7 +2182,7 @@
 "ak_broad-ribbed_kelp","large boulder","Sund_Rock","Hood_Canal",2.08333208333333,0.00138888888888889,24
 "ak_broad-ribbed_kelp","large boulder","Titlow_Beach","South_Puget_Sound",0,0.0916666666666667,18
 "ak_broad-ribbed_kelp","large boulder","Watmough_Bay","San_Juan_Islands",14.6296277777778,0.0546296296296296,18
-"ak_broad-ribbed_kelp","large boulder","Wing_Point","Central_Puget_Sound",0.222222333333333,0,30
+"ak_broad-ribbed_kelp","large boulder","Wing_Point","Central_Puget_Sound",0.229885172413793,0,29
 "ak_five-ribbed_kelp","large boulder","Blake_Island_South","Central_Puget_Sound",0.416666666666667,0.60625,24
 "ak_five-ribbed_kelp","large boulder","Burrows_Lighthouse","North_Puget_Sound",12.6388854166667,1.14097222222222,24
 "ak_five-ribbed_kelp","large boulder","Cattle_Point","San_Juan_Islands",2.29166625,0.136458333333333,16
@@ -2224,7 +2224,7 @@
 "ak_five-ribbed_kelp","large boulder","Sund_Rock","Hood_Canal",2.08333208333333,0,24
 "ak_five-ribbed_kelp","large boulder","Titlow_Beach","South_Puget_Sound",0,0.55,18
 "ak_five-ribbed_kelp","large boulder","Watmough_Bay","San_Juan_Islands",14.6296277777778,0.315740740740741,18
-"ak_five-ribbed_kelp","large boulder","Wing_Point","Central_Puget_Sound",0.222222333333333,0.0783333333333333,30
+"ak_five-ribbed_kelp","large boulder","Wing_Point","Central_Puget_Sound",0.229885172413793,0.0775862068965517,29
 "ak_sieve_kelp","large boulder","Blake_Island_South","Central_Puget_Sound",0.416666666666667,0.00138888888888889,24
 "ak_sieve_kelp","large boulder","Burrows_Lighthouse","North_Puget_Sound",12.6388854166667,1.56597222222222,24
 "ak_sieve_kelp","large boulder","Cattle_Point","San_Juan_Islands",2.29166625,0,16
@@ -2266,7 +2266,7 @@
 "ak_sieve_kelp","large boulder","Sund_Rock","Hood_Canal",2.08333208333333,0.827777777777778,24
 "ak_sieve_kelp","large boulder","Titlow_Beach","South_Puget_Sound",0,0.25462962962963,18
 "ak_sieve_kelp","large boulder","Watmough_Bay","San_Juan_Islands",14.6296277777778,1.08981481481481,18
-"ak_sieve_kelp","large boulder","Wing_Point","Central_Puget_Sound",0.222222333333333,0.00166666666666667,30
+"ak_sieve_kelp","large boulder","Wing_Point","Central_Puget_Sound",0.229885172413793,0.00172413793103448,29
 "ak_sugar_kelp","large boulder","Blake_Island_South","Central_Puget_Sound",0.416666666666667,1.03472222222222,24
 "ak_sugar_kelp","large boulder","Burrows_Lighthouse","North_Puget_Sound",12.6388854166667,0.135416666666667,24
 "ak_sugar_kelp","large boulder","Cattle_Point","San_Juan_Islands",2.29166625,1.51666666666667,16
@@ -2308,7 +2308,7 @@
 "ak_sugar_kelp","large boulder","Sund_Rock","Hood_Canal",2.08333208333333,0.226388888888889,24
 "ak_sugar_kelp","large boulder","Titlow_Beach","South_Puget_Sound",0,2.63611111111111,18
 "ak_sugar_kelp","large boulder","Watmough_Bay","San_Juan_Islands",14.6296277777778,1.23518518518519,18
-"ak_sugar_kelp","large boulder","Wing_Point","Central_Puget_Sound",0.222222333333333,5.09722222222222,30
+"ak_sugar_kelp","large boulder","Wing_Point","Central_Puget_Sound",0.229885172413793,5.17471264367816,29
 "ak_three-ribbed_kelp","large boulder","Blake_Island_South","Central_Puget_Sound",0.416666666666667,0,24
 "ak_three-ribbed_kelp","large boulder","Burrows_Lighthouse","North_Puget_Sound",12.6388854166667,0.550694444444444,24
 "ak_three-ribbed_kelp","large boulder","Cattle_Point","San_Juan_Islands",2.29166625,0.991666666666667,16
@@ -2350,7 +2350,7 @@
 "ak_three-ribbed_kelp","large boulder","Sund_Rock","Hood_Canal",2.08333208333333,0,24
 "ak_three-ribbed_kelp","large boulder","Titlow_Beach","South_Puget_Sound",0,0.000925925925925926,18
 "ak_three-ribbed_kelp","large boulder","Watmough_Bay","San_Juan_Islands",14.6296277777778,0.0222222222222222,18
-"ak_three-ribbed_kelp","large boulder","Wing_Point","Central_Puget_Sound",0.222222333333333,0,30
+"ak_three-ribbed_kelp","large boulder","Wing_Point","Central_Puget_Sound",0.229885172413793,0,29
 "ak_torn_kelp","large boulder","Blake_Island_South","Central_Puget_Sound",0.416666666666667,0,24
 "ak_torn_kelp","large boulder","Burrows_Lighthouse","North_Puget_Sound",12.6388854166667,0.0159722222222222,24
 "ak_torn_kelp","large boulder","Cattle_Point","San_Juan_Islands",2.29166625,0.065625,16
@@ -2392,7 +2392,7 @@
 "ak_torn_kelp","large boulder","Sund_Rock","Hood_Canal",2.08333208333333,0,24
 "ak_torn_kelp","large boulder","Titlow_Beach","South_Puget_Sound",0,0,18
 "ak_torn_kelp","large boulder","Watmough_Bay","San_Juan_Islands",14.6296277777778,0.0324074074074074,18
-"ak_torn_kelp","large boulder","Wing_Point","Central_Puget_Sound",0.222222333333333,0,30
+"ak_torn_kelp","large boulder","Wing_Point","Central_Puget_Sound",0.229885172413793,0,29
 "ak_winged_kelp","large boulder","Blake_Island_South","Central_Puget_Sound",0.416666666666667,0,24
 "ak_winged_kelp","large boulder","Burrows_Lighthouse","North_Puget_Sound",12.6388854166667,0.00763888888888889,24
 "ak_winged_kelp","large boulder","Cattle_Point","San_Juan_Islands",2.29166625,0.236458333333333,16
@@ -2434,7 +2434,7 @@
 "ak_winged_kelp","large boulder","Sund_Rock","Hood_Canal",2.08333208333333,0.00208333333333333,24
 "ak_winged_kelp","large boulder","Titlow_Beach","South_Puget_Sound",0,0.000925925925925926,18
 "ak_winged_kelp","large boulder","Watmough_Bay","San_Juan_Islands",14.6296277777778,0.0185185185185185,18
-"ak_winged_kelp","large boulder","Wing_Point","Central_Puget_Sound",0.222222333333333,0,30
+"ak_winged_kelp","large boulder","Wing_Point","Central_Puget_Sound",0.229885172413793,0,29
 "ak_wire_weed","large boulder","Blake_Island_South","Central_Puget_Sound",0.416666666666667,0.0326388888888889,24
 "ak_wire_weed","large boulder","Burrows_Lighthouse","North_Puget_Sound",12.6388854166667,0,24
 "ak_wire_weed","large boulder","Cattle_Point","San_Juan_Islands",2.29166625,0,16
@@ -2476,7 +2476,7 @@
 "ak_wire_weed","large boulder","Sund_Rock","Hood_Canal",2.08333208333333,0.0513888888888889,24
 "ak_wire_weed","large boulder","Titlow_Beach","South_Puget_Sound",0,0.0898148148148148,18
 "ak_wire_weed","large boulder","Watmough_Bay","San_Juan_Islands",14.6296277777778,0.00185185185185185,18
-"ak_wire_weed","large boulder","Wing_Point","Central_Puget_Sound",0.222222333333333,0.0905555555555556,30
+"ak_wire_weed","large boulder","Wing_Point","Central_Puget_Sound",0.229885172413793,0.0925287356321839,29
 "ak_woody_kelp","large boulder","Blake_Island_South","Central_Puget_Sound",0.416666666666667,0.6125,24
 "ak_woody_kelp","large boulder","Burrows_Lighthouse","North_Puget_Sound",12.6388854166667,0.895833333333333,24
 "ak_woody_kelp","large boulder","Cattle_Point","San_Juan_Islands",2.29166625,1.14166666666667,16
@@ -2518,7 +2518,7 @@
 "ak_woody_kelp","large boulder","Sund_Rock","Hood_Canal",2.08333208333333,0,24
 "ak_woody_kelp","large boulder","Titlow_Beach","South_Puget_Sound",0,0.0157407407407407,18
 "ak_woody_kelp","large boulder","Watmough_Bay","San_Juan_Islands",14.6296277777778,2.01666666666667,18
-"ak_woody_kelp","large boulder","Wing_Point","Central_Puget_Sound",0.222222333333333,0,30
+"ak_woody_kelp","large boulder","Wing_Point","Central_Puget_Sound",0.229885172413793,0,29
 "ak_acid_weed","small boulder","Blake_Island_South","Central_Puget_Sound",0.13888875,0.223611111111111,24
 "ak_acid_weed","small boulder","Burrows_Lighthouse","North_Puget_Sound",8.47222041666667,0.125,24
 "ak_acid_weed","small boulder","Cattle_Point","San_Juan_Islands",1.04166625,0.523958333333333,16
@@ -2560,7 +2560,7 @@
 "ak_acid_weed","small boulder","Sund_Rock","Hood_Canal",2.7777775,0.0256944444444444,24
 "ak_acid_weed","small boulder","Titlow_Beach","South_Puget_Sound",0.185185,0.440740740740741,18
 "ak_acid_weed","small boulder","Watmough_Bay","San_Juan_Islands",12.9629594444444,0.012037037037037,18
-"ak_acid_weed","small boulder","Wing_Point","Central_Puget_Sound",0.666666666666667,0.212222222222222,30
+"ak_acid_weed","small boulder","Wing_Point","Central_Puget_Sound",0.689655172413793,0.217241379310345,29
 "ak_broad-ribbed_kelp","small boulder","Blake_Island_South","Central_Puget_Sound",0.13888875,0.00138888888888889,24
 "ak_broad-ribbed_kelp","small boulder","Burrows_Lighthouse","North_Puget_Sound",8.47222041666667,0.0881944444444445,24
 "ak_broad-ribbed_kelp","small boulder","Cattle_Point","San_Juan_Islands",1.04166625,0.0625,16
@@ -2602,7 +2602,7 @@
 "ak_broad-ribbed_kelp","small boulder","Sund_Rock","Hood_Canal",2.7777775,0.00138888888888889,24
 "ak_broad-ribbed_kelp","small boulder","Titlow_Beach","South_Puget_Sound",0.185185,0.0916666666666667,18
 "ak_broad-ribbed_kelp","small boulder","Watmough_Bay","San_Juan_Islands",12.9629594444444,0.0546296296296296,18
-"ak_broad-ribbed_kelp","small boulder","Wing_Point","Central_Puget_Sound",0.666666666666667,0,30
+"ak_broad-ribbed_kelp","small boulder","Wing_Point","Central_Puget_Sound",0.689655172413793,0,29
 "ak_five-ribbed_kelp","small boulder","Blake_Island_South","Central_Puget_Sound",0.13888875,0.60625,24
 "ak_five-ribbed_kelp","small boulder","Burrows_Lighthouse","North_Puget_Sound",8.47222041666667,1.14097222222222,24
 "ak_five-ribbed_kelp","small boulder","Cattle_Point","San_Juan_Islands",1.04166625,0.136458333333333,16
@@ -2644,7 +2644,7 @@
 "ak_five-ribbed_kelp","small boulder","Sund_Rock","Hood_Canal",2.7777775,0,24
 "ak_five-ribbed_kelp","small boulder","Titlow_Beach","South_Puget_Sound",0.185185,0.55,18
 "ak_five-ribbed_kelp","small boulder","Watmough_Bay","San_Juan_Islands",12.9629594444444,0.315740740740741,18
-"ak_five-ribbed_kelp","small boulder","Wing_Point","Central_Puget_Sound",0.666666666666667,0.0783333333333333,30
+"ak_five-ribbed_kelp","small boulder","Wing_Point","Central_Puget_Sound",0.689655172413793,0.0775862068965517,29
 "ak_sieve_kelp","small boulder","Blake_Island_South","Central_Puget_Sound",0.13888875,0.00138888888888889,24
 "ak_sieve_kelp","small boulder","Burrows_Lighthouse","North_Puget_Sound",8.47222041666667,1.56597222222222,24
 "ak_sieve_kelp","small boulder","Cattle_Point","San_Juan_Islands",1.04166625,0,16
@@ -2686,7 +2686,7 @@
 "ak_sieve_kelp","small boulder","Sund_Rock","Hood_Canal",2.7777775,0.827777777777778,24
 "ak_sieve_kelp","small boulder","Titlow_Beach","South_Puget_Sound",0.185185,0.25462962962963,18
 "ak_sieve_kelp","small boulder","Watmough_Bay","San_Juan_Islands",12.9629594444444,1.08981481481481,18
-"ak_sieve_kelp","small boulder","Wing_Point","Central_Puget_Sound",0.666666666666667,0.00166666666666667,30
+"ak_sieve_kelp","small boulder","Wing_Point","Central_Puget_Sound",0.689655172413793,0.00172413793103448,29
 "ak_sugar_kelp","small boulder","Blake_Island_South","Central_Puget_Sound",0.13888875,1.03472222222222,24
 "ak_sugar_kelp","small boulder","Burrows_Lighthouse","North_Puget_Sound",8.47222041666667,0.135416666666667,24
 "ak_sugar_kelp","small boulder","Cattle_Point","San_Juan_Islands",1.04166625,1.51666666666667,16
@@ -2728,7 +2728,7 @@
 "ak_sugar_kelp","small boulder","Sund_Rock","Hood_Canal",2.7777775,0.226388888888889,24
 "ak_sugar_kelp","small boulder","Titlow_Beach","South_Puget_Sound",0.185185,2.63611111111111,18
 "ak_sugar_kelp","small boulder","Watmough_Bay","San_Juan_Islands",12.9629594444444,1.23518518518519,18
-"ak_sugar_kelp","small boulder","Wing_Point","Central_Puget_Sound",0.666666666666667,5.09722222222222,30
+"ak_sugar_kelp","small boulder","Wing_Point","Central_Puget_Sound",0.689655172413793,5.17471264367816,29
 "ak_three-ribbed_kelp","small boulder","Blake_Island_South","Central_Puget_Sound",0.13888875,0,24
 "ak_three-ribbed_kelp","small boulder","Burrows_Lighthouse","North_Puget_Sound",8.47222041666667,0.550694444444444,24
 "ak_three-ribbed_kelp","small boulder","Cattle_Point","San_Juan_Islands",1.04166625,0.991666666666667,16
@@ -2770,7 +2770,7 @@
 "ak_three-ribbed_kelp","small boulder","Sund_Rock","Hood_Canal",2.7777775,0,24
 "ak_three-ribbed_kelp","small boulder","Titlow_Beach","South_Puget_Sound",0.185185,0.000925925925925926,18
 "ak_three-ribbed_kelp","small boulder","Watmough_Bay","San_Juan_Islands",12.9629594444444,0.0222222222222222,18
-"ak_three-ribbed_kelp","small boulder","Wing_Point","Central_Puget_Sound",0.666666666666667,0,30
+"ak_three-ribbed_kelp","small boulder","Wing_Point","Central_Puget_Sound",0.689655172413793,0,29
 "ak_torn_kelp","small boulder","Blake_Island_South","Central_Puget_Sound",0.13888875,0,24
 "ak_torn_kelp","small boulder","Burrows_Lighthouse","North_Puget_Sound",8.47222041666667,0.0159722222222222,24
 "ak_torn_kelp","small boulder","Cattle_Point","San_Juan_Islands",1.04166625,0.065625,16
@@ -2812,7 +2812,7 @@
 "ak_torn_kelp","small boulder","Sund_Rock","Hood_Canal",2.7777775,0,24
 "ak_torn_kelp","small boulder","Titlow_Beach","South_Puget_Sound",0.185185,0,18
 "ak_torn_kelp","small boulder","Watmough_Bay","San_Juan_Islands",12.9629594444444,0.0324074074074074,18
-"ak_torn_kelp","small boulder","Wing_Point","Central_Puget_Sound",0.666666666666667,0,30
+"ak_torn_kelp","small boulder","Wing_Point","Central_Puget_Sound",0.689655172413793,0,29
 "ak_winged_kelp","small boulder","Blake_Island_South","Central_Puget_Sound",0.13888875,0,24
 "ak_winged_kelp","small boulder","Burrows_Lighthouse","North_Puget_Sound",8.47222041666667,0.00763888888888889,24
 "ak_winged_kelp","small boulder","Cattle_Point","San_Juan_Islands",1.04166625,0.236458333333333,16
@@ -2854,7 +2854,7 @@
 "ak_winged_kelp","small boulder","Sund_Rock","Hood_Canal",2.7777775,0.00208333333333333,24
 "ak_winged_kelp","small boulder","Titlow_Beach","South_Puget_Sound",0.185185,0.000925925925925926,18
 "ak_winged_kelp","small boulder","Watmough_Bay","San_Juan_Islands",12.9629594444444,0.0185185185185185,18
-"ak_winged_kelp","small boulder","Wing_Point","Central_Puget_Sound",0.666666666666667,0,30
+"ak_winged_kelp","small boulder","Wing_Point","Central_Puget_Sound",0.689655172413793,0,29
 "ak_wire_weed","small boulder","Blake_Island_South","Central_Puget_Sound",0.13888875,0.0326388888888889,24
 "ak_wire_weed","small boulder","Burrows_Lighthouse","North_Puget_Sound",8.47222041666667,0,24
 "ak_wire_weed","small boulder","Cattle_Point","San_Juan_Islands",1.04166625,0,16
@@ -2896,7 +2896,7 @@
 "ak_wire_weed","small boulder","Sund_Rock","Hood_Canal",2.7777775,0.0513888888888889,24
 "ak_wire_weed","small boulder","Titlow_Beach","South_Puget_Sound",0.185185,0.0898148148148148,18
 "ak_wire_weed","small boulder","Watmough_Bay","San_Juan_Islands",12.9629594444444,0.00185185185185185,18
-"ak_wire_weed","small boulder","Wing_Point","Central_Puget_Sound",0.666666666666667,0.0905555555555556,30
+"ak_wire_weed","small boulder","Wing_Point","Central_Puget_Sound",0.689655172413793,0.0925287356321839,29
 "ak_woody_kelp","small boulder","Blake_Island_South","Central_Puget_Sound",0.13888875,0.6125,24
 "ak_woody_kelp","small boulder","Burrows_Lighthouse","North_Puget_Sound",8.47222041666667,0.895833333333333,24
 "ak_woody_kelp","small boulder","Cattle_Point","San_Juan_Islands",1.04166625,1.14166666666667,16
@@ -2938,7 +2938,7 @@
 "ak_woody_kelp","small boulder","Sund_Rock","Hood_Canal",2.7777775,0,24
 "ak_woody_kelp","small boulder","Titlow_Beach","South_Puget_Sound",0.185185,0.0157407407407407,18
 "ak_woody_kelp","small boulder","Watmough_Bay","San_Juan_Islands",12.9629594444444,2.01666666666667,18
-"ak_woody_kelp","small boulder","Wing_Point","Central_Puget_Sound",0.666666666666667,0,30
+"ak_woody_kelp","small boulder","Wing_Point","Central_Puget_Sound",0.689655172413793,0,29
 "ak_acid_weed","rock","Blake_Island_South","Central_Puget_Sound",3.74999583333333,0.223611111111111,24
 "ak_acid_weed","rock","Burrows_Lighthouse","North_Puget_Sound",6.25000125,0.125,24
 "ak_acid_weed","rock","Cattle_Point","San_Juan_Islands",2.5,0.523958333333333,16
@@ -2980,7 +2980,7 @@
 "ak_acid_weed","rock","Sund_Rock","Hood_Canal",2.49999958333333,0.0256944444444444,24
 "ak_acid_weed","rock","Titlow_Beach","South_Puget_Sound",1.85185111111111,0.440740740740741,18
 "ak_acid_weed","rock","Watmough_Bay","San_Juan_Islands",12.4074088888889,0.012037037037037,18
-"ak_acid_weed","rock","Wing_Point","Central_Puget_Sound",1.22222066666667,0.212222222222222,30
+"ak_acid_weed","rock","Wing_Point","Central_Puget_Sound",1.26436620689655,0.217241379310345,29
 "ak_broad-ribbed_kelp","rock","Blake_Island_South","Central_Puget_Sound",3.74999583333333,0.00138888888888889,24
 "ak_broad-ribbed_kelp","rock","Burrows_Lighthouse","North_Puget_Sound",6.25000125,0.0881944444444445,24
 "ak_broad-ribbed_kelp","rock","Cattle_Point","San_Juan_Islands",2.5,0.0625,16
@@ -3022,7 +3022,7 @@
 "ak_broad-ribbed_kelp","rock","Sund_Rock","Hood_Canal",2.49999958333333,0.00138888888888889,24
 "ak_broad-ribbed_kelp","rock","Titlow_Beach","South_Puget_Sound",1.85185111111111,0.0916666666666667,18
 "ak_broad-ribbed_kelp","rock","Watmough_Bay","San_Juan_Islands",12.4074088888889,0.0546296296296296,18
-"ak_broad-ribbed_kelp","rock","Wing_Point","Central_Puget_Sound",1.22222066666667,0,30
+"ak_broad-ribbed_kelp","rock","Wing_Point","Central_Puget_Sound",1.26436620689655,0,29
 "ak_five-ribbed_kelp","rock","Blake_Island_South","Central_Puget_Sound",3.74999583333333,0.60625,24
 "ak_five-ribbed_kelp","rock","Burrows_Lighthouse","North_Puget_Sound",6.25000125,1.14097222222222,24
 "ak_five-ribbed_kelp","rock","Cattle_Point","San_Juan_Islands",2.5,0.136458333333333,16
@@ -3064,7 +3064,7 @@
 "ak_five-ribbed_kelp","rock","Sund_Rock","Hood_Canal",2.49999958333333,0,24
 "ak_five-ribbed_kelp","rock","Titlow_Beach","South_Puget_Sound",1.85185111111111,0.55,18
 "ak_five-ribbed_kelp","rock","Watmough_Bay","San_Juan_Islands",12.4074088888889,0.315740740740741,18
-"ak_five-ribbed_kelp","rock","Wing_Point","Central_Puget_Sound",1.22222066666667,0.0783333333333333,30
+"ak_five-ribbed_kelp","rock","Wing_Point","Central_Puget_Sound",1.26436620689655,0.0775862068965517,29
 "ak_sieve_kelp","rock","Blake_Island_South","Central_Puget_Sound",3.74999583333333,0.00138888888888889,24
 "ak_sieve_kelp","rock","Burrows_Lighthouse","North_Puget_Sound",6.25000125,1.56597222222222,24
 "ak_sieve_kelp","rock","Cattle_Point","San_Juan_Islands",2.5,0,16
@@ -3106,7 +3106,7 @@
 "ak_sieve_kelp","rock","Sund_Rock","Hood_Canal",2.49999958333333,0.827777777777778,24
 "ak_sieve_kelp","rock","Titlow_Beach","South_Puget_Sound",1.85185111111111,0.25462962962963,18
 "ak_sieve_kelp","rock","Watmough_Bay","San_Juan_Islands",12.4074088888889,1.08981481481481,18
-"ak_sieve_kelp","rock","Wing_Point","Central_Puget_Sound",1.22222066666667,0.00166666666666667,30
+"ak_sieve_kelp","rock","Wing_Point","Central_Puget_Sound",1.26436620689655,0.00172413793103448,29
 "ak_sugar_kelp","rock","Blake_Island_South","Central_Puget_Sound",3.74999583333333,1.03472222222222,24
 "ak_sugar_kelp","rock","Burrows_Lighthouse","North_Puget_Sound",6.25000125,0.135416666666667,24
 "ak_sugar_kelp","rock","Cattle_Point","San_Juan_Islands",2.5,1.51666666666667,16
@@ -3148,7 +3148,7 @@
 "ak_sugar_kelp","rock","Sund_Rock","Hood_Canal",2.49999958333333,0.226388888888889,24
 "ak_sugar_kelp","rock","Titlow_Beach","South_Puget_Sound",1.85185111111111,2.63611111111111,18
 "ak_sugar_kelp","rock","Watmough_Bay","San_Juan_Islands",12.4074088888889,1.23518518518519,18
-"ak_sugar_kelp","rock","Wing_Point","Central_Puget_Sound",1.22222066666667,5.09722222222222,30
+"ak_sugar_kelp","rock","Wing_Point","Central_Puget_Sound",1.26436620689655,5.17471264367816,29
 "ak_three-ribbed_kelp","rock","Blake_Island_South","Central_Puget_Sound",3.74999583333333,0,24
 "ak_three-ribbed_kelp","rock","Burrows_Lighthouse","North_Puget_Sound",6.25000125,0.550694444444444,24
 "ak_three-ribbed_kelp","rock","Cattle_Point","San_Juan_Islands",2.5,0.991666666666667,16
@@ -3190,7 +3190,7 @@
 "ak_three-ribbed_kelp","rock","Sund_Rock","Hood_Canal",2.49999958333333,0,24
 "ak_three-ribbed_kelp","rock","Titlow_Beach","South_Puget_Sound",1.85185111111111,0.000925925925925926,18
 "ak_three-ribbed_kelp","rock","Watmough_Bay","San_Juan_Islands",12.4074088888889,0.0222222222222222,18
-"ak_three-ribbed_kelp","rock","Wing_Point","Central_Puget_Sound",1.22222066666667,0,30
+"ak_three-ribbed_kelp","rock","Wing_Point","Central_Puget_Sound",1.26436620689655,0,29
 "ak_torn_kelp","rock","Blake_Island_South","Central_Puget_Sound",3.74999583333333,0,24
 "ak_torn_kelp","rock","Burrows_Lighthouse","North_Puget_Sound",6.25000125,0.0159722222222222,24
 "ak_torn_kelp","rock","Cattle_Point","San_Juan_Islands",2.5,0.065625,16
@@ -3232,7 +3232,7 @@
 "ak_torn_kelp","rock","Sund_Rock","Hood_Canal",2.49999958333333,0,24
 "ak_torn_kelp","rock","Titlow_Beach","South_Puget_Sound",1.85185111111111,0,18
 "ak_torn_kelp","rock","Watmough_Bay","San_Juan_Islands",12.4074088888889,0.0324074074074074,18
-"ak_torn_kelp","rock","Wing_Point","Central_Puget_Sound",1.22222066666667,0,30
+"ak_torn_kelp","rock","Wing_Point","Central_Puget_Sound",1.26436620689655,0,29
 "ak_winged_kelp","rock","Blake_Island_South","Central_Puget_Sound",3.74999583333333,0,24
 "ak_winged_kelp","rock","Burrows_Lighthouse","North_Puget_Sound",6.25000125,0.00763888888888889,24
 "ak_winged_kelp","rock","Cattle_Point","San_Juan_Islands",2.5,0.236458333333333,16
@@ -3274,7 +3274,7 @@
 "ak_winged_kelp","rock","Sund_Rock","Hood_Canal",2.49999958333333,0.00208333333333333,24
 "ak_winged_kelp","rock","Titlow_Beach","South_Puget_Sound",1.85185111111111,0.000925925925925926,18
 "ak_winged_kelp","rock","Watmough_Bay","San_Juan_Islands",12.4074088888889,0.0185185185185185,18
-"ak_winged_kelp","rock","Wing_Point","Central_Puget_Sound",1.22222066666667,0,30
+"ak_winged_kelp","rock","Wing_Point","Central_Puget_Sound",1.26436620689655,0,29
 "ak_wire_weed","rock","Blake_Island_South","Central_Puget_Sound",3.74999583333333,0.0326388888888889,24
 "ak_wire_weed","rock","Burrows_Lighthouse","North_Puget_Sound",6.25000125,0,24
 "ak_wire_weed","rock","Cattle_Point","San_Juan_Islands",2.5,0,16
@@ -3316,7 +3316,7 @@
 "ak_wire_weed","rock","Sund_Rock","Hood_Canal",2.49999958333333,0.0513888888888889,24
 "ak_wire_weed","rock","Titlow_Beach","South_Puget_Sound",1.85185111111111,0.0898148148148148,18
 "ak_wire_weed","rock","Watmough_Bay","San_Juan_Islands",12.4074088888889,0.00185185185185185,18
-"ak_wire_weed","rock","Wing_Point","Central_Puget_Sound",1.22222066666667,0.0905555555555556,30
+"ak_wire_weed","rock","Wing_Point","Central_Puget_Sound",1.26436620689655,0.0925287356321839,29
 "ak_woody_kelp","rock","Blake_Island_South","Central_Puget_Sound",3.74999583333333,0.6125,24
 "ak_woody_kelp","rock","Burrows_Lighthouse","North_Puget_Sound",6.25000125,0.895833333333333,24
 "ak_woody_kelp","rock","Cattle_Point","San_Juan_Islands",2.5,1.14166666666667,16
@@ -3358,7 +3358,7 @@
 "ak_woody_kelp","rock","Sund_Rock","Hood_Canal",2.49999958333333,0,24
 "ak_woody_kelp","rock","Titlow_Beach","South_Puget_Sound",1.85185111111111,0.0157407407407407,18
 "ak_woody_kelp","rock","Watmough_Bay","San_Juan_Islands",12.4074088888889,2.01666666666667,18
-"ak_woody_kelp","rock","Wing_Point","Central_Puget_Sound",1.22222066666667,0,30
+"ak_woody_kelp","rock","Wing_Point","Central_Puget_Sound",1.26436620689655,0,29
 "ak_acid_weed","cobble","Blake_Island_South","Central_Puget_Sound",22.91666375,0.223611111111111,24
 "ak_acid_weed","cobble","Burrows_Lighthouse","North_Puget_Sound",9.16666666666667,0.125,24
 "ak_acid_weed","cobble","Cattle_Point","San_Juan_Islands",4.791661875,0.523958333333333,16
@@ -3400,7 +3400,7 @@
 "ak_acid_weed","cobble","Sund_Rock","Hood_Canal",18.0555566666667,0.0256944444444444,24
 "ak_acid_weed","cobble","Titlow_Beach","South_Puget_Sound",4.07407444444444,0.440740740740741,18
 "ak_acid_weed","cobble","Watmough_Bay","San_Juan_Islands",7.96296111111111,0.012037037037037,18
-"ak_acid_weed","cobble","Wing_Point","Central_Puget_Sound",22.000001,0.212222222222222,30
+"ak_acid_weed","cobble","Wing_Point","Central_Puget_Sound",22.5287365517241,0.217241379310345,29
 "ak_broad-ribbed_kelp","cobble","Blake_Island_South","Central_Puget_Sound",22.91666375,0.00138888888888889,24
 "ak_broad-ribbed_kelp","cobble","Burrows_Lighthouse","North_Puget_Sound",9.16666666666667,0.0881944444444445,24
 "ak_broad-ribbed_kelp","cobble","Cattle_Point","San_Juan_Islands",4.791661875,0.0625,16
@@ -3442,7 +3442,7 @@
 "ak_broad-ribbed_kelp","cobble","Sund_Rock","Hood_Canal",18.0555566666667,0.00138888888888889,24
 "ak_broad-ribbed_kelp","cobble","Titlow_Beach","South_Puget_Sound",4.07407444444444,0.0916666666666667,18
 "ak_broad-ribbed_kelp","cobble","Watmough_Bay","San_Juan_Islands",7.96296111111111,0.0546296296296296,18
-"ak_broad-ribbed_kelp","cobble","Wing_Point","Central_Puget_Sound",22.000001,0,30
+"ak_broad-ribbed_kelp","cobble","Wing_Point","Central_Puget_Sound",22.5287365517241,0,29
 "ak_five-ribbed_kelp","cobble","Blake_Island_South","Central_Puget_Sound",22.91666375,0.60625,24
 "ak_five-ribbed_kelp","cobble","Burrows_Lighthouse","North_Puget_Sound",9.16666666666667,1.14097222222222,24
 "ak_five-ribbed_kelp","cobble","Cattle_Point","San_Juan_Islands",4.791661875,0.136458333333333,16
@@ -3484,7 +3484,7 @@
 "ak_five-ribbed_kelp","cobble","Sund_Rock","Hood_Canal",18.0555566666667,0,24
 "ak_five-ribbed_kelp","cobble","Titlow_Beach","South_Puget_Sound",4.07407444444444,0.55,18
 "ak_five-ribbed_kelp","cobble","Watmough_Bay","San_Juan_Islands",7.96296111111111,0.315740740740741,18
-"ak_five-ribbed_kelp","cobble","Wing_Point","Central_Puget_Sound",22.000001,0.0783333333333333,30
+"ak_five-ribbed_kelp","cobble","Wing_Point","Central_Puget_Sound",22.5287365517241,0.0775862068965517,29
 "ak_sieve_kelp","cobble","Blake_Island_South","Central_Puget_Sound",22.91666375,0.00138888888888889,24
 "ak_sieve_kelp","cobble","Burrows_Lighthouse","North_Puget_Sound",9.16666666666667,1.56597222222222,24
 "ak_sieve_kelp","cobble","Cattle_Point","San_Juan_Islands",4.791661875,0,16
@@ -3526,7 +3526,7 @@
 "ak_sieve_kelp","cobble","Sund_Rock","Hood_Canal",18.0555566666667,0.827777777777778,24
 "ak_sieve_kelp","cobble","Titlow_Beach","South_Puget_Sound",4.07407444444444,0.25462962962963,18
 "ak_sieve_kelp","cobble","Watmough_Bay","San_Juan_Islands",7.96296111111111,1.08981481481481,18
-"ak_sieve_kelp","cobble","Wing_Point","Central_Puget_Sound",22.000001,0.00166666666666667,30
+"ak_sieve_kelp","cobble","Wing_Point","Central_Puget_Sound",22.5287365517241,0.00172413793103448,29
 "ak_sugar_kelp","cobble","Blake_Island_South","Central_Puget_Sound",22.91666375,1.03472222222222,24
 "ak_sugar_kelp","cobble","Burrows_Lighthouse","North_Puget_Sound",9.16666666666667,0.135416666666667,24
 "ak_sugar_kelp","cobble","Cattle_Point","San_Juan_Islands",4.791661875,1.51666666666667,16
@@ -3568,7 +3568,7 @@
 "ak_sugar_kelp","cobble","Sund_Rock","Hood_Canal",18.0555566666667,0.226388888888889,24
 "ak_sugar_kelp","cobble","Titlow_Beach","South_Puget_Sound",4.07407444444444,2.63611111111111,18
 "ak_sugar_kelp","cobble","Watmough_Bay","San_Juan_Islands",7.96296111111111,1.23518518518519,18
-"ak_sugar_kelp","cobble","Wing_Point","Central_Puget_Sound",22.000001,5.09722222222222,30
+"ak_sugar_kelp","cobble","Wing_Point","Central_Puget_Sound",22.5287365517241,5.17471264367816,29
 "ak_three-ribbed_kelp","cobble","Blake_Island_South","Central_Puget_Sound",22.91666375,0,24
 "ak_three-ribbed_kelp","cobble","Burrows_Lighthouse","North_Puget_Sound",9.16666666666667,0.550694444444444,24
 "ak_three-ribbed_kelp","cobble","Cattle_Point","San_Juan_Islands",4.791661875,0.991666666666667,16
@@ -3610,7 +3610,7 @@
 "ak_three-ribbed_kelp","cobble","Sund_Rock","Hood_Canal",18.0555566666667,0,24
 "ak_three-ribbed_kelp","cobble","Titlow_Beach","South_Puget_Sound",4.07407444444444,0.000925925925925926,18
 "ak_three-ribbed_kelp","cobble","Watmough_Bay","San_Juan_Islands",7.96296111111111,0.0222222222222222,18
-"ak_three-ribbed_kelp","cobble","Wing_Point","Central_Puget_Sound",22.000001,0,30
+"ak_three-ribbed_kelp","cobble","Wing_Point","Central_Puget_Sound",22.5287365517241,0,29
 "ak_torn_kelp","cobble","Blake_Island_South","Central_Puget_Sound",22.91666375,0,24
 "ak_torn_kelp","cobble","Burrows_Lighthouse","North_Puget_Sound",9.16666666666667,0.0159722222222222,24
 "ak_torn_kelp","cobble","Cattle_Point","San_Juan_Islands",4.791661875,0.065625,16
@@ -3652,7 +3652,7 @@
 "ak_torn_kelp","cobble","Sund_Rock","Hood_Canal",18.0555566666667,0,24
 "ak_torn_kelp","cobble","Titlow_Beach","South_Puget_Sound",4.07407444444444,0,18
 "ak_torn_kelp","cobble","Watmough_Bay","San_Juan_Islands",7.96296111111111,0.0324074074074074,18
-"ak_torn_kelp","cobble","Wing_Point","Central_Puget_Sound",22.000001,0,30
+"ak_torn_kelp","cobble","Wing_Point","Central_Puget_Sound",22.5287365517241,0,29
 "ak_winged_kelp","cobble","Blake_Island_South","Central_Puget_Sound",22.91666375,0,24
 "ak_winged_kelp","cobble","Burrows_Lighthouse","North_Puget_Sound",9.16666666666667,0.00763888888888889,24
 "ak_winged_kelp","cobble","Cattle_Point","San_Juan_Islands",4.791661875,0.236458333333333,16
@@ -3694,7 +3694,7 @@
 "ak_winged_kelp","cobble","Sund_Rock","Hood_Canal",18.0555566666667,0.00208333333333333,24
 "ak_winged_kelp","cobble","Titlow_Beach","South_Puget_Sound",4.07407444444444,0.000925925925925926,18
 "ak_winged_kelp","cobble","Watmough_Bay","San_Juan_Islands",7.96296111111111,0.0185185185185185,18
-"ak_winged_kelp","cobble","Wing_Point","Central_Puget_Sound",22.000001,0,30
+"ak_winged_kelp","cobble","Wing_Point","Central_Puget_Sound",22.5287365517241,0,29
 "ak_wire_weed","cobble","Blake_Island_South","Central_Puget_Sound",22.91666375,0.0326388888888889,24
 "ak_wire_weed","cobble","Burrows_Lighthouse","North_Puget_Sound",9.16666666666667,0,24
 "ak_wire_weed","cobble","Cattle_Point","San_Juan_Islands",4.791661875,0,16
@@ -3736,7 +3736,7 @@
 "ak_wire_weed","cobble","Sund_Rock","Hood_Canal",18.0555566666667,0.0513888888888889,24
 "ak_wire_weed","cobble","Titlow_Beach","South_Puget_Sound",4.07407444444444,0.0898148148148148,18
 "ak_wire_weed","cobble","Watmough_Bay","San_Juan_Islands",7.96296111111111,0.00185185185185185,18
-"ak_wire_weed","cobble","Wing_Point","Central_Puget_Sound",22.000001,0.0905555555555556,30
+"ak_wire_weed","cobble","Wing_Point","Central_Puget_Sound",22.5287365517241,0.0925287356321839,29
 "ak_woody_kelp","cobble","Blake_Island_South","Central_Puget_Sound",22.91666375,0.6125,24
 "ak_woody_kelp","cobble","Burrows_Lighthouse","North_Puget_Sound",9.16666666666667,0.895833333333333,24
 "ak_woody_kelp","cobble","Cattle_Point","San_Juan_Islands",4.791661875,1.14166666666667,16
@@ -3778,7 +3778,7 @@
 "ak_woody_kelp","cobble","Sund_Rock","Hood_Canal",18.0555566666667,0,24
 "ak_woody_kelp","cobble","Titlow_Beach","South_Puget_Sound",4.07407444444444,0.0157407407407407,18
 "ak_woody_kelp","cobble","Watmough_Bay","San_Juan_Islands",7.96296111111111,2.01666666666667,18
-"ak_woody_kelp","cobble","Wing_Point","Central_Puget_Sound",22.000001,0,30
+"ak_woody_kelp","cobble","Wing_Point","Central_Puget_Sound",22.5287365517241,0,29
 "ak_acid_weed","pebble","Blake_Island_South","Central_Puget_Sound",40.9722208333333,0.223611111111111,24
 "ak_acid_weed","pebble","Burrows_Lighthouse","North_Puget_Sound",12.3611108333333,0.125,24
 "ak_acid_weed","pebble","Cattle_Point","San_Juan_Islands",25.624995625,0.523958333333333,16
@@ -3820,7 +3820,7 @@
 "ak_acid_weed","pebble","Sund_Rock","Hood_Canal",11.1111125,0.0256944444444444,24
 "ak_acid_weed","pebble","Titlow_Beach","South_Puget_Sound",19.6296238888889,0.440740740740741,18
 "ak_acid_weed","pebble","Watmough_Bay","San_Juan_Islands",12.7777788888889,0.012037037037037,18
-"ak_acid_weed","pebble","Wing_Point","Central_Puget_Sound",42.3333253333333,0.212222222222222,30
+"ak_acid_weed","pebble","Wing_Point","Central_Puget_Sound",40.9195331034483,0.217241379310345,29
 "ak_broad-ribbed_kelp","pebble","Blake_Island_South","Central_Puget_Sound",40.9722208333333,0.00138888888888889,24
 "ak_broad-ribbed_kelp","pebble","Burrows_Lighthouse","North_Puget_Sound",12.3611108333333,0.0881944444444445,24
 "ak_broad-ribbed_kelp","pebble","Cattle_Point","San_Juan_Islands",25.624995625,0.0625,16
@@ -3862,7 +3862,7 @@
 "ak_broad-ribbed_kelp","pebble","Sund_Rock","Hood_Canal",11.1111125,0.00138888888888889,24
 "ak_broad-ribbed_kelp","pebble","Titlow_Beach","South_Puget_Sound",19.6296238888889,0.0916666666666667,18
 "ak_broad-ribbed_kelp","pebble","Watmough_Bay","San_Juan_Islands",12.7777788888889,0.0546296296296296,18
-"ak_broad-ribbed_kelp","pebble","Wing_Point","Central_Puget_Sound",42.3333253333333,0,30
+"ak_broad-ribbed_kelp","pebble","Wing_Point","Central_Puget_Sound",40.9195331034483,0,29
 "ak_five-ribbed_kelp","pebble","Blake_Island_South","Central_Puget_Sound",40.9722208333333,0.60625,24
 "ak_five-ribbed_kelp","pebble","Burrows_Lighthouse","North_Puget_Sound",12.3611108333333,1.14097222222222,24
 "ak_five-ribbed_kelp","pebble","Cattle_Point","San_Juan_Islands",25.624995625,0.136458333333333,16
@@ -3904,7 +3904,7 @@
 "ak_five-ribbed_kelp","pebble","Sund_Rock","Hood_Canal",11.1111125,0,24
 "ak_five-ribbed_kelp","pebble","Titlow_Beach","South_Puget_Sound",19.6296238888889,0.55,18
 "ak_five-ribbed_kelp","pebble","Watmough_Bay","San_Juan_Islands",12.7777788888889,0.315740740740741,18
-"ak_five-ribbed_kelp","pebble","Wing_Point","Central_Puget_Sound",42.3333253333333,0.0783333333333333,30
+"ak_five-ribbed_kelp","pebble","Wing_Point","Central_Puget_Sound",40.9195331034483,0.0775862068965517,29
 "ak_sieve_kelp","pebble","Blake_Island_South","Central_Puget_Sound",40.9722208333333,0.00138888888888889,24
 "ak_sieve_kelp","pebble","Burrows_Lighthouse","North_Puget_Sound",12.3611108333333,1.56597222222222,24
 "ak_sieve_kelp","pebble","Cattle_Point","San_Juan_Islands",25.624995625,0,16
@@ -3946,7 +3946,7 @@
 "ak_sieve_kelp","pebble","Sund_Rock","Hood_Canal",11.1111125,0.827777777777778,24
 "ak_sieve_kelp","pebble","Titlow_Beach","South_Puget_Sound",19.6296238888889,0.25462962962963,18
 "ak_sieve_kelp","pebble","Watmough_Bay","San_Juan_Islands",12.7777788888889,1.08981481481481,18
-"ak_sieve_kelp","pebble","Wing_Point","Central_Puget_Sound",42.3333253333333,0.00166666666666667,30
+"ak_sieve_kelp","pebble","Wing_Point","Central_Puget_Sound",40.9195331034483,0.00172413793103448,29
 "ak_sugar_kelp","pebble","Blake_Island_South","Central_Puget_Sound",40.9722208333333,1.03472222222222,24
 "ak_sugar_kelp","pebble","Burrows_Lighthouse","North_Puget_Sound",12.3611108333333,0.135416666666667,24
 "ak_sugar_kelp","pebble","Cattle_Point","San_Juan_Islands",25.624995625,1.51666666666667,16
@@ -3988,7 +3988,7 @@
 "ak_sugar_kelp","pebble","Sund_Rock","Hood_Canal",11.1111125,0.226388888888889,24
 "ak_sugar_kelp","pebble","Titlow_Beach","South_Puget_Sound",19.6296238888889,2.63611111111111,18
 "ak_sugar_kelp","pebble","Watmough_Bay","San_Juan_Islands",12.7777788888889,1.23518518518519,18
-"ak_sugar_kelp","pebble","Wing_Point","Central_Puget_Sound",42.3333253333333,5.09722222222222,30
+"ak_sugar_kelp","pebble","Wing_Point","Central_Puget_Sound",40.9195331034483,5.17471264367816,29
 "ak_three-ribbed_kelp","pebble","Blake_Island_South","Central_Puget_Sound",40.9722208333333,0,24
 "ak_three-ribbed_kelp","pebble","Burrows_Lighthouse","North_Puget_Sound",12.3611108333333,0.550694444444444,24
 "ak_three-ribbed_kelp","pebble","Cattle_Point","San_Juan_Islands",25.624995625,0.991666666666667,16
@@ -4030,7 +4030,7 @@
 "ak_three-ribbed_kelp","pebble","Sund_Rock","Hood_Canal",11.1111125,0,24
 "ak_three-ribbed_kelp","pebble","Titlow_Beach","South_Puget_Sound",19.6296238888889,0.000925925925925926,18
 "ak_three-ribbed_kelp","pebble","Watmough_Bay","San_Juan_Islands",12.7777788888889,0.0222222222222222,18
-"ak_three-ribbed_kelp","pebble","Wing_Point","Central_Puget_Sound",42.3333253333333,0,30
+"ak_three-ribbed_kelp","pebble","Wing_Point","Central_Puget_Sound",40.9195331034483,0,29
 "ak_torn_kelp","pebble","Blake_Island_South","Central_Puget_Sound",40.9722208333333,0,24
 "ak_torn_kelp","pebble","Burrows_Lighthouse","North_Puget_Sound",12.3611108333333,0.0159722222222222,24
 "ak_torn_kelp","pebble","Cattle_Point","San_Juan_Islands",25.624995625,0.065625,16
@@ -4072,7 +4072,7 @@
 "ak_torn_kelp","pebble","Sund_Rock","Hood_Canal",11.1111125,0,24
 "ak_torn_kelp","pebble","Titlow_Beach","South_Puget_Sound",19.6296238888889,0,18
 "ak_torn_kelp","pebble","Watmough_Bay","San_Juan_Islands",12.7777788888889,0.0324074074074074,18
-"ak_torn_kelp","pebble","Wing_Point","Central_Puget_Sound",42.3333253333333,0,30
+"ak_torn_kelp","pebble","Wing_Point","Central_Puget_Sound",40.9195331034483,0,29
 "ak_winged_kelp","pebble","Blake_Island_South","Central_Puget_Sound",40.9722208333333,0,24
 "ak_winged_kelp","pebble","Burrows_Lighthouse","North_Puget_Sound",12.3611108333333,0.00763888888888889,24
 "ak_winged_kelp","pebble","Cattle_Point","San_Juan_Islands",25.624995625,0.236458333333333,16
@@ -4114,7 +4114,7 @@
 "ak_winged_kelp","pebble","Sund_Rock","Hood_Canal",11.1111125,0.00208333333333333,24
 "ak_winged_kelp","pebble","Titlow_Beach","South_Puget_Sound",19.6296238888889,0.000925925925925926,18
 "ak_winged_kelp","pebble","Watmough_Bay","San_Juan_Islands",12.7777788888889,0.0185185185185185,18
-"ak_winged_kelp","pebble","Wing_Point","Central_Puget_Sound",42.3333253333333,0,30
+"ak_winged_kelp","pebble","Wing_Point","Central_Puget_Sound",40.9195331034483,0,29
 "ak_wire_weed","pebble","Blake_Island_South","Central_Puget_Sound",40.9722208333333,0.0326388888888889,24
 "ak_wire_weed","pebble","Burrows_Lighthouse","North_Puget_Sound",12.3611108333333,0,24
 "ak_wire_weed","pebble","Cattle_Point","San_Juan_Islands",25.624995625,0,16
@@ -4156,7 +4156,7 @@
 "ak_wire_weed","pebble","Sund_Rock","Hood_Canal",11.1111125,0.0513888888888889,24
 "ak_wire_weed","pebble","Titlow_Beach","South_Puget_Sound",19.6296238888889,0.0898148148148148,18
 "ak_wire_weed","pebble","Watmough_Bay","San_Juan_Islands",12.7777788888889,0.00185185185185185,18
-"ak_wire_weed","pebble","Wing_Point","Central_Puget_Sound",42.3333253333333,0.0905555555555556,30
+"ak_wire_weed","pebble","Wing_Point","Central_Puget_Sound",40.9195331034483,0.0925287356321839,29
 "ak_woody_kelp","pebble","Blake_Island_South","Central_Puget_Sound",40.9722208333333,0.6125,24
 "ak_woody_kelp","pebble","Burrows_Lighthouse","North_Puget_Sound",12.3611108333333,0.895833333333333,24
 "ak_woody_kelp","pebble","Cattle_Point","San_Juan_Islands",25.624995625,1.14166666666667,16
@@ -4198,7 +4198,7 @@
 "ak_woody_kelp","pebble","Sund_Rock","Hood_Canal",11.1111125,0,24
 "ak_woody_kelp","pebble","Titlow_Beach","South_Puget_Sound",19.6296238888889,0.0157407407407407,18
 "ak_woody_kelp","pebble","Watmough_Bay","San_Juan_Islands",12.7777788888889,2.01666666666667,18
-"ak_woody_kelp","pebble","Wing_Point","Central_Puget_Sound",42.3333253333333,0,30
+"ak_woody_kelp","pebble","Wing_Point","Central_Puget_Sound",40.9195331034483,0,29
 "ak_acid_weed","sand","Blake_Island_South","Central_Puget_Sound",24.02777375,0.223611111111111,24
 "ak_acid_weed","sand","Burrows_Lighthouse","North_Puget_Sound",4.02778,0.125,24
 "ak_acid_weed","sand","Cattle_Point","San_Juan_Islands",39.999995625,0.523958333333333,16
@@ -4240,7 +4240,7 @@
 "ak_acid_weed","sand","Sund_Rock","Hood_Canal",17.0833375,0.0256944444444444,24
 "ak_acid_weed","sand","Titlow_Beach","South_Puget_Sound",49.4444427777778,0.440740740740741,18
 "ak_acid_weed","sand","Watmough_Bay","San_Juan_Islands",10.7407405555556,0.012037037037037,18
-"ak_acid_weed","sand","Wing_Point","Central_Puget_Sound",31.2222186666667,0.212222222222222,30
+"ak_acid_weed","sand","Wing_Point","Central_Puget_Sound",32.0689617241379,0.217241379310345,29
 "ak_broad-ribbed_kelp","sand","Blake_Island_South","Central_Puget_Sound",24.02777375,0.00138888888888889,24
 "ak_broad-ribbed_kelp","sand","Burrows_Lighthouse","North_Puget_Sound",4.02778,0.0881944444444445,24
 "ak_broad-ribbed_kelp","sand","Cattle_Point","San_Juan_Islands",39.999995625,0.0625,16
@@ -4282,7 +4282,7 @@
 "ak_broad-ribbed_kelp","sand","Sund_Rock","Hood_Canal",17.0833375,0.00138888888888889,24
 "ak_broad-ribbed_kelp","sand","Titlow_Beach","South_Puget_Sound",49.4444427777778,0.0916666666666667,18
 "ak_broad-ribbed_kelp","sand","Watmough_Bay","San_Juan_Islands",10.7407405555556,0.0546296296296296,18
-"ak_broad-ribbed_kelp","sand","Wing_Point","Central_Puget_Sound",31.2222186666667,0,30
+"ak_broad-ribbed_kelp","sand","Wing_Point","Central_Puget_Sound",32.0689617241379,0,29
 "ak_five-ribbed_kelp","sand","Blake_Island_South","Central_Puget_Sound",24.02777375,0.60625,24
 "ak_five-ribbed_kelp","sand","Burrows_Lighthouse","North_Puget_Sound",4.02778,1.14097222222222,24
 "ak_five-ribbed_kelp","sand","Cattle_Point","San_Juan_Islands",39.999995625,0.136458333333333,16
@@ -4324,7 +4324,7 @@
 "ak_five-ribbed_kelp","sand","Sund_Rock","Hood_Canal",17.0833375,0,24
 "ak_five-ribbed_kelp","sand","Titlow_Beach","South_Puget_Sound",49.4444427777778,0.55,18
 "ak_five-ribbed_kelp","sand","Watmough_Bay","San_Juan_Islands",10.7407405555556,0.315740740740741,18
-"ak_five-ribbed_kelp","sand","Wing_Point","Central_Puget_Sound",31.2222186666667,0.0783333333333333,30
+"ak_five-ribbed_kelp","sand","Wing_Point","Central_Puget_Sound",32.0689617241379,0.0775862068965517,29
 "ak_sieve_kelp","sand","Blake_Island_South","Central_Puget_Sound",24.02777375,0.00138888888888889,24
 "ak_sieve_kelp","sand","Burrows_Lighthouse","North_Puget_Sound",4.02778,1.56597222222222,24
 "ak_sieve_kelp","sand","Cattle_Point","San_Juan_Islands",39.999995625,0,16
@@ -4366,7 +4366,7 @@
 "ak_sieve_kelp","sand","Sund_Rock","Hood_Canal",17.0833375,0.827777777777778,24
 "ak_sieve_kelp","sand","Titlow_Beach","South_Puget_Sound",49.4444427777778,0.25462962962963,18
 "ak_sieve_kelp","sand","Watmough_Bay","San_Juan_Islands",10.7407405555556,1.08981481481481,18
-"ak_sieve_kelp","sand","Wing_Point","Central_Puget_Sound",31.2222186666667,0.00166666666666667,30
+"ak_sieve_kelp","sand","Wing_Point","Central_Puget_Sound",32.0689617241379,0.00172413793103448,29
 "ak_sugar_kelp","sand","Blake_Island_South","Central_Puget_Sound",24.02777375,1.03472222222222,24
 "ak_sugar_kelp","sand","Burrows_Lighthouse","North_Puget_Sound",4.02778,0.135416666666667,24
 "ak_sugar_kelp","sand","Cattle_Point","San_Juan_Islands",39.999995625,1.51666666666667,16
@@ -4408,7 +4408,7 @@
 "ak_sugar_kelp","sand","Sund_Rock","Hood_Canal",17.0833375,0.226388888888889,24
 "ak_sugar_kelp","sand","Titlow_Beach","South_Puget_Sound",49.4444427777778,2.63611111111111,18
 "ak_sugar_kelp","sand","Watmough_Bay","San_Juan_Islands",10.7407405555556,1.23518518518519,18
-"ak_sugar_kelp","sand","Wing_Point","Central_Puget_Sound",31.2222186666667,5.09722222222222,30
+"ak_sugar_kelp","sand","Wing_Point","Central_Puget_Sound",32.0689617241379,5.17471264367816,29
 "ak_three-ribbed_kelp","sand","Blake_Island_South","Central_Puget_Sound",24.02777375,0,24
 "ak_three-ribbed_kelp","sand","Burrows_Lighthouse","North_Puget_Sound",4.02778,0.550694444444444,24
 "ak_three-ribbed_kelp","sand","Cattle_Point","San_Juan_Islands",39.999995625,0.991666666666667,16
@@ -4450,7 +4450,7 @@
 "ak_three-ribbed_kelp","sand","Sund_Rock","Hood_Canal",17.0833375,0,24
 "ak_three-ribbed_kelp","sand","Titlow_Beach","South_Puget_Sound",49.4444427777778,0.000925925925925926,18
 "ak_three-ribbed_kelp","sand","Watmough_Bay","San_Juan_Islands",10.7407405555556,0.0222222222222222,18
-"ak_three-ribbed_kelp","sand","Wing_Point","Central_Puget_Sound",31.2222186666667,0,30
+"ak_three-ribbed_kelp","sand","Wing_Point","Central_Puget_Sound",32.0689617241379,0,29
 "ak_torn_kelp","sand","Blake_Island_South","Central_Puget_Sound",24.02777375,0,24
 "ak_torn_kelp","sand","Burrows_Lighthouse","North_Puget_Sound",4.02778,0.0159722222222222,24
 "ak_torn_kelp","sand","Cattle_Point","San_Juan_Islands",39.999995625,0.065625,16
@@ -4492,7 +4492,7 @@
 "ak_torn_kelp","sand","Sund_Rock","Hood_Canal",17.0833375,0,24
 "ak_torn_kelp","sand","Titlow_Beach","South_Puget_Sound",49.4444427777778,0,18
 "ak_torn_kelp","sand","Watmough_Bay","San_Juan_Islands",10.7407405555556,0.0324074074074074,18
-"ak_torn_kelp","sand","Wing_Point","Central_Puget_Sound",31.2222186666667,0,30
+"ak_torn_kelp","sand","Wing_Point","Central_Puget_Sound",32.0689617241379,0,29
 "ak_winged_kelp","sand","Blake_Island_South","Central_Puget_Sound",24.02777375,0,24
 "ak_winged_kelp","sand","Burrows_Lighthouse","North_Puget_Sound",4.02778,0.00763888888888889,24
 "ak_winged_kelp","sand","Cattle_Point","San_Juan_Islands",39.999995625,0.236458333333333,16
@@ -4534,7 +4534,7 @@
 "ak_winged_kelp","sand","Sund_Rock","Hood_Canal",17.0833375,0.00208333333333333,24
 "ak_winged_kelp","sand","Titlow_Beach","South_Puget_Sound",49.4444427777778,0.000925925925925926,18
 "ak_winged_kelp","sand","Watmough_Bay","San_Juan_Islands",10.7407405555556,0.0185185185185185,18
-"ak_winged_kelp","sand","Wing_Point","Central_Puget_Sound",31.2222186666667,0,30
+"ak_winged_kelp","sand","Wing_Point","Central_Puget_Sound",32.0689617241379,0,29
 "ak_wire_weed","sand","Blake_Island_South","Central_Puget_Sound",24.02777375,0.0326388888888889,24
 "ak_wire_weed","sand","Burrows_Lighthouse","North_Puget_Sound",4.02778,0,24
 "ak_wire_weed","sand","Cattle_Point","San_Juan_Islands",39.999995625,0,16
@@ -4576,7 +4576,7 @@
 "ak_wire_weed","sand","Sund_Rock","Hood_Canal",17.0833375,0.0513888888888889,24
 "ak_wire_weed","sand","Titlow_Beach","South_Puget_Sound",49.4444427777778,0.0898148148148148,18
 "ak_wire_weed","sand","Watmough_Bay","San_Juan_Islands",10.7407405555556,0.00185185185185185,18
-"ak_wire_weed","sand","Wing_Point","Central_Puget_Sound",31.2222186666667,0.0905555555555556,30
+"ak_wire_weed","sand","Wing_Point","Central_Puget_Sound",32.0689617241379,0.0925287356321839,29
 "ak_woody_kelp","sand","Blake_Island_South","Central_Puget_Sound",24.02777375,0.6125,24
 "ak_woody_kelp","sand","Burrows_Lighthouse","North_Puget_Sound",4.02778,0.895833333333333,24
 "ak_woody_kelp","sand","Cattle_Point","San_Juan_Islands",39.999995625,1.14166666666667,16
@@ -4618,7 +4618,7 @@
 "ak_woody_kelp","sand","Sund_Rock","Hood_Canal",17.0833375,0,24
 "ak_woody_kelp","sand","Titlow_Beach","South_Puget_Sound",49.4444427777778,0.0157407407407407,18
 "ak_woody_kelp","sand","Watmough_Bay","San_Juan_Islands",10.7407405555556,2.01666666666667,18
-"ak_woody_kelp","sand","Wing_Point","Central_Puget_Sound",31.2222186666667,0,30
+"ak_woody_kelp","sand","Wing_Point","Central_Puget_Sound",32.0689617241379,0,29
 "ak_acid_weed","shell hash","Blake_Island_South","Central_Puget_Sound",0.69444375,0.223611111111111,24
 "ak_acid_weed","shell hash","Burrows_Lighthouse","North_Puget_Sound",1.24999958333333,0.125,24
 "ak_acid_weed","shell hash","Cattle_Point","San_Juan_Islands",0,0.523958333333333,16
@@ -4660,7 +4660,7 @@
 "ak_acid_weed","shell hash","Sund_Rock","Hood_Canal",5.833335,0.0256944444444444,24
 "ak_acid_weed","shell hash","Titlow_Beach","South_Puget_Sound",21.8518538888889,0.440740740740741,18
 "ak_acid_weed","shell hash","Watmough_Bay","San_Juan_Islands",5.185185,0.012037037037037,18
-"ak_acid_weed","shell hash","Wing_Point","Central_Puget_Sound",2.33333166666667,0.212222222222222,30
+"ak_acid_weed","shell hash","Wing_Point","Central_Puget_Sound",2.29884896551724,0.217241379310345,29
 "ak_broad-ribbed_kelp","shell hash","Blake_Island_South","Central_Puget_Sound",0.69444375,0.00138888888888889,24
 "ak_broad-ribbed_kelp","shell hash","Burrows_Lighthouse","North_Puget_Sound",1.24999958333333,0.0881944444444445,24
 "ak_broad-ribbed_kelp","shell hash","Cattle_Point","San_Juan_Islands",0,0.0625,16
@@ -4702,7 +4702,7 @@
 "ak_broad-ribbed_kelp","shell hash","Sund_Rock","Hood_Canal",5.833335,0.00138888888888889,24
 "ak_broad-ribbed_kelp","shell hash","Titlow_Beach","South_Puget_Sound",21.8518538888889,0.0916666666666667,18
 "ak_broad-ribbed_kelp","shell hash","Watmough_Bay","San_Juan_Islands",5.185185,0.0546296296296296,18
-"ak_broad-ribbed_kelp","shell hash","Wing_Point","Central_Puget_Sound",2.33333166666667,0,30
+"ak_broad-ribbed_kelp","shell hash","Wing_Point","Central_Puget_Sound",2.29884896551724,0,29
 "ak_five-ribbed_kelp","shell hash","Blake_Island_South","Central_Puget_Sound",0.69444375,0.60625,24
 "ak_five-ribbed_kelp","shell hash","Burrows_Lighthouse","North_Puget_Sound",1.24999958333333,1.14097222222222,24
 "ak_five-ribbed_kelp","shell hash","Cattle_Point","San_Juan_Islands",0,0.136458333333333,16
@@ -4744,7 +4744,7 @@
 "ak_five-ribbed_kelp","shell hash","Sund_Rock","Hood_Canal",5.833335,0,24
 "ak_five-ribbed_kelp","shell hash","Titlow_Beach","South_Puget_Sound",21.8518538888889,0.55,18
 "ak_five-ribbed_kelp","shell hash","Watmough_Bay","San_Juan_Islands",5.185185,0.315740740740741,18
-"ak_five-ribbed_kelp","shell hash","Wing_Point","Central_Puget_Sound",2.33333166666667,0.0783333333333333,30
+"ak_five-ribbed_kelp","shell hash","Wing_Point","Central_Puget_Sound",2.29884896551724,0.0775862068965517,29
 "ak_sieve_kelp","shell hash","Blake_Island_South","Central_Puget_Sound",0.69444375,0.00138888888888889,24
 "ak_sieve_kelp","shell hash","Burrows_Lighthouse","North_Puget_Sound",1.24999958333333,1.56597222222222,24
 "ak_sieve_kelp","shell hash","Cattle_Point","San_Juan_Islands",0,0,16
@@ -4786,7 +4786,7 @@
 "ak_sieve_kelp","shell hash","Sund_Rock","Hood_Canal",5.833335,0.827777777777778,24
 "ak_sieve_kelp","shell hash","Titlow_Beach","South_Puget_Sound",21.8518538888889,0.25462962962963,18
 "ak_sieve_kelp","shell hash","Watmough_Bay","San_Juan_Islands",5.185185,1.08981481481481,18
-"ak_sieve_kelp","shell hash","Wing_Point","Central_Puget_Sound",2.33333166666667,0.00166666666666667,30
+"ak_sieve_kelp","shell hash","Wing_Point","Central_Puget_Sound",2.29884896551724,0.00172413793103448,29
 "ak_sugar_kelp","shell hash","Blake_Island_South","Central_Puget_Sound",0.69444375,1.03472222222222,24
 "ak_sugar_kelp","shell hash","Burrows_Lighthouse","North_Puget_Sound",1.24999958333333,0.135416666666667,24
 "ak_sugar_kelp","shell hash","Cattle_Point","San_Juan_Islands",0,1.51666666666667,16
@@ -4828,7 +4828,7 @@
 "ak_sugar_kelp","shell hash","Sund_Rock","Hood_Canal",5.833335,0.226388888888889,24
 "ak_sugar_kelp","shell hash","Titlow_Beach","South_Puget_Sound",21.8518538888889,2.63611111111111,18
 "ak_sugar_kelp","shell hash","Watmough_Bay","San_Juan_Islands",5.185185,1.23518518518519,18
-"ak_sugar_kelp","shell hash","Wing_Point","Central_Puget_Sound",2.33333166666667,5.09722222222222,30
+"ak_sugar_kelp","shell hash","Wing_Point","Central_Puget_Sound",2.29884896551724,5.17471264367816,29
 "ak_three-ribbed_kelp","shell hash","Blake_Island_South","Central_Puget_Sound",0.69444375,0,24
 "ak_three-ribbed_kelp","shell hash","Burrows_Lighthouse","North_Puget_Sound",1.24999958333333,0.550694444444444,24
 "ak_three-ribbed_kelp","shell hash","Cattle_Point","San_Juan_Islands",0,0.991666666666667,16
@@ -4870,7 +4870,7 @@
 "ak_three-ribbed_kelp","shell hash","Sund_Rock","Hood_Canal",5.833335,0,24
 "ak_three-ribbed_kelp","shell hash","Titlow_Beach","South_Puget_Sound",21.8518538888889,0.000925925925925926,18
 "ak_three-ribbed_kelp","shell hash","Watmough_Bay","San_Juan_Islands",5.185185,0.0222222222222222,18
-"ak_three-ribbed_kelp","shell hash","Wing_Point","Central_Puget_Sound",2.33333166666667,0,30
+"ak_three-ribbed_kelp","shell hash","Wing_Point","Central_Puget_Sound",2.29884896551724,0,29
 "ak_torn_kelp","shell hash","Blake_Island_South","Central_Puget_Sound",0.69444375,0,24
 "ak_torn_kelp","shell hash","Burrows_Lighthouse","North_Puget_Sound",1.24999958333333,0.0159722222222222,24
 "ak_torn_kelp","shell hash","Cattle_Point","San_Juan_Islands",0,0.065625,16
@@ -4912,7 +4912,7 @@
 "ak_torn_kelp","shell hash","Sund_Rock","Hood_Canal",5.833335,0,24
 "ak_torn_kelp","shell hash","Titlow_Beach","South_Puget_Sound",21.8518538888889,0,18
 "ak_torn_kelp","shell hash","Watmough_Bay","San_Juan_Islands",5.185185,0.0324074074074074,18
-"ak_torn_kelp","shell hash","Wing_Point","Central_Puget_Sound",2.33333166666667,0,30
+"ak_torn_kelp","shell hash","Wing_Point","Central_Puget_Sound",2.29884896551724,0,29
 "ak_winged_kelp","shell hash","Blake_Island_South","Central_Puget_Sound",0.69444375,0,24
 "ak_winged_kelp","shell hash","Burrows_Lighthouse","North_Puget_Sound",1.24999958333333,0.00763888888888889,24
 "ak_winged_kelp","shell hash","Cattle_Point","San_Juan_Islands",0,0.236458333333333,16
@@ -4954,7 +4954,7 @@
 "ak_winged_kelp","shell hash","Sund_Rock","Hood_Canal",5.833335,0.00208333333333333,24
 "ak_winged_kelp","shell hash","Titlow_Beach","South_Puget_Sound",21.8518538888889,0.000925925925925926,18
 "ak_winged_kelp","shell hash","Watmough_Bay","San_Juan_Islands",5.185185,0.0185185185185185,18
-"ak_winged_kelp","shell hash","Wing_Point","Central_Puget_Sound",2.33333166666667,0,30
+"ak_winged_kelp","shell hash","Wing_Point","Central_Puget_Sound",2.29884896551724,0,29
 "ak_wire_weed","shell hash","Blake_Island_South","Central_Puget_Sound",0.69444375,0.0326388888888889,24
 "ak_wire_weed","shell hash","Burrows_Lighthouse","North_Puget_Sound",1.24999958333333,0,24
 "ak_wire_weed","shell hash","Cattle_Point","San_Juan_Islands",0,0,16
@@ -4996,7 +4996,7 @@
 "ak_wire_weed","shell hash","Sund_Rock","Hood_Canal",5.833335,0.0513888888888889,24
 "ak_wire_weed","shell hash","Titlow_Beach","South_Puget_Sound",21.8518538888889,0.0898148148148148,18
 "ak_wire_weed","shell hash","Watmough_Bay","San_Juan_Islands",5.185185,0.00185185185185185,18
-"ak_wire_weed","shell hash","Wing_Point","Central_Puget_Sound",2.33333166666667,0.0905555555555556,30
+"ak_wire_weed","shell hash","Wing_Point","Central_Puget_Sound",2.29884896551724,0.0925287356321839,29
 "ak_woody_kelp","shell hash","Blake_Island_South","Central_Puget_Sound",0.69444375,0.6125,24
 "ak_woody_kelp","shell hash","Burrows_Lighthouse","North_Puget_Sound",1.24999958333333,0.895833333333333,24
 "ak_woody_kelp","shell hash","Cattle_Point","San_Juan_Islands",0,1.14166666666667,16
@@ -5038,4 +5038,4 @@
 "ak_woody_kelp","shell hash","Sund_Rock","Hood_Canal",5.833335,0,24
 "ak_woody_kelp","shell hash","Titlow_Beach","South_Puget_Sound",21.8518538888889,0.0157407407407407,18
 "ak_woody_kelp","shell hash","Watmough_Bay","San_Juan_Islands",5.185185,2.01666666666667,18
-"ak_woody_kelp","shell hash","Wing_Point","Central_Puget_Sound",2.33333166666667,0,30
+"ak_woody_kelp","shell hash","Wing_Point","Central_Puget_Sound",2.29884896551724,0,29

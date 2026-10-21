@@ -41,14 +41,14 @@ held_out <- c("Northern Coast", "Western Strait of Juan de Fuca", "Eastern Strai
 tr <- tr[!gsub("_", " ", tr$basin) %in% held_out, ]
 canopy  <- c("ak_bull_kelp", "ak_giant_kelp_n", "ak_feather_boa_n")
 species <- setdiff(grep("^ak_", names(tr), value = TRUE), canopy)
-d <- data.frame(key = tr$key, basin = tr$basin, site = tr$site, year = tr$year, depth_zone = tr$depth_zone)
+d <- data.frame(key = tr$key, basin = tr$basin, site = tr$site, year = tr$year, depth_ft = tr$depth_ft)
 for (g in names(substrate_groups)) d[[g]] <- substrate_share(tr, substrate_groups[[g]])
 d$relief <- mean_relief(tr)
 for (nm in names(substrate_individual)) d[[nm]] <- tr[[substrate_individual[[nm]]]]
 d <- cbind(d, cl[match(d$key, cl$key), species])
-d <- d[rowSums(!is.na(d[species])) > 0 & !is.na(d$hard) & !is.na(d$relief), ]
+d <- d[rowSums(!is.na(d[species])) > 0 & !is.na(d$hard) & !is.na(d$relief) & !is.na(d$depth_ft), ]
 d$site <- factor(d$site); d$year <- factor(d$year)
-d$depth_zone <- factor(d$depth_zone, levels = c("offshore", "inshore"))
+d$depth <- (d$depth_ft - 15) / 10   # per 10 ft from 15 ft, as in glmm_substrate.R
 for (p in c("soft", "hard")) {
   m <- ave(d[[p]], d$site, FUN = mean)
   d[[paste0(p, "_between")]] <- m / 0.1; d[[paste0(p, "_within")]] <- (d[[p]] - m) / 0.1
@@ -57,14 +57,15 @@ for (p in c("soft", "hard")) {
 ## ---- the figure ------------------------------------------------------------------
 dash_panel <- function(sp, x, title, xlab, col) {
   dd <- d[!is.na(d[[sp]]), ]; dd$y <- dd[[sp]]
-  fit <- glmmTMB(as.formula(sprintf("y ~ %s_between + %s_within + depth_zone + year + (1 | site)", x, x)),
+  fit <- glmmTMB(as.formula(sprintf("y ~ %s_between + %s_within + depth + year + (1 | site)", x, x)),
                  data = dd, family = nbinom2())
   b <- fixef(fit)$cond; nb <- paste0(x, "_between"); nw <- paste0(x, "_within")
-  ## a typical transect: depth zones and the years the species was recorded
+  ## a typical transect: the depths and years of the transects in the years
+  ## the species was recorded
   yrs <- names(which(tapply(dd$y, dd$year, sum) > 0))
   d2 <- dd[dd$year %in% yrs, ]
   yv <- b[paste0("year", d2$year)]; yv[is.na(yv)] <- 0
-  dv <- ifelse(d2$depth_zone == "inshore", b["depth_zoneinshore"], 0)
+  dv <- b["depth"] * d2$depth
   base <- b["(Intercept)"] + mean(yv + dv)
   u <- ranef(fit)$cond$site
   sites <- dd %>% group_by(site) %>%
