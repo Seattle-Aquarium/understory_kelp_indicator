@@ -203,6 +203,39 @@ composite_color <- "#1963b0"
 composite_fill_alpha <- 0.25
 member_color <- "gray70"
 
+## ---- HOVER ------------------------------------------------------------------
+## In the app, the lines and points behind a figure say what they are when the
+## mouse is over them, and the line or site under it stands out. The app turns
+## this on with options(ukelp.hover = TRUE) and draws through ggiraph; Run
+## never does, so the saved PNGs are the plain figures, layer for layer.
+hover_on <- function() isTRUE(getOption("ukelp.hover")) && requireNamespace("ggiraph", quietly = TRUE)
+
+## a ggplot2 layer, or its ggiraph twin carrying `hover` (tooltip, data_id)
+## when hover is on: `fun` is the ggplot2 name, "geom_path" or "geom_point"
+hover_layer <- function(fun, mapping, hover, ...) {
+  if (!hover_on()) return(getExportedValue("ggplot2", fun)(mapping = mapping, ...))
+  both <- c(unclass(mapping), unclass(hover))
+  class(both) <- class(mapping)
+  getExportedValue("ggiraph", paste0(fun, "_interactive"))(mapping = both, ...)
+}
+
+## each value to 3 significant figures on its own ("1.9", not "1.90000")
+hover_num <- function(v) vapply(signif(v, 3), function(z) format(z, trim = TRUE), character(1))
+
+## "0.42 per m\u00b2", "12% of points" or "180% of the preceding years' mean"
+hover_value <- function(analysis, grp, v) {
+  ifelse(is.na(v), "no value",
+         if (identical(analysis, "trend")) paste(pct_label(signif(v, 3)), "of the preceding years' mean")
+         else if (identical(grp$prefix, "ak_")) paste(hover_num(v), "per m\u00b2")
+         else paste0(hover_num(100 * v), "% of points"))
+}
+## one tooltip per row: the name in bold, then a line for each of `...`
+hover_tip <- function(name, ...) {
+  out <- paste0("<b>", name, "</b>")
+  for (line in Filter(Negate(is.null), list(...))) out <- paste0(out, "<br>", line)
+  out
+}
+
 ## ---- REGIONS ---------------------------------------------------------------
 ## The basins carved out of Puget Sound proper. Deliberately independent of the
 ## EXCLUDED BASINS filter, which empties when a run is asked to include them --
@@ -845,11 +878,14 @@ draw_facets <- function(analysis, scale, view, focal, members, facet_var, levels
       member_marks <- members_drawn %>%
         filter(status %in% c("lost", "new")) %>%
         count(.facet, .x, status, y, name = "n")
+      member_lines <- member_lines %>%
+        mutate(.id = member, .name = place_label(member),
+               .tip = hover_tip(.name, paste(year, "\u00b7", hover_value(analysis, grp, value))))
       p <- p +
-        geom_path(data = paths_of(member_lines), aes(x = .x, y = y, group = .grp),
-                  color = member_color, linewidth = 0.6, alpha = 0.6) +
-        geom_point(data = member_lines, aes(x = .x, y = y),
-                   color = member_color, size = 1, alpha = 0.7) +
+        hover_layer("geom_path", aes(x = .x, y = y, group = .grp), aes(tooltip = .name, data_id = .id),
+                    data = paths_of(member_lines), color = member_color, linewidth = 0.6, alpha = 0.6) +
+        hover_layer("geom_point", aes(x = .x, y = y), aes(tooltip = .tip, data_id = .id),
+                    data = member_lines, color = member_color, size = 1, alpha = 0.7) +
         geom_point(data = member_marks, aes(x = .x, y = y, shape = status),
                    color = "gray55", fill = member_color, size = 1.8, alpha = 0.8) +
         geom_text(data = member_marks, aes(x = .x, y = y, label = n),
@@ -860,7 +896,9 @@ draw_facets <- function(analysis, scale, view, focal, members, facet_var, levels
     p <- p +
       geom_path(data = paths_of(focal_lines), aes(x = .x, y = y, group = .grp),
                 color = composite_color, linewidth = 1.3) +
-      geom_point(data = focal_lines, aes(x = .x, y = y), color = composite_color, size = 2) +
+      hover_layer("geom_point", aes(x = .x, y = y),
+                  aes(tooltip = hover_tip(place_label(unit), paste(year, "\u00b7", hover_value(analysis, grp, value)))),
+                  data = focal_lines, color = composite_color, size = 2) +
       geom_point(data = focal_marks, aes(x = .x, y = y, shape = status),
                  color = composite_color, fill = composite_color, size = 2.8) +
       off_scale_labels(focal) +
@@ -876,12 +914,14 @@ draw_facets <- function(analysis, scale, view, focal, members, facet_var, levels
       p <- p + geom_ribbon(data = band, aes(x = .x, ymin = lower, ymax = upper, group = .grp),
                            fill = composite_color, alpha = composite_fill_alpha)
     } else if (!is.null(members_drawn)) {
-      member_lines <- with_runs(members_drawn, c(".facet", "member", "col"), density_drawable)
+      member_lines <- with_runs(members_drawn, c(".facet", "member", "col"), density_drawable) %>%
+        mutate(.id = member, .name = place_label(member),
+               .tip = hover_tip(.name, paste(year, "\u00b7", hover_value(analysis, grp, value))))
       p <- p +
-        geom_path(data = paths_of(member_lines), aes(x = .x, y = value, group = .grp),
-                  color = member_color, linewidth = 0.6, alpha = 0.6) +
-        geom_point(data = member_lines, aes(x = .x, y = value),
-                   color = member_color, size = 1, alpha = 0.6)
+        hover_layer("geom_path", aes(x = .x, y = value, group = .grp), aes(tooltip = .name, data_id = .id),
+                    data = paths_of(member_lines), color = member_color, linewidth = 0.6, alpha = 0.6) +
+        hover_layer("geom_point", aes(x = .x, y = value), aes(tooltip = .tip, data_id = .id),
+                    data = member_lines, color = member_color, size = 1, alpha = 0.6)
     }
     focal_lines <- with_runs(focal, c(".facet", "unit", "col"), density_drawable)
     ## every panel's axis starts at 0, including a category that was never
@@ -891,7 +931,10 @@ draw_facets <- function(analysis, scale, view, focal, members, facet_var, levels
       geom_blank(data = floor_blank, aes(y = y)) +
       geom_path(data = paths_of(focal_lines), aes(x = .x, y = value, group = .grp),
                 color = composite_color, linewidth = 1.3) +
-      geom_point(data = focal_lines, aes(x = .x, y = value), color = composite_color, size = 2) +
+      hover_layer("geom_point", aes(x = .x, y = value),
+                  aes(tooltip = hover_tip(place_label(unit), paste(year, "\u00b7", hover_value(analysis, grp, value)),
+                                          if (identical(analysis, "density_sd")) paste("SD", hover_num(sd)) else NULL)),
+                  data = focal_lines, color = composite_color, size = 2) +
       scale_y_continuous(expand = expansion(mult = c(0.02, 0.08)))
     y_lab <- grp$y_lab
     squished <- FALSE
@@ -1129,26 +1172,34 @@ ordination_base <- function(pts, x, y, color_by, basin, size_by, ellipses) {
 
   pts$.x <- pts[[x]]
   pts$.y <- pts[[y]]
+  ## hovering a transect names it and picks out every transect of its site
+  pts$.id <- as.character(pts[[getOption("ukelp.hover_id", "site")]])
+  pts$.tip <- hover_tip(place_label(pts$site),
+                        paste(place_label(pts$basin), "\u00b7", pts$year),
+                        paste0("transect ", pts$transect, " (", pts$depth_zone, ")"),
+                        if (!is.null(size_col) && size_col %in% names(pts))
+                          paste(hover_num(pts[[size_col]]), "per m\u00b2"))
   fg <- pts[g$focus, , drop = FALSE]
   fg$.group <- factor(g$group[g$focus], levels = g$groups)
+  tip <- aes(tooltip = .tip, data_id = .id)
 
   p <- ggplot(mapping = aes(x = .x, y = .y))
 
   ## the other basins' transects stay in view, in gray, so a basin's sites are
   ## seen against the whole ordination
   if (!all(g$focus)) {
-    p <- p + geom_point(data = pts[!g$focus, , drop = FALSE], color = "gray78",
-                        alpha = 0.45, size = 1.1, shape = 16)
+    p <- p + hover_layer("geom_point", aes(), tip, data = pts[!g$focus, , drop = FALSE], color = "gray78",
+                         alpha = 0.45, size = 1.1, shape = 16)
   }
 
   if (is.null(size_col)) {
-    p <- p + geom_point(data = fg, aes(color = .group), size = 1.6, alpha = 0.4, shape = 16)
+    p <- p + hover_layer("geom_point", aes(color = .group), tip, data = fg, size = 1.6, alpha = 0.4, shape = 16)
   } else {
     ## largest on top would hide the rest; smallest on top keeps every point visible
     fg <- fg[order(-fg[[size_col]]), , drop = FALSE]
     p <- p +
-      geom_point(data = fg, aes(color = .group, size = .data[[size_col]]),
-                 alpha = 0.45, shape = 16) +
+      hover_layer("geom_point", aes(color = .group, size = .data[[size_col]]), tip, data = fg,
+                  alpha = 0.45, shape = 16) +
       size_scale(paste0(point_size_label(size_by), "\n(per m\u00b2)"))
   }
 
