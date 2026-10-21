@@ -160,10 +160,10 @@ Each script runs as its own R process from `code/` (`setwd("../")`), reads only 
 - **F-7 Ordinations.** Basin colours come from one palette over every basin, so a basin keeps its colour when one is highlighted. Ellipses: 95% normal-theory, groups of ≥ 5 transects. Species arrows sit at their scores on the NMDS, and on the db-RDA are stretched by one shared factor to reach 90% of the points' extent; substrate arrows are stretched by one shared factor to reach 75%.
 - **F-8 GLMM.** Heatmap fill = log₂(rate ratio) clamped to ±2 (¼× to 4×), the same scale in every view; stars for q < 0.05, 0.01, 0.001; † for fits that are not ok. Views: each set between sites, within sites, and both stacked; one species × one class. Within panels: log₂ axis spanning at least ¼×–4× and at most 1/16×–16×; bins beyond it are open triangles on the edge they passed.
 - **F-9 Hover (app preview only).** With `options(ukelp.hover = TRUE)` and ggiraph present, `hover_layer()` swaps the member lines and points, the composite lines and the ordination points for their ggiraph twins, and `hover_widget()` draws the figure with ggiraph at the PNG's 12 × 7 in. Run and Save never turn hover on.
-  - Lines (density, standard deviation, trend): a member line's id is its member (site, basin or transect), so hovering it highlights that member in #00C389 in every panel; its points name the member, year and value. Blue points name the place, year and value (and SD).
+  - Lines (density, standard deviation, trend): a member line's id is its member (site, basin or transect), so hovering it highlights that member in Reef Check's light blue (#00C4B3) in every panel, leaving the other lines as they are; its points name the member, year and value. Blue points name the place, year and value (and SD).
   - Composite: a category's line thickens in its own colour and names the category.
-  - Ordinations: a point's id is its site, so hovering one transect outlines every transect of that site; its label gives site, basin, year, transect number and depth in feet (and the sized species' density). Hovering a legend entry (key or name) picks out that group.
-  - Everything not hovered fades to 20% opacity. The GLMM figures carry no hover layers.
+  - Ordinations: a point's id is its site, so hovering one transect outlines every transect of that site; its label gives site, basin, year, transect number and depth in feet (and the sized species' density). Hovering a legend entry (key or name) picks out that group. Only the ordinations fade what is not hovered, to 20% opacity.
+  - GLMM, one species × one class: on the between-site panel a site's point fills light blue and names the site, basin, mean share (or relief), mean density and transect count; on the within-site panel a bin's point gives its ratio and interval, transects, sites and mean departure. The heatmaps carry no hover layers.
 
 ## R: reproducibility
 
@@ -177,6 +177,7 @@ Each script runs as its own R process from `code/` (`setwd("../")`), reads only 
 
 | Date | IDs | Change |
 |---|---|---|
+| 2026-10-22 | F-9 | Hover highlight in light blue; line plots no longer fade the other lines; GLMM single-species figures hover. |
 | 2026-10-21 | F-1, F-9, R-1 | Hover in the app's preview (ggiraph, added to the app's packages; `LIBRARY_REV` 4). Saved PNGs unchanged. |
 | 2026-10-21 | G-1, G-3, G-6, G-8, G-10 | Depth enters the GLMMs as continuous depth in feet instead of the inshore/offshore depth zone, which is not a true category at many sites. 894 transects (three lack a depth). Rate ratios moved by a median of 0.2%; 35 terms are significant before and after (32 in both); no significant term changed direction. |
 | 2026-10-20 | all | First version, written from the code at commit 959bd1a plus the within-site bins (G-8, G-9). |

@@ -230,16 +230,21 @@ hover_value <- function(analysis, grp, v) {
          else paste0(hover_num(100 * v), "% of points"))
 }
 ## The app's interactive figure, the size of the saved PNG. `kind`:
-##   lines       a hovered gray line and its points turn #00C389
+##   lines       a hovered gray line and its points turn Reef Check's light
+##               blue; the other lines stay as they are
 ##   composite   a hovered category's line thickens in its own colour
 ##   ordination  a hovered point outlines every transect of its site in their
-##               own colour, and a hovered legend entry picks out its group
-## Everything else fades to 20%.
-hover_colour <- "#00C389"
-hover_widget <- function(p, kind = c("lines", "composite", "ordination")) {
+##               own colour, a hovered legend entry picks out its group, and
+##               everything else fades to 20%
+##   glmm        a hovered site on the between-site panel fills light blue
+hover_colour <- "#00C4B3"   # Reef Check's light blue, Pantone 3265 C, as in the app
+hover_widget <- function(p, kind = c("lines", "composite", "ordination", "glmm")) {
   kind <- match.arg(kind)
   css <- if (kind == "ordination") {
     ggiraph::girafe_css(css = "", point = "stroke:#111111;stroke-width:1.4px;stroke-opacity:1;fill-opacity:1;r:4.5px;")
+  } else if (kind == "glmm") {
+    ggiraph::girafe_css(css = "", point = sprintf(
+      "fill:%s;stroke:#003A70;stroke-width:1.5px;fill-opacity:1;stroke-opacity:1;", hover_colour))
   } else if (kind == "composite") {
     ggiraph::girafe_css(css = "", line = "stroke-width:3.5px;stroke-opacity:1;",
                         point = "fill-opacity:1;stroke-opacity:1;r:4px;")
@@ -253,7 +258,7 @@ hover_widget <- function(p, kind = c("lines", "composite", "ordination")) {
                     "line-height:1.35;box-shadow:0 2px 8px rgba(0,0,0,.18);")
   g <- ggiraph::girafe(ggobj = p, width_svg = fig_width, height_svg = fig_height,
                   options = list(ggiraph::opts_hover(css = css),
-                                 ggiraph::opts_hover_inv(css = "opacity:0.2;"),
+                                 ggiraph::opts_hover_inv(css = if (kind == "ordination") "opacity:0.2;" else ""),
                                  ggiraph::opts_hover_key(css = "stroke:#111111;stroke-width:1px;"),
                                  ggiraph::opts_tooltip(css = tooltip, use_fill = FALSE, offx = 14, offy = 14),
                                  ggiraph::opts_sizing(rescale = TRUE),
@@ -1714,10 +1719,16 @@ draw_glmm_pair <- function(species, predictor) {
   flagged <- !all(tm$ok)
 
   cb <- cv[cv$panel == "between", ]
+  ## hovering a site names it (preview only; see HOVER)
+  st$.tip <- hover_tip(place_label(st$site), place_label(st$basin),
+                       if (relief) paste(hover_num(st$x), "m mean relief") else paste0(hover_num(st$x), "% ", cls),
+                       paste(hover_num(st$density), "per m\u00b2"),
+                       paste(st$n, "transects"))
   pb <- ggplot() +
     { if (nrow(cb)) geom_ribbon(data = cb, aes(x, ymin = lo, ymax = hi), fill = col, alpha = 0.18) } +
     { if (nrow(cb)) geom_line(data = cb, aes(x, fit), color = col, linewidth = 1) } +
-    geom_point(data = st, aes(x, density, size = n), shape = 21, fill = col, color = "white", alpha = 0.85) +
+    hover_layer("geom_point", aes(x, density, size = n), aes(tooltip = .tip, data_id = site),
+                data = st, shape = 21, fill = col, color = "white", alpha = 0.85) +
     scale_y_continuous(trans = scales::pseudo_log_trans(sigma = 0.02, base = 10),
                        breaks = c(0, 0.03, 0.1, 0.3, 1, 3, 10, 30)) +
     scale_size_area(max_size = 5, name = "transects behind\nthe site's mean") +
@@ -1746,6 +1757,11 @@ draw_glmm_pair <- function(species, predictor) {
     lim <- c(max(cap[1], min(lim[1], min(pos$ratio) / 1.25)), min(cap[2], max(lim[2], max(pos$ratio) * 1.25)))
   }
   if (!is.null(below) && nrow(below)) lim[1] <- cap[1]
+  if (!is.null(pos) && nrow(pos)) {
+    pos$.tip <- hover_tip(paste0(hover_num(pos$ratio), "\u00d7 (95% interval ", hover_num(pos$lo), "\u2013", hover_num(pos$hi), ")"),
+                          paste0(pos$n, " transects at ", pos$n_sites, " sites"),
+                          paste0("mean departure ", hover_num(pos$x), if (relief) " m" else " points"))
+  }
   if (!is.null(above) && nrow(above)) lim[2] <- cap[2]
   breaks <- 2^(ceiling(log2(lim[1])):floor(log2(lim[2])))
   pw <- ggplot() +
@@ -1756,7 +1772,8 @@ draw_glmm_pair <- function(species, predictor) {
         geom_linerange(data = pos, aes(x, ymin = pmax(lo, lim[1]), ymax = pmin(hi, lim[2])),
                        color = "gray35", linewidth = 0.5) } +
     { if (!is.null(pos) && nrow(pos))
-        geom_point(data = pos, aes(x, ratio, size = n), shape = 21, fill = col, color = "white", alpha = 0.9) } +
+        hover_layer("geom_point", aes(x, ratio, size = n), aes(tooltip = .tip),
+                    data = pos, shape = 21, fill = col, color = "white", alpha = 0.9) } +
     { if (!is.null(below) && nrow(below))
         geom_point(data = below, aes(x, lim[1] * 1.08), shape = 6, size = 2.5, color = col) } +
     { if (!is.null(above) && nrow(above))

@@ -1429,6 +1429,7 @@ server <- function(input, output, session) {
     validate(need(isTRUE(h$ok), ""))
     r <- pv_request()
     FIG_ENV$hover_widget(h$plot, kind = if (FIG_ENV$is_ordination(r$analysis)) "ordination"
+                                        else if (FIG_ENV$is_glmm(r$analysis)) "glmm"
                                         else if (identical(r$view, "composite")) "composite" else "lines")
   })
 
