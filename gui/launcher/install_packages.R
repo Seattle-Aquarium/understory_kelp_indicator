@@ -23,7 +23,8 @@ options(repos = c(CRAN = repo), timeout = 900,
 need <- c("shiny", "bslib", "processx",          # the app
           "dplyr", "tidyr", "tibble", "ggplot2",  # the step scripts
           "vegan", "ggrepel",                     # the NMDS and its labels
-          "glmmTMB", "patchwork")                 # the GLMMs and their two-panel figures
+          "glmmTMB", "patchwork",                 # the GLMMs and their two-panel figures
+          "ggiraph")                              # hovering over the preview
 
 installed <- function() rownames(installed.packages(lib.loc = lib))
 

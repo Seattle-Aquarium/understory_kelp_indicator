@@ -222,6 +222,12 @@ FIG_OK <- tryCatch({
   FALSE
 })
 
+## The preview is interactive when ggiraph is there (the app's own library
+## has it): hovering names a line's site or a point's transect, and picks it
+## out. Without it the preview is the plain image, as before. Either way Save
+## writes the plain figure, the same file Run writes.
+HOVER <- FIG_OK && requireNamespace("ggiraph", quietly = TRUE)
+
 if (FIG_OK) {
   ANALYSES   <- FIG_ENV$ANALYSES
   FIG_SCALES <- FIG_ENV$SCALES
@@ -688,7 +694,9 @@ preview_card <- function(step) {
       div(uiOutput("pv_ylock_ui"))
     ),
     uiOutput("pv_status"),
-    div(class = "rc-preview-stage", imageOutput("pv_plot", height = "auto")),
+    div(class = "rc-preview-stage",
+        if (HOVER) ggiraph::girafeOutput("pv_hover", width = "100%", height = NULL)
+        else imageOutput("pv_plot", height = "auto")),
     div(style = "display:flex;align-items:center;flex-wrap:wrap;margin-top:12px;",
         actionButton("pv_save", "Save this figure", class = "btn-run"),
         div(style = "width:8px;"),
@@ -1405,6 +1413,25 @@ server <- function(input, output, session) {
   ## does -- lays it out on a canvas as wide as the window, so in a narrow window
   ## the facet titles clipped and the caption fell off the bottom, none of which
   ## would happen in the file.
+  ## the same figure with its hover layers, drawn on the same 12 x 7 in canvas
+  ## and scaled to fit, for the preview only; pv_figure() stays the plain one
+  ## that Save writes
+  pv_hover <- reactive({
+    res <- pv_figure()
+    if (!isTRUE(res$ok)) return(NULL)
+    old <- options(ukelp.hover = TRUE)
+    on.exit(options(old))
+    tryCatch(do.call(FIG_ENV$make_figure, pv_request()), error = function(e) NULL)
+  })
+
+  if (HOVER) output$pv_hover <- ggiraph::renderGirafe({
+    h <- pv_hover()
+    validate(need(isTRUE(h$ok), ""))
+    r <- pv_request()
+    FIG_ENV$hover_widget(h$plot, kind = if (FIG_ENV$is_ordination(r$analysis)) "ordination"
+                                        else if (identical(r$view, "composite")) "composite" else "lines")
+  })
+
   output$pv_plot <- renderImage({
     res <- pv_figure()
     validate(need(isTRUE(res$ok), ""))

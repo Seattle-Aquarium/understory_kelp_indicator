@@ -229,6 +229,58 @@ hover_value <- function(analysis, grp, v) {
          else if (identical(grp$prefix, "ak_")) paste(hover_num(v), "per m\u00b2")
          else paste0(hover_num(100 * v), "% of points"))
 }
+## The app's interactive figure, the size of the saved PNG. `kind`:
+##   lines       a hovered gray line and its points turn #00C389
+##   composite   a hovered category's line thickens in its own colour
+##   ordination  a hovered point outlines every transect of its site in their
+##               own colour, and a hovered legend entry picks out its group
+## Everything else fades to 20%.
+hover_colour <- "#00C389"
+hover_widget <- function(p, kind = c("lines", "composite", "ordination")) {
+  kind <- match.arg(kind)
+  css <- if (kind == "ordination") {
+    ggiraph::girafe_css(css = "", point = "stroke:#111111;stroke-width:1.4px;stroke-opacity:1;fill-opacity:1;r:4.5px;")
+  } else if (kind == "composite") {
+    ggiraph::girafe_css(css = "", line = "stroke-width:3.5px;stroke-opacity:1;",
+                        point = "fill-opacity:1;stroke-opacity:1;r:4px;")
+  } else {
+    ggiraph::girafe_css(css = "",
+      line = sprintf("stroke:%s;stroke-width:3px;stroke-opacity:1;", hover_colour),
+      point = sprintf("fill:%s;stroke:%s;fill-opacity:1;stroke-opacity:1;r:3.5px;", hover_colour, hover_colour))
+  }
+  tooltip <- paste0("background:#ffffff;color:#1f2933;border:1px solid #c9d2dc;border-radius:6px;",
+                    "padding:6px 9px;font-family:'Segoe UI',Arial,sans-serif;font-size:13px;",
+                    "line-height:1.35;box-shadow:0 2px 8px rgba(0,0,0,.18);")
+  g <- ggiraph::girafe(ggobj = p, width_svg = fig_width, height_svg = fig_height,
+                  options = list(ggiraph::opts_hover(css = css),
+                                 ggiraph::opts_hover_inv(css = "opacity:0.2;"),
+                                 ggiraph::opts_hover_key(css = "stroke:#111111;stroke-width:1px;"),
+                                 ggiraph::opts_tooltip(css = tooltip, use_fill = FALSE, offx = 14, offy = 14),
+                                 ggiraph::opts_sizing(rescale = TRUE),
+                                 ggiraph::opts_toolbar(hidden = c("selection", "zoom", "misc"))))
+  ## ggiraph keeps legend keys apart from the plot's points, so a legend
+  ## entry (key or name) is tied to its group's points here: hovering it
+  ## brings them up, outlined, and fades the rest
+  htmlwidgets::onRender(g, "function(el) {
+    const svg = el.querySelector('svg'); if (!svg) return;
+    const marks = [...svg.querySelectorAll('[data-id]')];
+    const clear = () => marks.forEach(m => { m.style.opacity = ''; m.style.fillOpacity = '';
+      m.style.stroke = ''; m.style.strokeWidth = ''; m.style.strokeOpacity = ''; });
+    svg.querySelectorAll('[key-id]').forEach(k => {
+      k.style.cursor = 'pointer';
+      k.addEventListener('mouseenter', () => {
+        const id = k.getAttribute('key-id');
+        marks.forEach(m => {
+          if (m.getAttribute('data-id') === id) { m.style.fillOpacity = '1'; m.style.stroke = '#111111';
+            m.style.strokeWidth = '1px'; m.style.strokeOpacity = '1'; }
+          else m.style.opacity = '0.2';
+        });
+      });
+      k.addEventListener('mouseleave', clear);
+    });
+  }")
+}
+
 ## one tooltip per row: the name in bold, then a line for each of `...`
 hover_tip <- function(name, ...) {
   out <- paste0("<b>", name, "</b>")
@@ -971,7 +1023,9 @@ draw_composite <- function(analysis, scale, focal, members, cols, grp, title) {
   ## single panel. Named by column, so labels match the levels by name.
   lab <- vapply(cols, species_label, character(1))
   yrs <- sort(unique(focal$year))
-  focal <- focal %>% mutate(col = factor(col, levels = cols), .x = factor(year, levels = yrs))
+  focal <- focal %>% mutate(col = factor(col, levels = cols), .x = factor(year, levels = yrs),
+                            .id = as.character(col), .name = unname(lab[as.character(col)]),
+                            .tip = hover_tip(.name, paste(year, "\u00b7", hover_value(analysis, grp, value))))
 
   p <- ggplot()
   squished <- FALSE
@@ -995,9 +1049,10 @@ draw_composite <- function(analysis, scale, focal, members, cols, grp, title) {
     p <- p +
       geom_blank(data = tibble(y = unname(e)), aes(y = y)) +
       geom_hline(yintercept = 100, linetype = "dashed", linewidth = 0.5, color = "gray45") +
-      geom_path(data = paths_of(lines), aes(x = .x, y = y, group = .grp, color = col),
-                linewidth = 1.1) +
-      geom_point(data = lines, aes(x = .x, y = y, color = col), size = 2.4) +
+      hover_layer("geom_path", aes(x = .x, y = y, group = .grp, color = col), aes(tooltip = .name, data_id = .id),
+                  data = paths_of(lines), linewidth = 1.1) +
+      hover_layer("geom_point", aes(x = .x, y = y, color = col), aes(tooltip = .tip, data_id = .id),
+                  data = lines, size = 2.4) +
       geom_point(data = marks, aes(x = .xn, y = y, color = col, fill = col, shape = status),
                  size = 2.8) +
       (if (any(!is.na(marks$n_mark)))
@@ -1011,9 +1066,10 @@ draw_composite <- function(analysis, scale, focal, members, cols, grp, title) {
   } else {
     lines <- with_runs(focal, "col", density_drawable)
     p <- p +
-      geom_path(data = paths_of(lines), aes(x = .x, y = value, group = .grp, color = col),
-                linewidth = 1.1) +
-      geom_point(data = lines, aes(x = .x, y = value, color = col), size = 2.4) +
+      hover_layer("geom_path", aes(x = .x, y = value, group = .grp, color = col), aes(tooltip = .name, data_id = .id),
+                  data = paths_of(lines), linewidth = 1.1) +
+      hover_layer("geom_point", aes(x = .x, y = value, color = col), aes(tooltip = .tip, data_id = .id),
+                  data = lines, size = 2.4) +
       expand_limits(y = 0)
     y_lab <- grp$y_lab
   }
@@ -1172,11 +1228,15 @@ ordination_base <- function(pts, x, y, color_by, basin, size_by, ellipses) {
 
   pts$.x <- pts[[x]]
   pts$.y <- pts[[y]]
-  ## hovering a transect names it and picks out every transect of its site
-  pts$.id <- as.character(pts[[getOption("ukelp.hover_id", "site")]])
+  ## hovering a transect names it, with its depth from the transect table, and
+  ## picks out every transect of its site
+  depth_ft <- if (is.null(df_transect)) rep(NA_real_, nrow(pts)) else
+    df_transect$depth_ft[match(pts$key, df_transect$key)]
+  pts$.id <- as.character(pts$site)
   pts$.tip <- hover_tip(place_label(pts$site),
                         paste(place_label(pts$basin), "\u00b7", pts$year),
-                        paste0("transect ", pts$transect, " (", pts$depth_zone, ")"),
+                        ifelse(is.na(depth_ft), paste("transect", pts$transect),
+                               paste0("transect ", pts$transect, ", ", hover_num(depth_ft), " ft")),
                         if (!is.null(size_col) && size_col %in% names(pts))
                           paste(hover_num(pts[[size_col]]), "per m\u00b2"))
   fg <- pts[g$focus, , drop = FALSE]
@@ -1184,6 +1244,20 @@ ordination_base <- function(pts, x, y, color_by, basin, size_by, ellipses) {
   tip <- aes(tooltip = .tip, data_id = .id)
 
   p <- ggplot(mapping = aes(x = .x, y = .y))
+
+  ## hovering a legend entry picks out that group: an unseen copy of the
+  ## coloured points, under the visible ones (so it never takes the mouse from
+  ## them), carries the group's id, which the hover makes visible
+  if (hover_on()) {
+    p <- p + if (is.null(size_col)) {
+      ggiraph::geom_point_interactive(data = fg, aes(color = .group, data_id = paste0("group:", .group)),
+                                      alpha = 0, shape = 16, size = 1.6)
+    } else {
+      ggiraph::geom_point_interactive(data = fg, aes(color = .group, size = .data[[size_col]],
+                                                     data_id = paste0("group:", .group)),
+                                      alpha = 0, shape = 16)
+    }
+  }
 
   ## the other basins' transects stay in view, in gray, so a basin's sites are
   ## seen against the whole ordination
@@ -1215,8 +1289,14 @@ ordination_base <- function(pts, x, y, color_by, basin, size_by, ellipses) {
   }
 
   p <- p +
-    scale_color_manual(values = g$colours, name = g$title, drop = FALSE) +
-    guides(color = guide_legend(override.aes = list(alpha = 1, size = 3, linewidth = 0),
+    (if (hover_on()) ggiraph::scale_color_manual_interactive(
+       values = g$colours, name = g$title, drop = FALSE,
+       data_id = function(breaks) paste0("group:", breaks), tooltip = function(breaks) breaks,
+       labels = function(breaks) lapply(breaks, function(b)
+         ggiraph::label_interactive(b, data_id = paste0("group:", b), tooltip = b)))
+     else scale_color_manual(values = g$colours, name = g$title, drop = FALSE)) +
+    guides(color = (if (hover_on()) ggiraph::guide_legend_interactive else guide_legend)(
+                     override.aes = list(alpha = 1, size = 3, linewidth = 0),
                                 order = 1))
   list(ok = TRUE, plot = p, pts = pts, focus = g$focus, size_col = size_col)
 }

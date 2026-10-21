@@ -151,7 +151,7 @@ Each script runs as its own R process from `code/` (`setwd("../")`), reads only 
 
 ## F: figures (`figure_functions.R`, `visualizations.R`, `gui/app.R`)
 
-- **F-1 One definition.** Every figure is built by `make_figure()` in `figure_functions.R`; the app's preview and Run's saved file are the same figure by construction. Nothing else draws a figure.
+- **F-1 One definition.** Every figure is built by `make_figure()` in `figure_functions.R`; the app's preview and Run's saved file are the same figure by construction. Nothing else draws a figure. The preview adds hover layers (F-9); with hover off, every layer is the plain ggplot2 one, so a saved PNG is byte-identical to Run's.
 - **F-2 Size.** 12 × 7 inches at 300 dpi, white background.
 - **F-3 Paths.** `figs/<analysis>/<scale>/<view>/<data type>/<stem>.png`, with the stems `figure_file()` defines; the ordinations and GLMMs use scale `transect` and data type `algae`.
 - **F-4 Exclusions and orders.** The canopy kelps are never drawn. GLMM species run from hard-substrate to soft-bottom along the db-RDA's first axis; classes follow S-2.
@@ -159,10 +159,15 @@ Each script runs as its own R process from `code/` (`setwd("../")`), reads only 
 - **F-6 Trend.** log₂ axis centred on 100%; values outside 6.25%–1,600% drawn at the limit, blue ones labelled with their value; lost and new as triangles on the bottom and top edges, with member counts at the basin and Puget Sound scales; lines join consecutive `present` years only.
 - **F-7 Ordinations.** Basin colours come from one palette over every basin, so a basin keeps its colour when one is highlighted. Ellipses: 95% normal-theory, groups of ≥ 5 transects. Species arrows sit at their scores on the NMDS, and on the db-RDA are stretched by one shared factor to reach 90% of the points' extent; substrate arrows are stretched by one shared factor to reach 75%.
 - **F-8 GLMM.** Heatmap fill = log₂(rate ratio) clamped to ±2 (¼× to 4×), the same scale in every view; stars for q < 0.05, 0.01, 0.001; † for fits that are not ok. Views: each set between sites, within sites, and both stacked; one species × one class. Within panels: log₂ axis spanning at least ¼×–4× and at most 1/16×–16×; bins beyond it are open triangles on the edge they passed.
+- **F-9 Hover (app preview only).** With `options(ukelp.hover = TRUE)` and ggiraph present, `hover_layer()` swaps the member lines and points, the composite lines and the ordination points for their ggiraph twins, and `hover_widget()` draws the figure with ggiraph at the PNG's 12 × 7 in. Run and Save never turn hover on.
+  - Lines (density, standard deviation, trend): a member line's id is its member (site, basin or transect), so hovering it highlights that member in #00C389 in every panel; its points name the member, year and value. Blue points name the place, year and value (and SD).
+  - Composite: a category's line thickens in its own colour and names the category.
+  - Ordinations: a point's id is its site, so hovering one transect outlines every transect of that site; its label gives site, basin, year, transect number and depth in feet (and the sized species' density). Hovering a legend entry (key or name) picks out that group.
+  - Everything not hovered fades to 20% opacity. The GLMM figures carry no hover layers.
 
 ## R: reproducibility
 
-- **R-1 Environment.** R 4.6.1 with packages from the CRAN snapshot of 2026-10-01 (`gui/launcher/runtime.cfg`: `R_VERSION`, `R_SHA256`, `CRAN_SNAPSHOT`, `LIBRARY_REV`). Versions at the time of writing: vegan 2.7.6, glmmTMB 1.1.15.2, TMB 1.9.25, dplyr 1.2.1, tidyr 1.3.2, ggplot2 4.0.3, patchwork 1.3.2, ggrepel 0.9.8, scales 1.4.0, shiny 1.14.0, bslib 0.12.0. A package added to `install_packages.R` bumps `LIBRARY_REV`.
+- **R-1 Environment.** R 4.6.1 with packages from the CRAN snapshot of 2026-10-01 (`gui/launcher/runtime.cfg`: `R_VERSION`, `R_SHA256`, `CRAN_SNAPSHOT`, `LIBRARY_REV`). Versions at the time of writing: vegan 2.7.6, glmmTMB 1.1.15.2, TMB 1.9.25, dplyr 1.2.1, tidyr 1.3.2, ggplot2 4.0.3, patchwork 1.3.2, ggrepel 0.9.8, scales 1.4.0, shiny 1.14.0, bslib 0.12.0, ggiraph 0.9 (hover; `LIBRARY_REV` 4). A package added to `install_packages.R` bumps `LIBRARY_REV`.
 - **R-2 Seeds.** NMDS 20261019 + *k*; permutation tests 20261019; GLMM bins 20261020 + task index. Never removed or varied between runs.
 - **R-3 Caching.** `nmds_algae.R`, `substrate_algae.R` and `glmm_substrate.R` fingerprint their inputs and settings (an md5 written to their summary file) and reuse the last results when it matches; `UKELP_NMDS_FORCE=1` forces a re-run of all three. A change to a method must change its fingerprint: the settings it hashes, the `"v2"` tag in `substrate_algae.R`, or `version` in `glmm_substrate.R`.
 - **R-4 Determinism.** Every result is reproducible on the same computer. The NMDS draws its random starts in batches of `cores`, so a computer with a different core count can settle on an equally good but slightly different map; the committed results are the reference. Permutation p-values are reproducible given the seed and 999 permutations; their smallest possible value is 0.001.
@@ -172,5 +177,6 @@ Each script runs as its own R process from `code/` (`setwd("../")`), reads only 
 
 | Date | IDs | Change |
 |---|---|---|
+| 2026-10-21 | F-1, F-9, R-1 | Hover in the app's preview (ggiraph, added to the app's packages; `LIBRARY_REV` 4). Saved PNGs unchanged. |
 | 2026-10-21 | G-1, G-3, G-6, G-8, G-10 | Depth enters the GLMMs as continuous depth in feet instead of the inshore/offshore depth zone, which is not a true category at many sites. 894 transects (three lack a depth). Rate ratios moved by a median of 0.2%; 35 terms are significant before and after (32 in both); no significant term changed direction. |
 | 2026-10-20 | all | First version, written from the code at commit 959bd1a plus the within-site bins (G-8, G-9). |
