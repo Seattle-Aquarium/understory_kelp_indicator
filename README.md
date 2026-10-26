@@ -24,6 +24,8 @@ Photo credit: Tim McClure
 
 ## Running the Data Interpreter
 
+To browse the figures without installing anything, open the online **[Data Explorer](https://01a17970-b855-56ce-6ae6-779d21c65df2.share.connect.posit.cloud/)**.
+
 Double-click **`run_data_interpreter.bat`**. Nothing needs to be installed first: the first run sets up the app's own copy of R and its packages (a few minutes, internet needed once), and every run after that opens the app in your browser straight away. Its tabs run steps 1–3 below, and *Explore data* on the **3. Data** tab previews any figure before you save it. `Create Desktop Shortcut.bat` puts it on the desktop. See [`gui/gui_operation.md`](gui/gui_operation.md) for the details.
 
 <p align="center">
