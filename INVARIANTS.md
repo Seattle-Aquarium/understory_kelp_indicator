@@ -164,6 +164,7 @@ Each script runs as its own R process from `code/` (`setwd("../")`), reads only 
   - Composite: a category's line thickens in its own colour and names the category.
   - Ordinations: a point's id is its site, so hovering one transect outlines every transect of that site; its label gives site, basin, year, transect number and depth in feet (and the sized species' density). Hovering a legend entry (key or name) picks out that group. Only the ordinations fade what is not hovered, to 20% opacity.
   - GLMM, one species × one class: on the between-site panel a site's point fills light blue and names the site, basin, mean share (or relief), mean density and transect count; on the within-site panel a bin's point gives its ratio and interval, transects, sites and mean departure. The heatmaps carry no hover layers.
+- **F-10 The website (Data Explorer).** `app.R` at the repository root runs `gui/app.R` with `options(ukelp.explore_only = TRUE)`. That page shows only Explore data: no steps, no Run, no file pickers, and it never quits when a visitor leaves. Its Download PNG button writes `pv_figure()`'s plain figure exactly as Save does (12 × 7 in, 300 dpi, white), named by its path under `figs/` with `/` turned to `_`. It reads the committed `results/` tables, so the website shows whatever main holds.
 
 ## R: reproducibility
 
@@ -172,11 +173,13 @@ Each script runs as its own R process from `code/` (`setwd("../")`), reads only 
 - **R-3 Caching.** `nmds_algae.R`, `substrate_algae.R` and `glmm_substrate.R` fingerprint their inputs and settings (an md5 written to their summary file) and reuse the last results when it matches; `UKELP_NMDS_FORCE=1` forces a re-run of all three. A change to a method must change its fingerprint: the settings it hashes, the `"v2"` tag in `substrate_algae.R`, or `version` in `glmm_substrate.R`.
 - **R-4 Determinism.** Every result is reproducible on the same computer. The NMDS draws its random starts in batches of `cores`, so a computer with a different core count can settle on an equally good but slightly different map; the committed results are the reference. Permutation p-values are reproducible given the seed and 999 permutations; their smallest possible value is 0.001.
 - **R-5 Precision.** Results are written at full precision except where M-6 and T-6 say otherwise.
+- **R-6 The website's packages.** `manifest.json` at the repository root lists the website's files (the two `app.R`s, `code/figure_functions.R`, the two logos and the 21 `results/` tables the figures read) and every package with its version, all from the same CRAN snapshot as R-1. It is written by `rsconnect::writeManifest(appDir = ".", appFiles = <those files>, appPrimaryDoc = "app.R")` from the app's own package library, and is rewritten whenever a package the figures or the app use is added or changes, or a table is added. ✓
 
 ## Change log
 
 | Date | IDs | Change |
 |---|---|---|
+| 2026-10-26 | F-10, R-6 | The Data Explorer website: `app.R` and `manifest.json` at the root, explore-only mode in `gui/app.R`. Desktop app unchanged. |
 | 2026-10-22 | F-9 | Hover highlight in light blue; line plots no longer fade the other lines; GLMM single-species figures hover. |
 | 2026-10-21 | F-1, F-9, R-1 | Hover in the app's preview (ggiraph, added to the app's packages; `LIBRARY_REV` 4). Saved PNGs unchanged. |
 | 2026-10-21 | G-1, G-3, G-6, G-8, G-10 | Depth enters the GLMMs as continuous depth in feet instead of the inshore/offshore depth zone, which is not a true category at many sites. 894 transects (three lack a depth). Rate ratios moved by a median of 0.2%; 35 terms are significant before and after (32 in both); no significant term changed direction. |

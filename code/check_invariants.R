@@ -145,6 +145,21 @@ check("G-3", "GLMMs use continuous depth, never depth zone",
         all(c("depth_rate_ratio", "depth_p") %in% names(gt)))
 check("G-10", "GLMM settings recorded", all(grepl("nbinom2", gs$model)))
 
+## ---- R: the website's manifest -----------------------------------------------------
+mf <- jsonlite::fromJSON("manifest.json")
+snapshot <- sub("^CRAN_SNAPSHOT=", "", grep("^CRAN_SNAPSHOT=", readLines("gui/launcher/runtime.cfg"), value = TRUE))
+web_tables <- c(paste0("metrics_", c("transect", "site", "basin", "puget_sound"), "_scale.csv"),
+                paste0("trend_", c("site", "basin", "puget_sound"), "_scale.csv"),
+                paste0("nmds_algae_", c("points", "species", "stress", "envfit"), ".csv"),
+                paste0("dbrda_algae_", c("points", "species", "terms", "summary", "varpart"), ".csv"),
+                paste0("glmm_algae_", c("terms", "curves", "sites", "bins", "summary"), ".csv"))
+check("R-6", "manifest: the website's files, all present",
+      all(c("app.R", "gui/app.R", "code/figure_functions.R", file.path("results", web_tables)) %in% names(mf$files)) &&
+        all(file.exists(names(mf$files))))
+check("R-6", "manifest: the packages the figures need, from the app's CRAN snapshot",
+      all(c("shiny", "bslib", "dplyr", "tidyr", "ggplot2", "ggrepel", "patchwork", "ggiraph", "scales") %in% names(mf$packages)) &&
+        all(vapply(mf$packages, function(p) grepl(snapshot, p$Repository, fixed = TRUE), logical(1))))
+
 cat(if (length(failed)) sprintf("\n%d check(s) failed: %s\n", length(failed), paste(unique(failed), collapse = ", "))
     else "\nAll checks passed.\n")
 if (length(failed)) quit(save = "no", status = 1)

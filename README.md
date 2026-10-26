@@ -46,5 +46,6 @@ Double-click **`run_data_interpreter.bat`**. Nothing needs to be installed first
 | `code/supplementary/` | checks behind the methods, run by hand rather than from the app: transformations, predictor sets, between vs within sites, GLMM checks and sensitivity analyses → `results/supplementary/`, `figs/supplementary/` |
 | `code/figure_functions.R`, `code/visualizations.R` | step 3: the figures → `figs/<analysis>/<scale>/<view>/<data type>/` |
 | `gui/` | the Data Interpreter (Shiny app) and its launcher |
+| `app.R`, `manifest.json` | the Data Explorer website: Explore data on its own, for Posit Connect Cloud |
 | `documents/` | the plain-language methods (`methods.md`), the metric definitions (LaTeX) and the code review |
 | `INVARIANTS.md`, `code/check_invariants.R` | the rules every data step and metric must keep, and a script that checks `results/` against them |

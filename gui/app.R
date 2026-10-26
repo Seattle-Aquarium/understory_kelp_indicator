@@ -228,6 +228,14 @@ FIG_OK <- tryCatch({
 ## writes the plain figure, the same file Run writes.
 HOVER <- FIG_OK && requireNamespace("ggiraph", quietly = TRUE)
 
+## Explore only: the app as a website (the app.R at the repository root turns
+## this on for Posit Connect Cloud). One card -- Explore data -- with a
+## Download button in place of Save; no steps, no Run, no file pickers, and it
+## does not quit when a visitor closes the page. The figures are the same
+## make_figure() ones, drawn from the results/ tables in the repository.
+EXPLORE_ONLY <- isTRUE(getOption("ukelp.explore_only")) ||
+  identical(Sys.getenv("UKELP_EXPLORE_ONLY"), "1")
+
 if (FIG_OK) {
   ANALYSES   <- FIG_ENV$ANALYSES
   FIG_SCALES <- FIG_ENV$SCALES
@@ -669,14 +677,20 @@ include_box <- function(scope) {
 ## y-axis switch (for the ordinations, which arrows and ellipses to show).
 ## The slots relabel themselves with the analysis, so no control changes
 ## meaning without saying so.
-preview_card <- function(step) {
+preview_card <- function(step, explore = FALSE) {
   div(
     class = "rc-card",
-    h2(sprintf("%d.  Explore data", step$n)),
+    h2(if (explore) "Explore data" else sprintf("%d.  Explore data", step$n)),
     p(class = "blurb",
-      paste("Build one figure and look at it. These choices are independent of",
-            "the checkboxes below -- they decide what you are looking at, not",
-            "what Run writes.")),
+      if (explore) {
+        paste("Choose an analysis, a scale, a view and a data type to draw any figure",
+              "from the indicator's results. Hover over a line or a point to see which",
+              "site it comes from; Download saves the figure as a PNG.")
+      } else {
+        paste("Build one figure and look at it. These choices are independent of",
+              "the checkboxes below -- they decide what you are looking at, not",
+              "what Run writes.")
+      }),
     div(
       class = "rc-preview-controls",
       div(tags$h3("Analysis"),
@@ -697,11 +711,46 @@ preview_card <- function(step) {
     div(class = "rc-preview-stage",
         if (HOVER) ggiraph::girafeOutput("pv_hover", width = "100%", height = NULL)
         else imageOutput("pv_plot", height = "auto")),
-    div(style = "display:flex;align-items:center;flex-wrap:wrap;margin-top:12px;",
-        actionButton("pv_save", "Save this figure", class = "btn-run"),
-        div(style = "width:8px;"),
-        actionButton("pv_save_as", "Save as\u2026", class = "btn-browse"),
-        uiOutput("pv_target", inline = TRUE))
+    if (explore) {
+      div(style = "display:flex;align-items:center;flex-wrap:wrap;margin-top:12px;",
+          downloadButton("pv_download", "Download PNG", class = "btn-run"),
+          uiOutput("pv_target", inline = TRUE))
+    } else {
+      div(style = "display:flex;align-items:center;flex-wrap:wrap;margin-top:12px;",
+          actionButton("pv_save", "Save this figure", class = "btn-run"),
+          div(style = "width:8px;"),
+          actionButton("pv_save_as", "Save as\u2026", class = "btn-browse"),
+          uiOutput("pv_target", inline = TRUE))
+    }
+  )
+}
+
+## The website's page: the banner, the Explore data card and a line saying
+## what the figures are drawn from
+explore_ui <- function() {
+  years <- tryCatch(range(read.csv(file.path(RESULTS, "metrics_basin_scale.csv"))$year),
+                    error = function(e) NULL)
+  page_fluid(
+    theme = rc_theme,
+    tags$head(tags$style(HTML(app_css)),
+              tags$title("Understory Kelp Indicator: Data Explorer")),
+    div(class = "rc-banner",
+        tags$img(src = "ukelp/rc_logo.png", alt = "Reef Check"),
+        tags$img(src = "ukelp/seaq_logo.png", alt = "Seattle Aquarium"),
+        div(h1("Understory Kelp Indicator: Data Explorer", class = "rc-title"),
+            p("Reef Check  \u00b7  Seattle Aquarium", class = "rc-sub"))),
+    div(class = "rc-rule"),
+    div(class = "rc-wrap",
+        preview_card(STEPS$figures, explore = TRUE),
+        div(class = "rc-foot",
+            paste0("Figures are drawn from the indicator's results",
+                   if (length(years) == 2) sprintf(" (Reef Check surveys, %d\u2013%d)", years[1], years[2]),
+                   ". How each one is made: "),
+            tags$a(href = "https://github.com/Seattle-Aquarium/understory_kelp_indicator/blob/main/documents/methods.md",
+                   target = "_blank", "the methods"),
+            " \u00b7 ",
+            tags$a(href = "https://github.com/Seattle-Aquarium/understory_kelp_indicator",
+                   target = "_blank", "the code and data")))
   )
 }
 
@@ -779,6 +828,8 @@ ui <- page_fluid(
   "))
 )
 
+if (EXPLORE_ONLY) ui <- explore_ui()
+
 ## ---------------------------------------------------------------------------
 ## Server
 ## ---------------------------------------------------------------------------
@@ -807,7 +858,8 @@ session_tally <- local({
 
 server <- function(input, output, session) {
 
-  if (!interactive()) {
+  ## the website keeps running for the next visitor
+  if (!interactive() && !EXPLORE_ONLY) {
     session_tally$open()
     session$onSessionEnded(function() {
       session_tally$close()
@@ -1457,12 +1509,31 @@ server <- function(input, output, session) {
                                   substrate = r$substrate %||% FALSE))
   })
 
+  ## online the file is named by its whole path under figs/, folders joined
+  ## with underscores: density_basin_within_algae_San_Juan_Islands.png
+  download_name <- reactive({
+    t <- pv_target()
+    if (is.null(t)) return(NULL)
+    gsub("/", "_", sub(paste0("^", current_path("figs"), "/?"), "", t))
+  })
+
   output$pv_target <- renderUI({
     t <- pv_target()
     if (is.null(t)) return(NULL)
     span(class = "rc-pv-target",
-         sub(paste0("^", REPO, "/?"), "", t, fixed = FALSE))
+         if (EXPLORE_ONLY) download_name() else sub(paste0("^", REPO, "/?"), "", t, fixed = FALSE))
   })
+
+  ## the plain figure, exactly as Run writes it, to the visitor's computer
+  output$pv_download <- downloadHandler(
+    filename = function() download_name() %||% "figure.png",
+    content = function(file) {
+      res <- pv_figure()
+      validate(need(isTRUE(res$ok), "There is no figure to download yet."))
+      ggplot2::ggsave(file, plot = res$plot, width = FIG_ENV$fig_width,
+                      height = FIG_ENV$fig_height, dpi = FIG_ENV$fig_dpi,
+                      bg = "white", device = "png")
+    })
 
   save_preview <- function(path) {
     res <- pv_figure()

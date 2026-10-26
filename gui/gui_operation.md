@@ -62,6 +62,14 @@ From RStudio the app still runs the old way, on whatever R and packages are inst
       - *GLMM Algae ~ Substrate*: 126 figures — the rate-ratio grids (each set between sites, within sites, and both stacked), and every species against every class.
 4. **Run Everything** — Executes all three steps in Data Interpreter from data cleaning through visualizations (with whatever is ticked on each tab). Step 1 takes seconds; step 2 about a quarter of an hour the first time and seconds after that; step 3, 25–35 minutes for the default selection.
 
+## The website (Data Explorer)
+
+The Explore data card also runs on its own as a website, through Posit Connect Cloud, so anyone with the link can browse every figure without installing anything. It is the same app with the steps, Run and file pickers left out, and **Download PNG** in place of Save; the figures are identical to the desktop app's. It starts from `app.R` at the repository root and reads the `results/` tables committed to GitHub.
+
+- **Keeping it current:** run step 2 on your computer, commit the new `results/` and push to main. The website republishes from main by itself.
+- **When packages change:** if a change adds or updates an R package that the figures or the app use, regenerate `manifest.json` (see INVARIANTS.md, R-6) and commit it with the change.
+- **To see it on your own computer:** `shiny::runApp()` from the repository folder.
+
 ## Reading the figures
 
 Every figure carries a caption saying what the blue line, gray lines and band are. In short:
